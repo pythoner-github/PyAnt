@@ -33,6 +33,10 @@ def build(argv = None):
         os.makedirs(home, exist_ok = True)
 
         if os.path.isdir(home):
+            if os.environ.get('VERSION'):
+                if not os.environ.get('POM_VERSION'):
+                    os.environ['POM_VERSION'] = os.environ['VERSION'].upper().replace(' ', '')
+
             with builtin_os.chdir(home) as dir:
                 if name == 'bn':
                     build = bn

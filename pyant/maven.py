@@ -133,16 +133,19 @@ class maven:
             if re.search(r'^\[INFO\]\s+-+$', line):
                 return False
             elif re.search(r'^\[INFO\]\s+Building\s+', line):
-                return False
+                if re.search(r'^\[INFO\]\s+Building\s+jar\s*:', line):
+                    return True
+                else:
+                    return False
             elif re.search(r'^\[INFO\]\s+BUILD\s+(SUCCESS|FAILURE)$', line):
                 return False
             elif re.search(r'\[(ERROR|EXCEPTION)\]', line):
                 return False
             elif re.search(r'http:\/\/', line):
                 return True
-            elif re.search(r'\[exec\].*error', line):
+            elif re.search(r'\[exec\].*\s+(error|errors)\s+', line):
                 return False
-            elif re.search(r'\:.*error', line):
+            elif re.search(r'\:.*\s+(error|errors)\s+', line):
                 if 'following dependencies:' in line:
                     return True
                 else:

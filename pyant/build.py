@@ -47,7 +47,23 @@ def build(argv = None):
                 else:
                     build = sdno
 
-                if command == 'update':
+                if command == 'updateall':
+                    if arg:
+                        branch = arg[0]
+                    else:
+                        branch = None
+
+                    if name in ['bn', 'stn']:
+                        status = True
+
+                        for module in build.REPOS.keys():
+                            if not build.update(None, branch):
+                                status = False
+
+                        return status
+                    else:
+                        return build.update(None, branch);
+                elif command == 'update':
                     return build.update(*arg)
                 elif command == 'compile_base':
                     return build.compile_base(*arg)
@@ -67,6 +83,7 @@ Usage:
     name command home arg
 
     command:
+        updateall       arg: branch
         update          arg: module branch
         compile_base    arg: module cmd
         compile         arg: module cmd clean retry_cmd dirname lang

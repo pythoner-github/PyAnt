@@ -8,7 +8,7 @@ from pyant.builtin import os as builtin_os
 __all__ = ['build']
 
 __build_name__ = ('bn', 'stn', 'umebn', 'sdno')
-__build_command__ = ('update', 'compile_base', 'compile', 'package')
+__build_command__ = ('updateall', 'update', 'compile_base', 'compile', 'package')
 
 def build(argv = None):
     if not argv:

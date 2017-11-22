@@ -47,7 +47,7 @@ def compile_base(name = None, cmd = None):
 
     if os.path.isdir(path):
         with builtin_os.chdir(path) as dir:
-            for home in ('pom/version', 'pom/testframework', 'pom/cpp', 'pom/java'):
+            for home in ('pom/version', 'pom/testframework', 'pom'):
                 if os.path.isdir(home):
                     with builtin_os.chdir(home) as dir:
                         mvn = maven.maven()
@@ -58,6 +58,16 @@ def compile_base(name = None, cmd = None):
                     print('no such directory: %s' % os.path.normpath(home))
 
                     return False
+
+        for http in REPOS.values():
+            path = os.path.join(os.path.basename(http), 'code/build/thirdparty')
+
+            if os.path.isdir(path):
+                with builtin_os.chdir(path) as dir:
+                    mvn = maven.maven()
+
+                    if not mvn.compile(cmd):
+                        return False
 
         return True
     else:

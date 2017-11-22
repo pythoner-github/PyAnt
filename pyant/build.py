@@ -57,7 +57,7 @@ def build(argv = None):
                         status = True
 
                         for module in build.REPOS.keys():
-                            if not build.update(None, branch):
+                            if not build.update(module, branch):
                                 status = False
 
                         return status

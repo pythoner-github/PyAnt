@@ -28,7 +28,7 @@ class maven:
 
         cmd = command.command()
 
-        for line in cmd.command('mvn clean -fn'):
+        for line in cmd.command('mvn clean -fn -U'):
             status = self.validate(status, line)
 
             if not self.ignore(line):
@@ -41,7 +41,7 @@ class maven:
 
     def compile(self, cmdline = None, retry_cmd = None, lang = None):
         if not cmdline:
-            cmdline = 'mvn install -fn'
+            cmdline = 'mvn install -fn -U'
 
         self.errors = None
         self.lines = []

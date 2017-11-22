@@ -7,7 +7,7 @@ from pyant import git, maven
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ['update', 'compile']
+__all__ = ['update', 'compile', 'package']
 
 REPOS = collections.OrderedDict([
   ('interface', os.path.join(const.SSH_GIT, 'U31R22_INTERFACE')),
@@ -93,6 +93,9 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = Non
         print('module name not found in %s' % tuple(REPOS.keys()))
 
         return False
+
+def package(name = None, *arg):
+    return True
 
 # ----------------------------------------------------------
 

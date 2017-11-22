@@ -4,7 +4,7 @@ from pyant import git, maven
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ['update', 'compile']
+__all__ = ['update', 'compile', 'package']
 
 REPOS = os.path.join(const.SSH_GIT, 'umebn')
 
@@ -66,3 +66,6 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
         print('no such directory: %s' % os.path.normpath(path))
 
         return False
+
+def package(name = None, *arg):
+    return True

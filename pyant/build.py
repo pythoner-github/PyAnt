@@ -8,7 +8,7 @@ from pyant.builtin import os as builtin_os
 __all__ = ['build']
 
 __build_name__ = ('bn', 'stn', 'umebn', 'sdno')
-__build_command__ = ('update', 'compile_base', 'compile')
+__build_command__ = ('update', 'compile_base', 'compile', 'package')
 
 def build(argv = None):
     if not argv:
@@ -53,6 +53,8 @@ def build(argv = None):
                     return build.compile_base(*arg)
                 elif command == 'compile':
                     return build.compile(*arg)
+                elif command == 'package':
+                    return build.package(*arg)
                 else:
                     return True
         else:
@@ -68,6 +70,7 @@ Usage:
         update          arg: module branch
         compile_base    arg: module cmd
         compile         arg: module cmd clean retry_cmd dirname lang
+        package         arg:
         '''
 
         print(usage.strip())

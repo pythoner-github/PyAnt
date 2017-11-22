@@ -270,7 +270,7 @@ def log(path = None, arg = None):
 
                     if comment:
                         if line:
-                            if 'comment' not in info:
+                            if not info.get('comment'):
                                 info['comment'] = []
 
                             info['comment'].append(line)

@@ -28,7 +28,7 @@ class maven:
 
         cmd = command.command()
 
-        for line in cmd.command('mvn clean -fn -U'):
+        for line in cmd.command('mvn clean -fn -U -T 5'):
             status = self.validate(status, line)
 
             if not self.ignore(line):
@@ -133,7 +133,7 @@ class maven:
             if re.search(r'^\[INFO\]\s+-+$', line):
                 return False
             elif re.search(r'^\[INFO\]\s+Building\s+', line):
-                if re.search(r'^\[INFO\]\s+Building\s+jar\s*:', line):
+                if re.search(r'^\[INFO\]\s+Building\s+(jar|war)\s*:', line):
                     return True
                 else:
                     return False

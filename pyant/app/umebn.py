@@ -27,7 +27,7 @@ def compile_base(name = None, cmd = None):
 
     if os.path.isdir(path):
         with builtin_os.chdir(path) as dir:
-            for home in ('devops/parent/version', 'devops/parent/build'):
+            for home in ('devops/parent/version', 'devops/parent/build', 'support/interface/thirdparty'):
                 if os.path.isdir(home):
                     with builtin_os.chdir(home) as dir:
                         mvn = maven.maven()

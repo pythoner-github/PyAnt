@@ -543,7 +543,29 @@ class maven:
 
     def puts_errors(self):
         if self.errors:
-            print(self.errors)
+            errors = {}
+
+            for file in self.errors:
+                if file:
+                    author = self.errors[file]['author']
+
+                    if author not in errors:
+                        errors[author] = {}
+
+                    errors[author][file] = self.errors[file]['date']
+
+            if errors:
+                print()
+                print('*' * 60)
+
+                for author in sorted(list(errors.keys())):
+                    print('%s:' % author)
+                    print('=' * 30)
+
+                    for file in sorted(list(errors[author].keys())):
+                        print('  %s, %s' % (file, errors[author][file]))
+
+                    print()
 
     def artifactid(self, path):
         if os.path.isfile(path):

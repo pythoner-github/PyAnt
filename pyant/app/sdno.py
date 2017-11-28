@@ -46,6 +46,10 @@ def compile_base(name = None, cmd = None):
         return False
 
 def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = None, *arg):
+    if isinstance(clean, str):
+        if clean.lower().strip() == 'true':
+            clean = True
+
     if not dirname:
         dirname = 'build'
 

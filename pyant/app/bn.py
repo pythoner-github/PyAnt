@@ -76,6 +76,10 @@ def compile_base(name = None, cmd = None):
         return False
 
 def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = None, dirname = None, *arg):
+    if isinstance(clean, str):
+        if clean.lower().strip() == 'true':
+            clean = True
+
     if name in REPOS.keys():
         environ(lang)
 

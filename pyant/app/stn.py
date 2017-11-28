@@ -58,6 +58,10 @@ def compile_base(cmd = None):
         return False
 
 def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = None, *arg):
+    if isinstance(clean, str):
+        if clean.lower().strip() == 'true':
+            clean = True
+
     if name in REPOS.keys():
         if not dirname:
             if name == 'u3_interface':

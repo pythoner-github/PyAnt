@@ -91,7 +91,7 @@ def build(argv = None):
                     return build.package(*arg)
                 elif command == 'check':
                     if name == 'bn':
-                        return app_build.check(home, 'U31R22_*', r'')
+                        return app_build.check(home, 'U31R22_*', r'error_conf\.xml')
                     else:
                         return app_build.check(home)
                 else:

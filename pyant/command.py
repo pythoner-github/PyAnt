@@ -47,7 +47,13 @@ class command:
             line = self.pipe.stdout.readline()
 
             if line:
-                yield line.decode(locale.getpreferredencoding(False)).rstrip()
+                for encoding in (locale.getpreferredencoding(False), 'utf8', 'cp936'):
+                    try:
+                        yield line.decode(encoding).rstrip()
+
+                        break
+                    except:
+                        pass
             else:
                 break
 

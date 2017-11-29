@@ -1,16 +1,16 @@
-import datetime
 import os
 import os.path
 import sys
+import xml.etree.ElementTree
 
-from pyant import command
 from pyant.app import bn, stn, umebn, sdno, const
+from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
 __all__ = ['build']
 
 __build_name__ = ('bn', 'stn', 'umebn', 'sdno')
-__build_command__ = ('updateall', 'update', 'compile_base', 'compile', 'package')
+__build_command__ = ('updateall', 'update', 'compile_base', 'compile', 'package', 'check')
 
 def build(argv = None):
     if not argv:
@@ -77,18 +77,23 @@ def build(argv = None):
                     else:
                         module_name = None
 
-                    id = metric_start(metric_id(name, module_name), module_name)
+                    id = app_build.metric_start(name, module_name)
 
                     if build.compile(*arg):
-                        metric_end(id, True)
+                        app_build.metric_end(id, True)
 
                         return True
                     else:
-                        metric_end(id, False)
+                        app_build.metric_end(id, False)
 
                         return False
                 elif command == 'package':
                     return build.package(*arg)
+                elif command == 'check':
+                    if name == 'bn':
+                        return app_build.check(home, 'U31R22_*', r'')
+                    else:
+                        return app_build.check(home)
                 else:
                     return True
         else:
@@ -106,78 +111,9 @@ Usage:
         compile_base    arg: module cmd
         compile         arg: module cmd clean retry_cmd dirname lang
         package         arg:
+        check           arg:
         '''
 
         print(usage.strip())
 
         return False
-
-def metric_id(name, module_name = None):
-    if name == 'bn':
-        if module_name in ('interface', 'platform', 'necommon', 'uca', 'sdh', 'ptn'):
-            return const.METRIC_ID_BN_IPTN
-        elif module_name in ('ptn2', 'ip'):
-            return const.METRIC_ID_BN_IPTN_NJ
-        elif module_name in ('e2e'):
-            return const.METRIC_ID_BN_E2E
-        elif module_name in ('xmlfile', 'nbi'):
-            return const.METRIC_ID_BN_NBI
-        elif module_name in ('wdm'):
-            return const.METRIC_ID_BN_OTN
-        else:
-            return None
-    elif name == 'stn':
-        return const.METRIC_ID_STN
-    elif name == 'umebn':
-        return const.METRIC_ID_UMEBN
-    elif name == 'sdno':
-        return const.METRIC_ID_SDNO
-    else:
-        return None
-
-def metric_start(id, module_name = None, night = True):
-    cmdline = None
-
-    if not module_name:
-        module_name = ''
-
-    if os.environ.get('METRIC'):
-        if id:
-            if night:
-                hour = datetime.datetime.now().hour
-
-                if 0 <= hour <=8 or hour >= 22:
-                    cmdline = 'curl --data "action=buildstart&project=%s&buildtype=night&item=%s" %s' % (id, module_name, const.HTTP_METRIC)
-            else:
-                cmdline = 'curl --data "action=buildstart&project=%s&buildtype=CI&item=%s" %s' % (id, module_name, const.HTTP_METRIC)
-
-    if cmdline:
-        lines = []
-
-        cmd = command.command()
-
-        for line in cmd.command(cmdline):
-            lines.append(line)
-
-            print(line)
-
-        if cmd.result():
-            return ''.join(lines[2:]).strip()
-        else:
-            return None
-    else:
-        return None
-
-def metric_end(id, status):
-    if id:
-        if status:
-            success = 'success'
-        else:
-            success = 'failed'
-
-        cmdline = 'curl --data "action=buildend&buildid=%s&buildresult=%s" %s' % (id, success, const.HTTP_METRIC)
-
-        cmd = command.command()
-
-        for line in cmd.command(cmdline):
-            print(line)

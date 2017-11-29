@@ -4,7 +4,7 @@ import os.path
 import sys
 
 from pyant import git, maven
-from pyant.app import const
+from pyant.app import build, const
 from pyant.builtin import os as builtin_os
 
 __all__ = ['update', 'compile', 'package']
@@ -108,8 +108,11 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = Non
 
         return False
 
-def package(name = None, *arg):
-    return True
+def package(version = None, type = None, *arg):
+    if not type:
+        type = 'ems'
+
+    return build.package(None, version, type, expand_filename)
 
 # ----------------------------------------------------------
 
@@ -184,3 +187,8 @@ def environ(lang = None):
 
             if os.path.isdir(path):
                 os.environ['WDM_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
+
+def expand_filename(filename):
+    filename = filename.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
+
+    return (filename, filename)

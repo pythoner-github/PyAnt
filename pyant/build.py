@@ -1,3 +1,4 @@
+import datetime
 import os
 import os.path
 import sys
@@ -88,12 +89,22 @@ def build(argv = None):
 
                         return False
                 elif command == 'package':
-                    return build.package(*arg)
+                    if os.environ.get('VERSION'):
+                        version = os.environ['VERSION']
+                    else:
+                        if arg:
+                            branch = arg[0]
+                        else:
+                            branch = 'master'
+
+                        version = '%s_%s' % (datetime.datetime.now().strftime('%Y%m%d'), branch)
+
+                    return build.package(version, *arg)
                 elif command == 'check':
                     if name == 'bn':
-                        return app_build.check(home, 'U31R22_*', r'error_conf\.xml')
+                        return app_build.check('U31R22_*', r'error_conf\.xml')
                     else:
-                        return app_build.check(home)
+                        return app_build.check()
                 else:
                     return True
         else:
@@ -110,7 +121,7 @@ Usage:
         update          arg: module branch
         compile_base    arg: module cmd
         compile         arg: module cmd clean retry_cmd dirname lang
-        package         arg:
+        package         arg: branch
         check           arg:
         '''
 

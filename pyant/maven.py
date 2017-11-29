@@ -689,7 +689,7 @@ class maven:
 
             for module, path in modules.items():
                 element = xml.etree.ElementTree.Element('{%s}module' % namespace['ns'])
-                element.text = os.path.join('..', path)
+                element.text = '/'.join(('..', path))
                 e.append(element)
 
             tree.write('pom.xml', 'utf-8', default_namespace = namespace['ns'])

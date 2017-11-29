@@ -1,15 +1,19 @@
 import collections
 import datetime
 import glob
+import os
+import os.path
+import shutil
 import xml.etree.ElementTree
+import zipfile
 
 from pyant import command
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ['check', 'metric_start', 'metric_end']
+__all__ = ['check', 'package', 'metric_start', 'metric_end']
 
-def check(home, xpath = None, ignores = None):
+def check(xpath = None, ignores = None):
     if not xpath:
         xpath = '*'
 
@@ -17,56 +21,123 @@ def check(home, xpath = None, ignores = None):
         if not isinstance(ignores, list):
             ignores = [ignores]
 
-    if os.path.isdir(home):
-        map = collections.OrderedDict()
+    map = collections.OrderedDict()
 
-        with builtin_os.chdir(home) as dir:
-            for file in glob.iglob(os.path.join(xpath, '**/*.java'), recursive = True):
-                try:
-                    with open(file, encoding = 'utf8') as f:
-                        for line in f.readlines():
-                            pass
-                except:
-                    if 'java' not in map:
-                        map['java'] = []
+    for file in glob.iglob(os.path.join(xpath, '**/*.java'), recursive = True):
+        try:
+            with open(file, encoding = 'utf8') as f:
+                for line in f.readlines():
+                    pass
+        except:
+            if 'java' not in map:
+                map['java'] = []
 
-                    map['java'].append(file)
+            map['java'].append(file)
 
-            for file in glob.iglob(os.path.join(xpath, '**/*.xml'), recursive = True):
-                try:
-                    xml.etree.ElementTree.parse(file)
-                except:
-                    if ignores:
-                        found = False
+    for file in glob.iglob(os.path.join(xpath, '**/*.xml'), recursive = True):
+        try:
+            xml.etree.ElementTree.parse(file)
+        except:
+            if ignores:
+                found = False
 
-                        for ignore in ignores:
-                            if re.search(ignore, file):
-                                found = True
+                for ignore in ignores:
+                    if re.search(ignore, file):
+                        found = True
 
-                                break
+                        break
 
-                        if found:
-                            continue
+                if found:
+                    continue
 
-                    if 'xml' not in map:
-                        map['xml'] = []
+            if 'xml' not in map:
+                map['xml'] = []
 
-                    map['xml'].append(file)
+            map['xml'].append(file)
 
-        if map:
-            for k, v in map.items():
-                print('encoding errors: %s' % k)
+    if map:
+        for k, v in map.items():
+            print('encoding errors: %s' % k)
 
-                for file in v:
-                    print('  %s' % file)
+            for file in v:
+                print('  %s' % file)
 
-                print()
+            print()
 
-            return False
-        else:
-            return True
+        return False
     else:
         return True
+
+def package(xpath = None, version = None, type = None, expand_filename = None):
+    if not xpath:
+        xpath = '*/installdisk/installdisk.xml'
+
+    if not type:
+        type = '*'
+
+    zipfile_home = os.path.abspath('../zipfile')
+
+    shutil.rmtree(zipfile_home, ignore_errors = True)
+    os.makedirs(zipfile_home, exist_ok = True)
+
+    map = {}
+
+    for file in glob.iglob(xpath, recursive = True):
+        try:
+            tree = xml.etree.ElementTree.parse(file)
+        except:
+            print('error: parse xml file fail: %s' % os.path.abspath(file))
+
+            return False
+
+        for e in tree.findall('/'.join((type, 'packages/package'))):
+            name = e.get('name')
+            dirname = e.get('dirname')
+
+            if name and dirname:
+                dirname = os.path.normpath(os.path.dirname(file), dirname)
+
+                if os.path.isdir(dirname):
+                    if name not in map:
+                        map[name] = []
+
+                    with builtin_os.chdir(dirname) as home_dir:
+                        for element in e.findall('file'):
+                            element_name = element.get('name')
+
+                            if element_name:
+                                if os.path.isfile(element_name):
+                                    map[name].append(os.path.join(home_dir, element_name))
+                                else:
+                                    for filename in glob.iglob(os.path.join(filename, '**/*'), recursive = True):
+                                        map[name].append(os.path.join(home_dir, filename))
+
+                        for element in e.findall('ignore'):
+                            element_name = element.get('name')
+
+                            if element_name:
+                                if os.path.isfile(element_name):
+                                    if os.path.join(home_dir, element_name) in map[name]:
+                                        map[name].remove(os.path.join(home_dir, element_name))
+                                else:
+                                    for filename in glob.iglob(os.path.join(filename, '**/*'), recursive = True):
+                                        if os.path.join(home_dir, filename) in map[name]:
+                                            map[name].remove(os.path.join(home_dir, filename))
+
+    for name, filename_list in map.items():
+        try:
+            with zipfile.ZipFile(os.path.join(zipfile_home, '%s_%s' % (name, version)), 'w') as zip:
+                for filename in filename_list:
+                    arcname = None
+
+                    if expand_filename:
+                        filename, arcname = expand_filename(filename)
+
+                    zip.write(filename, arcname)
+        except:
+            return False
+
+    return True
 
 def metric_start(name, module_name = None, night = True):
     cmdline = None

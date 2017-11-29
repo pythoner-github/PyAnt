@@ -370,7 +370,7 @@ class maven:
                         if os.path.isfile(os.path.join('src/test/java', filename)):
                             file = os.path.abspath(os.path.join('src/test/java', filename))
                         else:
-                            for name in glob.glob(os.path.join('**', filename), recursive = True):
+                            for name in glob.iglob(os.path.join('**', filename), recursive = True):
                                 file = os.path.abspath(name)
 
                                 if name.startswith('src/'):

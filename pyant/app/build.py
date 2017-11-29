@@ -1,6 +1,7 @@
 import collections
 import datetime
 import glob
+import xml.etree.ElementTree
 
 from pyant import command
 from pyant.app import const
@@ -20,7 +21,7 @@ def check(home, xpath = None, ignores = None):
         map = collections.OrderedDict()
 
         with builtin_os.chdir(home) as dir:
-            for file in glob.glob(os.path.join(xpath, '**/*.java'), recursive = True):
+            for file in glob.iglob(os.path.join(xpath, '**/*.java'), recursive = True):
                 try:
                     with open(file, encoding = 'utf8') as f:
                         for line in f.readlines():
@@ -31,7 +32,7 @@ def check(home, xpath = None, ignores = None):
 
                     map['java'].append(file)
 
-            for file in glob.glob(os.path.join(xpath, '**/*.xml'), recursive = True):
+            for file in glob.iglob(os.path.join(xpath, '**/*.xml'), recursive = True):
                 try:
                     xml.etree.ElementTree.parse(file)
                 except:

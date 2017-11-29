@@ -206,10 +206,8 @@ def log(path = None, arg = None):
 
                         if tmp_m:
                             with builtin_os.chdir(git_home) as git_dir:
-                                names = glob.glob(os.path.join('**', tmp_m.string[tmp_m.end():]))
-
-                                if names:
-                                    name = names[0]
+                                for file in glob.iglob(os.path.join('**', tmp_m.string[tmp_m.end():]), recursive = True):
+                                    name = file
 
                         if m.group(2):
                             if '+' in m.group(2) and '-' in m.group(2):

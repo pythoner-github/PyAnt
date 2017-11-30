@@ -35,6 +35,19 @@ def check(xpath = None, ignores = None):
             map['java'].append(file)
 
     for file in glob.iglob(os.path.join(xpath, '**/*.xml'), recursive = True):
+        found = False
+
+        unix_file = file.replace('\\', '/')
+
+        for name in ('/target/', '/output/'):
+            if name in unix_file:
+                found = True
+
+                break
+
+        if found:
+            continue
+
         try:
             xml.etree.ElementTree.parse(file)
         except:

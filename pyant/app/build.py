@@ -68,6 +68,35 @@ def check(xpath = None, ignores = None):
     else:
         return True
 
+# installdisk.xml
+#
+#    <install>
+#      <type>
+#        <packages>
+#          <package name = '...' dirname = '...'>
+#            <file name='...'/>
+#            <ignore name='...'/>
+#          </package>
+#
+#          <package name = '...' dirname = '...'>
+#            <file name='...'/>
+#            <ignore name='...'/>
+#          </package>
+#        </packages>
+#
+#        <copies>
+#          <copy name = '...' dirname = '...'>
+#            <file name='...'/>
+#            <ignore name='...'/>
+#          </copy>
+#
+#          <copy name = '...' dirname = '...'>
+#            <file name='...'/>
+#            <ignore name='...'/>
+#          </copy>
+#        </copies>
+#      </type>
+#    </install>
 def package(xpath = None, version = None, type = None, expand_filename = None):
     if not xpath:
         xpath = '*/installdisk/installdisk.xml'
@@ -80,7 +109,8 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
     shutil.rmtree(zipfile_home, ignore_errors = True)
     os.makedirs(zipfile_home, exist_ok = True)
 
-    map = {}
+    packages = {}
+    copies = {}
 
     for file in glob.iglob(xpath, recursive = True):
         try:
@@ -98,43 +128,115 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                 dirname = os.path.normpath(os.path.dirname(file), dirname)
 
                 if os.path.isdir(dirname):
-                    if name not in map:
-                        map[name] = []
+                    if name not in packages:
+                        packages[name] = collections.OrderedDict()
 
                     with builtin_os.chdir(dirname) as home_dir:
                         for element in e.findall('file'):
                             element_name = element.get('name')
 
                             if element_name:
+                                if home_dir not in packages[name]:
+                                    packages[name][home_dir] = []
+
                                 if os.path.isfile(element_name):
-                                    map[name].append(os.path.join(home_dir, element_name))
+                                    packages[name][home_dir].append(element_name)
                                 else:
-                                    for filename in glob.iglob(os.path.join(filename, '**/*'), recursive = True):
-                                        map[name].append(os.path.join(home_dir, filename))
+                                    for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
+                                        packages[name][home_dir].append(filename)
 
                         for element in e.findall('ignore'):
                             element_name = element.get('name')
 
                             if element_name:
+                                if home_dir in packages[name]:
+                                    if os.path.isfile(element_name):
+                                        if element_name in packages[name][home_dir]:
+                                            packages[name][home_dir].remove(element_name)
+                                    else:
+                                        for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
+                                            if filename in packages[name][home_dir]:
+                                                packages[name][home_dir].remove(filename)
+
+        for e in tree.findall('/'.join((type, 'copies/copy'))):
+            name = e.get('name')
+            dirname = e.get('dirname')
+
+            if name and dirname:
+                dirname = os.path.normpath(os.path.dirname(file), dirname)
+
+                if os.path.isdir(dirname):
+                    if name not in copies:
+                        copies[name] = collections.OrderedDict()
+
+                    with builtin_os.chdir(dirname) as home_dir:
+                        for element in e.findall('file'):
+                            element_name = element.get('name')
+
+                            if element_name:
+                                if home_dir not in copies[name]:
+                                    copies[name][home_dir] = []
+
                                 if os.path.isfile(element_name):
-                                    if os.path.join(home_dir, element_name) in map[name]:
-                                        map[name].remove(os.path.join(home_dir, element_name))
+                                    copies[name][home_dir].append(element_name)
                                 else:
-                                    for filename in glob.iglob(os.path.join(filename, '**/*'), recursive = True):
-                                        if os.path.join(home_dir, filename) in map[name]:
-                                            map[name].remove(os.path.join(home_dir, filename))
+                                    for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
+                                        copies[name][home_dir].append(filename)
 
-    for name, filename_list in map.items():
+                        for element in e.findall('ignore'):
+                            element_name = element.get('name')
+
+                            if element_name:
+                                if home_dir in copies[name]:
+                                    if os.path.isfile(element_name):
+                                        if element_name in copies[name][home_dir]:
+                                            copies[name][home_dir].remove(element_name)
+                                    else:
+                                        for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
+                                            if filename in copies[name][home_dir]:
+                                                copies[name][home_dir].remove(filename)
+
+    for name, dirname_list in packages.items():
         try:
-            with zipfile.ZipFile(os.path.join(zipfile_home, '%s_%s' % (name, version)), 'w') as zip:
+            with zipfile.ZipFile(os.path.join(zipfile_home, '%s_%s.zip' % (name, version)), 'w') as zip:
+                print('$ zipfile: %s' % zip.filename)
+                print('  (' + os.getcwd() + ')')
+
+                for dirname, filename_list in dirname_list.items():
+                    for filename in filename_list:
+                        arcname = None
+
+                        if expand_filename:
+                            filename, arcname = expand_filename(dirname, filename)
+
+                        zip.write(os.path.join(dirname, filename), arcname)
+        except Exception as e:
+            print(e)
+
+            return False
+
+    for name, filename_list in copies.items():
+        try:
+            print('$ copy: %s' % name)
+            print('  (' + os.getcwd() + ')')
+
+            for dirname, filename_list in dirname_list.items():
                 for filename in filename_list:
-                    arcname = None
+                    if os.path.isfile(os.path.join(dirname, filename)):
+                        dst = filename
 
-                    if expand_filename:
-                        filename, arcname = expand_filename(filename)
+                        if expand_filename:
+                            filename, dst = expand_filename(dirname, filename)
 
-                    zip.write(filename, arcname)
-        except:
+                        dst = os.path.join(zipfile_home, name, dst)
+
+                        if not os.path.isdir(dst):
+                            os.makedirs(dst, exist_ok = True)
+
+                        shutil.copyfile(os.path.join(dirname, filename), dst)
+        except Exception as e:
+            print(e)
+
             return False
 
     return True

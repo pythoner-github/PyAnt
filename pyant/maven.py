@@ -133,7 +133,7 @@ class maven:
             if re.search(r'^\[INFO\]\s+-+$', line):
                 return False
             elif re.search(r'^\[INFO\]\s+Building\s+', line):
-                if re.search(r'^\[INFO\]\s+Building\s+(jar|war)\s*:', line):
+                if re.search(r'^\[INFO\]\s+Building\s+(jar|war|zip)\s*:', line):
                     return True
                 else:
                     return False

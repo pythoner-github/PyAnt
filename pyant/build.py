@@ -102,7 +102,7 @@ def build(argv = None):
                     return build.package(version, *arg)
                 elif command == 'check':
                     if name == 'bn':
-                        return app_build.check('U31R22_*', r'error_conf\.xml')
+                        return app_build.check('U31R22_*', r'error_conf\.xml', True)
                     else:
                         return app_build.check()
                 else:

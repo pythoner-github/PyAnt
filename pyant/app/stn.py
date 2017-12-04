@@ -13,7 +13,6 @@ REPOS = collections.OrderedDict([
   ('sdn_framework'    , os.path.join(const.SSH_GIT, 'stn/sdn_framework')),
   ('sdn_application'  , os.path.join(const.SSH_GIT, 'stn/sdn_application')),
   ('sdn_tunnel'       , os.path.join(const.SSH_GIT, 'stn/sdn_tunnel')),
-  ('sdn_installation' , os.path.join(const.SSH_GIT, 'stn/sdn_installation')),
   ('CTR-ICT'          , os.path.join(const.SSH_GIT, 'stn/CTR-ICT')),
   ('SPTN-E2E'         , os.path.join(const.SSH_GIT, 'stn/SPTN-E2E'))
 ])

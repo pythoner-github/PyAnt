@@ -14,7 +14,7 @@ from pyant.builtin import os as builtin_os
 
 __all__ = ['check', 'package', 'metric_start', 'metric_end']
 
-def check(xpath = None, ignores = None):
+def check(xpath = None, ignores = None, gb2312 = False):
     if not xpath:
         xpath = '*'
 
@@ -63,6 +63,26 @@ def check(xpath = None, ignores = None):
 
                 if found:
                     continue
+            else:
+                if gb2312:
+                    try:
+                        string = None
+
+                        with open(file, encoding = 'gb2312') as f:
+                            string = f.read()
+
+                        if string:
+                            m = re.search(r'encoding\s*=\s*(\'|")([\w-]+)(\'|")', string.strip().splitlines()[0])
+
+                            if m:
+                                encoding = m.group(2).strip().lower()
+
+                                if encoding == 'gb2312':
+                                    xml.etree.ElementTree.parseString(string)
+
+                                    continue
+                    except:
+                        pass
 
             if 'xml' not in map:
                 map['xml'] = []

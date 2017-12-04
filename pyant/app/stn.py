@@ -2,7 +2,7 @@ import collections
 import os.path
 
 from pyant import git, maven
-from pyant.app import const
+from pyant.app import build, const
 from pyant.builtin import os as builtin_os
 
 __all__ = ['update', 'compile', 'package']

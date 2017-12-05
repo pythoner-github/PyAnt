@@ -91,4 +91,4 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
         return False
 
 def package(version = None, *arg):
-    return build.package(None, version)
+    return build.package(None, version, 'stn')

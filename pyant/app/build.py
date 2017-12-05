@@ -159,7 +159,7 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
             dirname = e.get('dirname')
 
             if name and dirname:
-                dirname = os.path.normpath(os.path.dirname(file), dirname)
+                dirname = os.path.relpath(dirname, os.path.dirname(file))
 
                 if os.path.isdir(dirname):
                     if name not in packages:

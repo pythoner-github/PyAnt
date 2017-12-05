@@ -13,8 +13,8 @@ REPOS = collections.OrderedDict([
   ('sdn_framework'    , os.path.join(const.SSH_GIT, 'stn/sdn_framework')),
   ('sdn_application'  , os.path.join(const.SSH_GIT, 'stn/sdn_application')),
   ('sdn_tunnel'       , os.path.join(const.SSH_GIT, 'stn/sdn_tunnel')),
-  ('CTR-ICT'          , os.path.join(const.SSH_GIT, 'stn/CTR-ICT')),
-  ('SPTN-E2E'         , os.path.join(const.SSH_GIT, 'stn/SPTN-E2E'))
+  ('SPTN-E2E'         , os.path.join(const.SSH_GIT, 'stn/SPTN-E2E')),
+  ('CTR-ICT'          , os.path.join(const.SSH_GIT, 'stn/CTR-ICT'))
 ])
 
 def update(name = None, branch = None, *arg):

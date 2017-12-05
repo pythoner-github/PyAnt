@@ -107,24 +107,24 @@ def check(xpath = None, ignores = None, gb2312 = False):
 #    <install>
 #      <type>
 #        <packages>
-#          <package name = '...' dirname = '...'>
+#          <package name = '...' dirname = '...' dest = '...'>
 #            <file name='...'/>
 #            <ignore name='...'/>
 #          </package>
 #
-#          <package name = '...' dirname = '...'>
+#          <package name = '...' dirname = '...' dest = '...'>
 #            <file name='...'/>
 #            <ignore name='...'/>
 #          </package>
 #        </packages>
 #
 #        <copies>
-#          <copy name = '...' dirname = '...'>
+#          <copy name = '...' dirname = '...' dest = '...'>
 #            <file name='...'/>
 #            <ignore name='...'/>
 #          </copy>
 #
-#          <copy name = '...' dirname = '...'>
+#          <copy name = '...' dirname = '...' dest = '...'>
 #            <file name='...'/>
 #            <ignore name='...'/>
 #          </copy>
@@ -157,9 +157,15 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
         for e in tree.findall('/'.join((type, 'packages/package'))):
             name = e.get('name')
             dirname = e.get('dirname')
+            dest = e.get('dest')
+
+            if dest in (None, '.'):
+                dest = ''
 
             if name and dirname:
-                dirname = os.path.relpath(dirname, os.path.dirname(file))
+                name = name.strip()
+                dirname = os.path.relpath(dirname.strip(), os.path.dirname(file))
+                dest = dest.strip()
 
                 if os.path.isdir(dirname):
                     if name not in packages:
@@ -170,34 +176,51 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                             element_name = element.get('name')
 
                             if element_name:
+                                element_name = element_name.strip()
+
                                 if home_dir not in packages[name]:
                                     packages[name][home_dir] = []
 
                                 if os.path.isfile(element_name):
-                                    packages[name][home_dir].append(element_name)
-                                else:
+                                    packages[name][home_dir].append(os.path.join(dest, element_name))
+                                elif os.path.isdir(element_name):
                                     for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                        packages[name][home_dir].append(filename)
+                                        packages[name][home_dir].append(os.path.join(dest, filename))
+                                else:
+                                    for filename in glob.iglob(element_name, recursive = True):
+                                        packages[name][home_dir].append(os.path.join(dest, filename))
 
                         for element in e.findall('ignore'):
                             element_name = element.get('name')
 
                             if element_name:
+                                element_name = element_name.strip()
+
                                 if home_dir in packages[name]:
                                     if os.path.isfile(element_name):
-                                        if element_name in packages[name][home_dir]:
-                                            packages[name][home_dir].remove(element_name)
-                                    else:
+                                        if os.path.join(dest, element_name) in packages[name][home_dir]:
+                                            packages[name][home_dir].remove(os.path.join(dest, element_name))
+                                    elif os.path.isdir(element_name):
                                         for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                            if filename in packages[name][home_dir]:
-                                                packages[name][home_dir].remove(filename)
+                                            if os.path.join(dest, filename) in packages[name][home_dir]:
+                                                packages[name][home_dir].remove(os.path.join(dest, filename))
+                                    else:
+                                        for filename in glob.iglob(element_name, recursive = True):
+                                            if os.path.join(dest, filename) in packages[name][home_dir]:
+                                                packages[name][home_dir].remove(os.path.join(dest, filename))
 
         for e in tree.findall('/'.join((type, 'copies/copy'))):
             name = e.get('name')
             dirname = e.get('dirname')
+            dest = e.get('dest')
+
+            if dest in (None, '.'):
+                dest = ''
 
             if name and dirname:
-                dirname = os.path.normpath(os.path.dirname(file), dirname)
+                name = name.strip()
+                dirname = os.path.relpath(dirname.strip(), os.path.dirname(file))
+                dest = dest.strip()
 
                 if os.path.isdir(dirname):
                     if name not in copies:
@@ -208,27 +231,38 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                             element_name = element.get('name')
 
                             if element_name:
+                                element_name = element_name.strip()
+
                                 if home_dir not in copies[name]:
                                     copies[name][home_dir] = []
 
                                 if os.path.isfile(element_name):
-                                    copies[name][home_dir].append(element_name)
-                                else:
+                                    copies[name][home_dir].append(os.path.join(dest, element_name))
+                                elif os.path.isdir(element_name):
                                     for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                        copies[name][home_dir].append(filename)
+                                        copies[name][home_dir].append(os.path.join(dest, filename))
+                                else:
+                                    for filename in glob.iglob(element_name, recursive = True):
+                                        copies[name][home_dir].append(os.path.join(dest, filename))
 
                         for element in e.findall('ignore'):
                             element_name = element.get('name')
 
                             if element_name:
+                                element_name = element_name.strip()
+
                                 if home_dir in copies[name]:
                                     if os.path.isfile(element_name):
-                                        if element_name in copies[name][home_dir]:
-                                            copies[name][home_dir].remove(element_name)
-                                    else:
+                                        if os.path.join(dest, element_name) in copies[name][home_dir]:
+                                            copies[name][home_dir].remove(os.path.join(dest, element_name))
+                                    elif os.path.isdir(element_name):
                                         for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                            if filename in copies[name][home_dir]:
-                                                copies[name][home_dir].remove(filename)
+                                            if os.path.join(dest, filename) in copies[name][home_dir]:
+                                                copies[name][home_dir].remove(os.path.join(dest, filename))
+                                    else:
+                                        for filename in glob.iglob(element_name, recursive = True):
+                                            if os.path.join(dest, filename) in copies[name][home_dir]:
+                                                copies[name][home_dir].remove(os.path.join(dest, filename))
 
     for name, dirname_list in packages.items():
         try:

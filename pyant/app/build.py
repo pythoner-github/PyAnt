@@ -297,7 +297,7 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                             arcname = None
 
                             if expand_filename:
-                                filename, arcname = expand_filename(dirname, filename)
+                                filename, arcname = expand_filename(version, dirname, filename)
 
                             zip.write(os.path.join(dirname, filename), os.path.join(dest, arcname))
         except Exception as e:
@@ -317,7 +317,7 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                             dst = filename
 
                             if expand_filename:
-                                filename, dst = expand_filename(dirname, filename)
+                                filename, dst = expand_filename(version, dirname, filename)
 
                             dst = os.path.join(zipfile_home, name, dest, dst)
 

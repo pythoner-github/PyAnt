@@ -188,7 +188,7 @@ def environ(lang = None):
             if os.path.isdir(path):
                 os.environ['WDM_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
-def expand_filename(dirname, filename):
+def expand_filename(version, dirname, filename):
     dst = filename.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
 
     return (filename, dst)

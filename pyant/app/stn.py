@@ -96,31 +96,11 @@ def package(version = None, *arg):
 
 # ----------------------------------------------------------
 
-def expand_filename(dirname, filename):
+def expand_filename(version, dirname, filename):
     dst = filename
     name = os.path.join(dirname, filename)
 
-    if os.path.basename(name) == 'stn-features.xml':
-        try:
-            xmlns = 'http://karaf.apache.org/xmlns/features/v1.2.0'
-            xml.etree.ElementTree.register_namespace('', xmlns)
-
-            namespace = {
-                'ns': xmlns
-            }
-
-            tree = xml.etree.ElementTree.parse(name)
-
-            for e in tree.findall('ns:feature', namespace):
-                if e.get('name').replace('-', '_') == os.path.basename(os.path.dirname(name)):
-                    e.set('install', 'auto')
-
-                    break
-
-            tree.write(name, encoding='utf-8', xml_declaration= True)
-        except:
-            pass
-    elif os.path.basename(name) == 'sptnconf.properties':
+    if os.path.basename(name) == 'sptnconf.properties':
         if os.path.basename(os.path.dirname(name)).endswith('_anode'):
             nodetype = '1'
         elif os.path.basename(os.path.dirname(name)).endswith('_cnode'):
@@ -151,6 +131,18 @@ def expand_filename(dirname, filename):
         if lines:
             with open(name, 'w', encoding = encoding) as f:
                 f.write('\n'.join(lines).strip())
+    elif os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml'):
+        if version:
+            try:
+                tree = xml.etree.ElementTree.parse(name)
+
+                for e in tree.findall('info'):
+                    e.set('version', version)
+                    e.set('display-version', version)
+
+                tree.write(name, encoding='utf-8', xml_declaration= True)
+            except:
+                pass
     else:
         pass
 

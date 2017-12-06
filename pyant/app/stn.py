@@ -1,5 +1,6 @@
 import collections
 import os.path
+import re
 import xml.etree.ElementTree
 
 from pyant import git, maven

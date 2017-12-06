@@ -179,16 +179,21 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                                 element_name = element_name.strip()
 
                                 if dirname not in packages[name]:
-                                    packages[name][dirname] = []
+                                    packages[name][dirname] = collections.OrderedDict()
+
+                                if dest not in packages[name][dirname]:
+                                    packages[name][dirname][dest] = []
 
                                 if os.path.isfile(element_name):
-                                    packages[name][dirname].append(os.path.join(dest, element_name))
+                                    packages[name][dirname][dest].append(element_name)
                                 elif os.path.isdir(element_name):
                                     for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                        packages[name][dirname].append(os.path.join(dest, filename))
+                                        if os.path.isfile(filename):
+                                            packages[name][dirname][dest].append(filename)
                                 else:
                                     for filename in glob.iglob(element_name, recursive = True):
-                                        packages[name][dirname].append(os.path.join(dest, filename))
+                                        if os.path.isfile(filename):
+                                            packages[name][dirname][dest].append(filename)
 
                         for element in e.findall('ignore'):
                             element_name = element.get('name')
@@ -197,17 +202,20 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                                 element_name = element_name.strip()
 
                                 if dirname in packages[name]:
-                                    if os.path.isfile(element_name):
-                                        if os.path.join(dest, element_name) in packages[name][dirname]:
-                                            packages[name][dirname].remove(os.path.join(dest, element_name))
-                                    elif os.path.isdir(element_name):
-                                        for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                            if os.path.join(dest, filename) in packages[name][dirname]:
-                                                packages[name][dirname].remove(os.path.join(dest, filename))
-                                    else:
-                                        for filename in glob.iglob(element_name, recursive = True):
-                                            if os.path.join(dest, filename) in packages[name][dirname]:
-                                                packages[name][dirname].remove(os.path.join(dest, filename))
+                                    if dest in packages[name][dirname]:
+                                        if os.path.isfile(element_name):
+                                            if element_name in packages[name][dirname][dest]:
+                                                packages[name][dirname][dest].remove(element_name)
+                                        elif os.path.isdir(element_name):
+                                            for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
+                                                if os.path.isfile(filename):
+                                                    if filename in packages[name][dirname]:
+                                                        packages[name][dirname][dest].remove(filename)
+                                        else:
+                                            for filename in glob.iglob(element_name, recursive = True):
+                                                if os.path.isfile(filename):
+                                                    if filename in packages[name][dirname]:
+                                                        packages[name][dirname][dest].remove(filename)
 
         for e in tree.findall('/'.join((type, 'copies/copy'))):
             name = e.get('name')
@@ -234,16 +242,21 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                                 element_name = element_name.strip()
 
                                 if dirname not in copies[name]:
-                                    copies[name][dirname] = []
+                                    copies[name][dirname] = collections.OrderedDict()
+
+                                if dest not in copies[name][dirname]:
+                                    copies[name][dirname][dest] = []
 
                                 if os.path.isfile(element_name):
-                                    copies[name][dirname].append(os.path.join(dest, element_name))
+                                    copies[name][dirname][dest].append(element_name)
                                 elif os.path.isdir(element_name):
                                     for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                        copies[name][dirname].append(os.path.join(dest, filename))
+                                        if os.path.isfile(filename):
+                                            copies[name][dirname][dest].append(filename)
                                 else:
                                     for filename in glob.iglob(element_name, recursive = True):
-                                        copies[name][dirname].append(os.path.join(dest, filename))
+                                        if os.path.isfile(filename):
+                                            copies[name][dirname][dest].append(filename)
 
                         for element in e.findall('ignore'):
                             element_name = element.get('name')
@@ -252,19 +265,22 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                                 element_name = element_name.strip()
 
                                 if dirname in copies[name]:
-                                    if os.path.isfile(element_name):
-                                        if os.path.join(dest, element_name) in copies[name][dirname]:
-                                            copies[name][dirname].remove(os.path.join(dest, element_name))
-                                    elif os.path.isdir(element_name):
-                                        for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                            if os.path.join(dest, filename) in copies[name][dirname]:
-                                                copies[name][dirname].remove(os.path.join(dest, filename))
-                                    else:
-                                        for filename in glob.iglob(element_name, recursive = True):
-                                            if os.path.join(dest, filename) in copies[name][dirname]:
-                                                copies[name][dirname].remove(os.path.join(dest, filename))
+                                    if dest in copies[name][dirname]:
+                                        if os.path.isfile(element_name):
+                                            if element_name in copies[name][dirname][dest]:
+                                                copies[name][dirname][dest].remove(element_name)
+                                        elif os.path.isdir(element_name):
+                                            for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
+                                                if os.path.isfile(filename):
+                                                    if filename in copies[name][dirname]:
+                                                        copies[name][dirname][dest].remove(filename)
+                                        else:
+                                            for filename in glob.iglob(element_name, recursive = True):
+                                                if os.path.isfile(filename):
+                                                    if filename in copies[name][dirname]:
+                                                        copies[name][dirname][dest].remove(filename)
 
-    for name, dirname_list in packages.items():
+    for name, dirname_info in packages.items():
         try:
             zipname = os.path.join(zipfile_home, '%s_%s.zip' % (name, version))
 
@@ -275,38 +291,40 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
                 print('$ zipfile: %s' % zip.filename)
                 print('  (' + os.getcwd() + ')')
 
-                for dirname, filename_list in dirname_list.items():
-                    for filename in filename_list:
-                        arcname = None
+                for dirname, dest_info in dirname_info.items():
+                    for dest, filename_list in dest_info.items():
+                        for filename in filename_list:
+                            arcname = None
 
-                        if expand_filename:
-                            filename, arcname = expand_filename(dirname, filename)
+                            if expand_filename:
+                                filename, arcname = expand_filename(dirname, filename)
 
-                        zip.write(os.path.join(dirname, filename), arcname)
+                            zip.write(os.path.join(dirname, filename), os.path.join(dest, arcname))
         except Exception as e:
             print(e)
 
             return False
 
-    for name, filename_list in copies.items():
+    for name, dirname_info in copies.items():
         try:
             print('$ copy: %s' % name)
             print('  (' + os.getcwd() + ')')
 
-            for dirname, filename_list in dirname_list.items():
-                for filename in filename_list:
-                    if os.path.isfile(os.path.join(dirname, filename)):
-                        dst = filename
+            for dirname, dest_info in dirname_info.items():
+                for dest, filename_list in dest_info.items():
+                    for filename in filename_list:
+                        if os.path.isfile(os.path.join(dirname, filename)):
+                            dst = filename
 
-                        if expand_filename:
-                            filename, dst = expand_filename(dirname, filename)
+                            if expand_filename:
+                                filename, dst = expand_filename(dirname, filename)
 
-                        dst = os.path.join(zipfile_home, name, dst)
+                            dst = os.path.join(zipfile_home, name, dest, dst)
 
-                        if not os.path.isdir(os.path.dirname(dst)):
-                            os.makedirs(os.path.dirname(dst), exist_ok = True)
+                            if not os.path.isdir(os.path.dirname(dst)):
+                                os.makedirs(os.path.dirname(dst), exist_ok = True)
 
-                        shutil.copyfile(os.path.join(dirname, filename), dst)
+                            shutil.copyfile(os.path.join(dirname, filename), dst)
         except Exception as e:
             print(e)
 

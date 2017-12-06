@@ -108,12 +108,11 @@ def expand_filename(version, dirname, filename):
         else:
             nodetype = '3'
 
-        lines = []
-        encoding = None
-
-        for enc in ('utf8', 'cp936'):
+        for encoding in ('utf8', 'cp936'):
             try:
-                with open(name, encoding = enc) as f:
+                lines = []
+
+                with open(name, encoding = encoding) as f:
                     for line in f.readlines():
                         line = line.rstrip()
 
@@ -122,15 +121,12 @@ def expand_filename(version, dirname, filename):
 
                         lines.append(line)
 
-                encoding = enc
+                with open(name, 'w', encoding = encoding) as f:
+                    f.write('\n'.join(lines).strip())
 
                 break
             except:
                 pass
-
-        if lines:
-            with open(name, 'w', encoding = encoding) as f:
-                f.write('\n'.join(lines).strip())
     elif os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml'):
         if version:
             try:

@@ -97,7 +97,7 @@ def build(argv = None):
                         else:
                             branch = 'master'
 
-                        version = '%s_%s' % (datetime.datetime.now().strftime('%Y%m%d'), branch)
+                        version = '%s_%s' % (branch, datetime.datetime.now().strftime('%Y%m%d'))
 
                     return build.package(version, *arg)
                 elif command == 'check':

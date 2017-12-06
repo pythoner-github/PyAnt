@@ -1,5 +1,6 @@
 import collections
 import os.path
+import xml.etree.ElementTree
 
 from pyant import git, maven
 from pyant.app import build, const
@@ -91,4 +92,66 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
         return False
 
 def package(version = None, *arg):
-    return build.package(None, version, 'stn')
+    return build.package(None, version, 'stn', expand_filename)
+
+# ----------------------------------------------------------
+
+def expand_filename(dirname, filename):
+    dst = filename
+    name = os.path.join(dirname, filename)
+
+    if os.path.basename(name) == 'stn-features.xml':
+        try:
+            xmlns = 'http://karaf.apache.org/xmlns/features/v1.2.0'
+            xml.etree.ElementTree.register_namespace('', xmlns)
+
+            namespace = {
+                'ns': xmlns
+            }
+
+            tree = xml.etree.ElementTree.parse(name)
+
+            for e in tree.findall('ns:feature', namespace):
+                if e.get('name').replace('-', '_') == os.path.basename(os.path.dirname(name)):
+                    e.set('install', 'auto')
+
+                    break
+
+            tree.write(name, encoding='utf-8', xml_declaration= True)
+        except:
+            pass
+    elif os.path.basename(name) == 'sptnconf.properties':
+        if os.path.basename(os.path.dirname(name)).endswith('_anode'):
+            nodetype = '1'
+        elif os.path.basename(os.path.dirname(name)).endswith('_cnode'):
+            nodetype = '2'
+        else:
+            nodetype = '3'
+
+        lines = []
+        encoding = None
+
+        for enc in ('utf8', 'cp936'):
+            try:
+                with open(name, encoding = enc) as f:
+                    for line in f.readlines():
+                        line = line.rstrip()
+
+                        if re.search(r'^sptn\.nodetype\s*=', line):
+                            line = 'sptn.nodetype=%s' % nodetype
+
+                        lines.append(line)
+
+                encoding = enc
+
+                break
+            except:
+                pass
+
+        if lines:
+            with open(name, 'w', encoding = encoding) as f:
+                f.write('\n'.join(lines).strip())
+    else:
+        pass
+
+    return (filename, dst)

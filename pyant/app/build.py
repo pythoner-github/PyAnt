@@ -164,7 +164,7 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
 
             if name and dirname:
                 name = name.strip()
-                dirname = os.path.relpath(dirname.strip(), os.path.dirname(file))
+                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
                 dest = dest.strip()
 
                 if os.path.isdir(dirname):
@@ -219,7 +219,7 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
 
             if name and dirname:
                 name = name.strip()
-                dirname = os.path.relpath(dirname.strip(), os.path.dirname(file))
+                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
                 dest = dest.strip()
 
                 if os.path.isdir(dirname):
@@ -266,7 +266,12 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
 
     for name, dirname_list in packages.items():
         try:
-            with zipfile.ZipFile(os.path.join(zipfile_home, '%s_%s.zip' % (name, version)), 'w') as zip:
+            zipname = os.path.join(zipfile_home, '%s_%s.zip' % (name, version))
+
+            if not os.path.isdir(os.path.dirname(zipname)):
+                os.makedirs(os.path.dirname(zipname), exist_ok = True)
+
+            with zipfile.ZipFile(zipname, 'w') as zip:
                 print('$ zipfile: %s' % zip.filename)
                 print('  (' + os.getcwd() + ')')
 
@@ -298,8 +303,8 @@ def package(xpath = None, version = None, type = None, expand_filename = None):
 
                         dst = os.path.join(zipfile_home, name, dst)
 
-                        if not os.path.isdir(dst):
-                            os.makedirs(dst, exist_ok = True)
+                        if not os.path.isdir(os.path.dirname(dst)):
+                            os.makedirs(os.path.dirname(dst), exist_ok = True)
 
                         shutil.copyfile(os.path.join(dirname, filename), dst)
         except Exception as e:

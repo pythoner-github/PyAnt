@@ -573,12 +573,14 @@ class maven:
         elif os.path.isdir(path):
             if os.path.isfile(os.path.join(path, 'pom.xml')):
                 try:
-                    tree = xml.etree.ElementTree.parse(os.path.join(path, 'pom.xml'))
+                    xmlns = 'http://maven.apache.org/POM/4.0.0'
+                    xml.etree.ElementTree.register_namespace('', xmlns)
 
                     namespace = {
-                        'ns': 'http://maven.apache.org/POM/4.0.0'
+                        'ns': xmlns
                     }
 
+                    tree = xml.etree.ElementTree.parse(os.path.join(path, 'pom.xml'))
                     e = tree.find('ns:artifactId', namespace)
 
                     if e is not None:
@@ -612,12 +614,14 @@ class maven:
         if os.path.isfile(os.path.join(dirname, 'pom.xml')):
             with builtin_os.chdir(dirname) as dir:
                 try:
-                    tree = xml.etree.ElementTree.parse('pom.xml')
+                    xmlns = 'http://maven.apache.org/POM/4.0.0'
+                    xml.etree.ElementTree.register_namespace('', xmlns)
 
                     namespace = {
-                        'ns': 'http://maven.apache.org/POM/4.0.0'
+                        'ns': xmlns
                     }
 
+                    tree = xml.etree.ElementTree.parse('pom.xml')
                     e = tree.find('ns:artifactId', namespace)
 
                     if e is not None:
@@ -669,11 +673,14 @@ class maven:
 
     def retry_pom(self, modules, template):
         try:
-            tree = xml.etree.ElementTree.parse(template)
+            xmlns = 'http://maven.apache.org/POM/4.0.0'
+            xml.etree.ElementTree.register_namespace('', xmlns)
 
             namespace = {
-                'ns': 'http://maven.apache.org/POM/4.0.0'
+                'ns': xmlns
             }
+
+            tree = xml.etree.ElementTree.parse(template)
 
             for e in tree.findall('ns:artifactId', namespace):
                 e.text = '%s-tmp' % e.text.strip()
@@ -692,7 +699,7 @@ class maven:
                 element.text = '/'.join(('..', path))
                 e.append(element)
 
-            tree.write('pom.xml', 'utf-8', default_namespace = namespace['ns'])
+            tree.write('pom.xml', encoding = 'utf-8', xml_declaration= True)
         except:
             pass
 

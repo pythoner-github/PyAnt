@@ -26,10 +26,10 @@ def compile_base(name = None, cmd = None):
         path = os.path.basename(REPOS)
 
     if os.path.isdir(path):
-        with builtin_os.chdir(path) as dir:
+        with builtin_os.chdir(path) as chdir:
             for home in ('devops/parent/version', 'devops/parent/build'):
                 if os.path.isdir(home):
-                    with builtin_os.chdir(home) as dir:
+                    with builtin_os.chdir(home) as chdir:
                         mvn = maven.maven()
 
                         if not mvn.compile(cmd):
@@ -59,7 +59,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
         path = os.path.join(os.path.basename(REPOS), dirname)
 
     if os.path.isdir(path):
-        with builtin_os.chdir(path) as dir:
+        with builtin_os.chdir(path) as chdir:
             mvn = maven.maven()
 
             if clean:

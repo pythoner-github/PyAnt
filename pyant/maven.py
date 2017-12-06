@@ -316,7 +316,7 @@ class maven:
 
         if m:
             if self.module_home and os.path.isdir(self.module_home):
-                with builtin_os.chdir(self.module_home) as dir:
+                with builtin_os.chdir(self.module_home) as chdir:
                     file = os.path.abspath(m.group(1))
                     lineno = int(m.group(2))
                     message = [line]
@@ -362,7 +362,7 @@ class maven:
 
         if m:
             if self.module_home and os.path.isdir(self.module_home):
-                with builtin_os.chdir(self.module_home) as dir:
+                with builtin_os.chdir(self.module_home) as chdir:
                     if int(m.group(2)) > 0 or int(m.group(3)):
                         filename = '%s.java' % m.string[m.end():].replace('.', '/')
                         file = None
@@ -447,7 +447,7 @@ class maven:
 
         if m:
             if self.module_home and os.path.isdir(self.module_home):
-                with builtin_os.chdir(self.module_home) as dir:
+                with builtin_os.chdir(self.module_home) as chdir:
                     file = m.string[:m.start()].strip()
                     lineno = int(m.group(1))
                     message = [line]
@@ -495,7 +495,7 @@ class maven:
                 osname = None
 
             if self.module_home and os.path.isdir(self.module_home):
-                with builtin_os.chdir(self.module_home) as dir:
+                with builtin_os.chdir(self.module_home) as chdir:
                     file = os.getcwd()
                     lineno = None
                     message = []
@@ -612,7 +612,7 @@ class maven:
         map = {}
 
         if os.path.isfile(os.path.join(dirname, 'pom.xml')):
-            with builtin_os.chdir(dirname) as dir:
+            with builtin_os.chdir(dirname) as chdir:
                 try:
                     xmlns = 'http://maven.apache.org/POM/4.0.0'
                     xml.etree.ElementTree.register_namespace('', xmlns)

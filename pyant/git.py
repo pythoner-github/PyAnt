@@ -36,7 +36,7 @@ def clone(url, path = None, branch = None, arg = None):
             if not branch:
                 branch = 'master'
 
-            with builtin_os.chdir(path) as dir:
+            with builtin_os.chdir(path) as chdir:
                 cmds = [
                     'git submodule init',
                     'git submodule update',
@@ -65,7 +65,7 @@ def pull(path = None, arg = None, revert = False):
         if arg:
             cmdline += ' %s' % arg
 
-        with builtin_os.chdir(path) as dir:
+        with builtin_os.chdir(path) as chdir:
             if revert:
                 cmd = command.command()
 
@@ -134,7 +134,7 @@ def log(path = None, arg = None):
 
         cmdline += ' -- %s' % subprocess.list2cmdline([name]).strip()
 
-        with builtin_os.chdir(path) as dir:
+        with builtin_os.chdir(path) as chdir:
             lines = []
 
             cmd = command.command()
@@ -205,7 +205,7 @@ def log(path = None, arg = None):
                         tmp_m = re.search(r'^\.{3}\/', name)
 
                         if tmp_m:
-                            with builtin_os.chdir(git_home) as git_dir:
+                            with builtin_os.chdir(git_home) as chdir:
                                 for file in glob.iglob(os.path.join('**', tmp_m.string[tmp_m.end():]), recursive = True):
                                     name = file
 
@@ -338,7 +338,7 @@ def config(path = None, arg = None):
 
         cmdline += ' --list'
 
-        with builtin_os.chdir(path) as dir:
+        with builtin_os.chdir(path) as chdir:
             lines = []
 
             cmd = command.command()

@@ -42,7 +42,7 @@ def build(argv = None):
 
                     print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
 
-            with builtin_os.chdir(home) as dir:
+            with builtin_os.chdir(home) as chdir:
                 if name == 'bn':
                     build = bn
                 elif name == 'stn':

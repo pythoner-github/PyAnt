@@ -26,7 +26,7 @@ def compile_base(name = None, cmd = None):
         path = os.path.basename(REPOS)
 
     if os.path.isdir(path):
-        with builtin_os.chdir(path) as dir:
+        with builtin_os.chdir(path) as chdir:
             for home in ('devops/parent/version', 'devops/parent/build', 'support/interface/thirdparty'):
                 if os.path.isdir(home):
                     with builtin_os.chdir(home) as chdir:

@@ -70,7 +70,7 @@ class maven:
                 modules = self.retry_modules()
 
                 if modules:
-                    with builtin_os.tmpdir('tmp') as dir:
+                    with builtin_os.tmpdir('tmp') as tmpdir:
                         self.retry_pom(modules, '../pom.xml')
 
                         if os.path.isfile('pom.xml'):

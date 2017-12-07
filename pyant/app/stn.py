@@ -102,9 +102,9 @@ def expand_filename(version, dirname, filename):
     name = os.path.join(dirname, filename)
 
     if os.path.basename(name) == 'sptnconf.properties':
-        if os.basename(dirname).endswith('_anode'):
+        if os.path.basename(dirname).endswith('_anode'):
             nodetype = '1'
-        elif os.basename(dirname).endswith('_cnode'):
+        elif os.path.basename(dirname).endswith('_cnode'):
             nodetype = '2'
         else:
             nodetype = '3'

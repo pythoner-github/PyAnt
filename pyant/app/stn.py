@@ -92,8 +92,8 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
 
         return False
 
-def package(version = None, *arg):
-    return build.package(None, version, 'stn', expand_filename)
+def package(version, *arg):
+    return build.package(version, None, 'stn', expand_filename)
 
 # ----------------------------------------------------------
 

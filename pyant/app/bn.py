@@ -108,11 +108,11 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = Non
 
         return False
 
-def package(version = None, type = None, *arg):
+def package(version, type = None, *arg):
     if not type:
         type = 'ems'
 
-    return build.package(None, version, type, expand_filename)
+    return build.package(version, None, type, expand_filename)
 
 # ----------------------------------------------------------
 

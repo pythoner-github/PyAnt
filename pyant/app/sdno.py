@@ -71,5 +71,5 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
 
         return False
 
-def package(version = None, *arg):
+def package(version, *arg):
     return True

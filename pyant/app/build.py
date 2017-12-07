@@ -131,14 +131,14 @@ def check(xpath = None, ignores = None, gb2312 = False):
 #        </copies>
 #      </type>
 #    </install>
-def package(xpath = None, version = None, type = None, expand_filename = None):
+def package(version, xpath = None, type = None, expand_filename = None):
     if not xpath:
         xpath = '*/installdisk/installdisk.xml'
 
     if not type:
         type = '*'
 
-    zipfile_home = os.path.abspath('../zipfile')
+    zipfile_home = os.path.abspath(os.path.join('../zipfile', version))
 
     shutil.rmtree(zipfile_home, ignore_errors = True)
     os.makedirs(zipfile_home, exist_ok = True)

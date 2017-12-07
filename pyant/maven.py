@@ -73,37 +73,9 @@ class maven:
                     with builtin_os.tmpdir('tmp') as tmpdir:
                         self.retry_pom(modules, '../pom.xml')
 
-                        if os.path.isfile('pom.xml'):
-                            self.errors = None
-                            self.lines = []
-
-                            status = None
-
-                            for line in cmd.command(retry_cmd):
-                                self.lines.append(line)
-
-                                status = self.validate(status, line)
-
-                                # if not self.ignore(line):
-                                #    print(line)
-                                print(line)
-
-                            if not cmd.result():
-                                return False
-
-                            if status:
-                                self.lines = []
-
-                                return True
-                            else:
-                                self.set_errors(lang)
-                                self.puts_errors()
-
-                                return False
-                        else:
-                            return False
+                        return retry_compile(retry_cmd)
                 else:
-                    return False
+                    return retry_compile(retry_cmd)
             else:
                 self.set_errors(lang)
                 self.puts_errors()
@@ -637,6 +609,35 @@ class maven:
                     pass
 
         return map
+
+    def retry_compile(self, cmd):
+        if os.path.isfile('pom.xml'):
+            self.errors = None
+            self.lines = []
+
+            status = None
+
+            for line in cmd.command(cmd):
+                self.lines.append(line)
+
+                status = self.validate(status, line)
+
+                print(line)
+
+            if not cmd.result():
+                return False
+
+            if status:
+                self.lines = []
+
+                return True
+            else:
+                self.set_errors(lang)
+                self.puts_errors()
+
+                return False
+        else:
+            return False
 
     def retry_modules(self):
         modules = {}

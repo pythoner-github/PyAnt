@@ -73,9 +73,9 @@ class maven:
                     with builtin_os.tmpdir('tmp') as tmpdir:
                         self.retry_pom(modules, '../pom.xml')
 
-                        return self.retry_compile(retry_cmd)
+                        return self.retry_compile(retry_cmd, lang)
                 else:
-                    return self.retry_compile(retry_cmd)
+                    return self.retry_compile(retry_cmd, lang)
             else:
                 self.set_errors(lang)
                 self.puts_errors()
@@ -610,12 +610,14 @@ class maven:
 
         return map
 
-    def retry_compile(self, cmdline):
+    def retry_compile(self, cmdline, lang):
         if os.path.isfile('pom.xml'):
             self.errors = None
             self.lines = []
 
             status = None
+
+            cmd = command.command()
 
             for line in cmd.command(cmdline):
                 self.lines.append(line)

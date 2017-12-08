@@ -276,7 +276,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
             with zipfile.ZipFile(zipname, 'w') as zip:
                 for line in ('$ zipfile: %s' % zip.filename, '  in (' + os.getcwd() + ')'):
-                    yield line
+                    print(line)
 
                 for dirname, dest_info in dirname_info.items():
                     for dest, filename_list in dest_info.items():
@@ -295,7 +295,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
     for name, dirname_info in copies.items():
         try:
             for line in ('$ copy: %s' % name, '  in (' + os.getcwd() + ')'):
-                yield line
+                print(line)
 
             for dirname, dest_info in dirname_info.items():
                 for dest, filename_list in dest_info.items():

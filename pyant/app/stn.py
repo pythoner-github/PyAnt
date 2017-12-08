@@ -97,7 +97,7 @@ def package(version, *arg):
 
 # ----------------------------------------------------------
 
-def expand_filename(version, dirname, filename):
+def expand_filename(version, dirname, filename, type):
     dst = filename
     name = os.path.join(dirname, filename)
 

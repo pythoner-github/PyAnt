@@ -154,6 +154,11 @@ def package(version, xpath = None, type = None, expand_filename = None):
                 dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
                 dest = dest.strip()
 
+                ############################################
+                if not os.path.isdir(dirname):
+                    dirname = os.path.join('..', dirname)
+                ############################################
+
                 if os.path.isdir(dirname):
                     if name not in packages:
                         packages[name] = collections.OrderedDict()
@@ -388,7 +393,7 @@ def xml_etree_with_encoding(file, encoding = 'gb2312'):
             m = re.search(r'encoding\s*=\s*(\'|")([\w-]+)(\'|")', string.splitlines()[0])
 
             if encoding == m.group(2).strip().lower():
-                tree = xml.etree.ElementTree.fromstring(string)
+                tree = xml.etree.ElementTree(xml.etree.ElementTree.fromstring(string))
     except:
         pass
 

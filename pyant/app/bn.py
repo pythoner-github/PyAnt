@@ -108,7 +108,12 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = Non
 
         return False
 
-def package(version, type = None, *arg):
+def package(version, *arg):
+    if arg:
+        type = arg[0].strip()
+    else:
+        type = None
+
     if not type:
         type = 'ems'
 

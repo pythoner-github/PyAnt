@@ -121,7 +121,7 @@ Usage:
         update          arg: module branch
         compile_base    arg: module cmd
         compile         arg: module cmd clean retry_cmd dirname lang
-        package         arg: branch
+        package         arg: branch type
         check           arg:
         '''
 

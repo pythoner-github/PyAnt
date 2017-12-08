@@ -10,7 +10,7 @@ class command:
         self.pipe = None
         self.async = False
 
-    def command(self, args, timeout = None, cwd = None, async = False):
+    def command(self, args, timeout = None, cwd = None, async = False, display_cmd = None):
         self.pipe = None
         self.async = async
 
@@ -29,7 +29,10 @@ class command:
         else:
             cmd = subprocess.list2cmdline([arg.strip() for arg in args])
 
-        for line in ('$ ' + cmd, '  in (' + os.getcwd() + ')'):
+        if not display_cmd:
+            display_cmd = cmd
+
+        for line in ('$ ' + display_cmd, '  in (' + os.getcwd() + ')'):
             yield line
 
         t = time.time()

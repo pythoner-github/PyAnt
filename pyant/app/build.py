@@ -5,6 +5,8 @@ import os
 import os.path
 import re
 import shutil
+import tarfile
+import tempfile
 import xml.etree.ElementTree
 import zipfile
 
@@ -12,7 +14,7 @@ from pyant import command
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ['check', 'package', 'package_home', 'metric_start', 'metric_end']
+__all__ = ['check', 'package', 'package_home', 'artifactory', 'metric_start', 'metric_end']
 
 def check(xpath = None, ignores = None, gb2312 = False):
     if not xpath:
@@ -333,6 +335,75 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
 def package_home(version):
     return os.path.abspath(os.path.join('../zipfile', version))
+
+def artifactory(path, generic_path, generic_base_path = None):
+    if os.path.isdir(path):
+        with builtin_os.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
+            if generic_base_path:
+                # download
+
+                artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_base_path)
+                cmdline = 'curl -H "%s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_path)
+
+                cmd = command.command()
+
+                for line in cmd.command(cmdline, display_cmd = 'artifact download: %s' % artifact_path):
+                    print(line)
+
+                if not cmd.result():
+                    return False
+
+                try:
+                    with tarfile.open(os.path.basename(generic_base_path)) as tar:
+                        tar.extractall('installation')
+                except Exception as e:
+                    print(e)
+
+                    return False
+
+            dst = os.path.join(os.getcwd(), 'installation')
+
+            with builtin_os.chdir(path) as chdir:
+                try:
+                    for file in glob.iglob('**/*', recursive = True):
+                        filename = os.path.join(dst, file)
+
+                        if not os.path.isdir(os.path.dirname(filename)):
+                            os.makedirs(os.path.dirname(filename), exist_ok = True)
+
+                        shutil.copyfile(file, filename)
+                except Exception as e:
+                    print(e)
+
+                    return False
+
+            try:
+                with tarfile.open('%s.tar.gz' % os.path.basename(path), 'w:gz') as tar:
+                    tar.add('installation')
+            except Exception as e:
+                print(e)
+
+                return False
+
+            # upload
+
+            artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_path)
+            cmdline = 'curl -u%s:%s -T "%s" "%s"' % (
+                const.ARTIFACT_USERNAME, const.ARTIFACT_ENCRYPTED_PASSWORD,
+                '%s.tar.gz' % os.path.basename(path), artifact_path
+            )
+
+            cmd = command.command()
+
+            for line in cmd.command(cmdline, display_cmd = 'artifact upload: %s' % artifact_path):
+                print(line)
+
+            if not cmd.result():
+                return False
+
+            return True
+    else:
+        return False
 
 def metric_start(name, module_name = None, night = True):
     cmdline = None

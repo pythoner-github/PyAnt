@@ -18,11 +18,13 @@ class chdir:
         os.chdir(self.cwd)
 
 class tmpdir:
-    def __init__(self, path):
+    def __init__(self, path, create = True):
         self.path = os.path.abspath(path)
         self.cwd = os.getcwd()
 
-        os.makedirs(self.path, exist_ok = True)
+        if create:
+            os.makedirs(self.path, exist_ok = True)
+
         os.chdir(self.path)
 
     def __enter__(self):

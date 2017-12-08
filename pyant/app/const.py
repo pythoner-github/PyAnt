@@ -27,6 +27,11 @@ if os.environ.get('ARTIFACT_ENCRYPTED_PASSWORD'):
 else:
     ARTIFACT_ENCRYPTED_PASSWORD = 'AP6z7JsxazRTsehPbSn1zm6q2DZ'
 
+if os.environ.get('ARTIFACT_APIKEY'):
+    ARTIFACT_APIKEY = os.environ['ARTIFACT_APIKEY']
+else:
+    ARTIFACT_APIKEY = 'X-JFrog-Art-Api: AKCp5Z2rqB9rukHc4XdQpSZuULA58k697iNHqmesFy2SQKFJskLRarc1WfBaRBkm8hvv11djv'
+
 # METRIC
 
 if os.environ.get('METRIC_HTTP'):

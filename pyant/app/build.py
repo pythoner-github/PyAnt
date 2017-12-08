@@ -336,13 +336,13 @@ def package(version, xpath = None, type = None, expand_filename = None):
 def package_home(version):
     return os.path.abspath(os.path.join('../zipfile', version))
 
-def artifactory(path, generic_path, generic_base_path = None):
+def artifactory(path, generic_path, generic_base_file = None):
     if os.path.isdir(path):
         with builtin_os.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
-            if generic_base_path:
+            if generic_base_file:
                 # download
 
-                artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_base_path)
+                artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_base_file)
                 cmdline = 'curl -H "%s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_path)
 
                 cmd = command.command()
@@ -354,7 +354,7 @@ def artifactory(path, generic_path, generic_base_path = None):
                     return False
 
                 try:
-                    with tarfile.open(os.path.basename(generic_base_path)) as tar:
+                    with tarfile.open(os.path.basename(generic_base_file)) as tar:
                         tar.extractall('installation')
                 except Exception as e:
                     print(e)
@@ -377,8 +377,10 @@ def artifactory(path, generic_path, generic_base_path = None):
 
                     return False
 
+            tarname = '%s.tar.gz' % os.path.basename(path)
+
             try:
-                with tarfile.open('%s.tar.gz' % os.path.basename(path), 'w:gz') as tar:
+                with tarfile.open(tarname, 'w:gz') as tar:
                     tar.add('installation')
             except Exception as e:
                 print(e)
@@ -387,15 +389,15 @@ def artifactory(path, generic_path, generic_base_path = None):
 
             # upload
 
-            artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_path)
+            artifact_file = os.path.join(const.ARTIFACT_HTTP, generic_path, tarname)
             cmdline = 'curl -u%s:%s -T "%s" "%s"' % (
                 const.ARTIFACT_USERNAME, const.ARTIFACT_ENCRYPTED_PASSWORD,
-                '%s.tar.gz' % os.path.basename(path), artifact_path
+                tarname, artifact_file
             )
 
             cmd = command.command()
 
-            for line in cmd.command(cmdline, display_cmd = 'artifact upload: %s' % artifact_path):
+            for line in cmd.command(cmdline, display_cmd = 'artifact upload: %s' % artifact_file):
                 print(line)
 
             if not cmd.result():

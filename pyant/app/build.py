@@ -336,7 +336,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
 def package_home(version):
     return os.path.abspath(os.path.join('../zipfile', version))
 
-def artifactory(path, generic_path, generic_base_file = None):
+def artifactory(path, generic_path, generic_base_file = None, suffix = None):
     if os.path.isdir(path):
         with builtin_os.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
             if generic_base_file:
@@ -377,7 +377,10 @@ def artifactory(path, generic_path, generic_base_file = None):
 
                     return False
 
-            tarname = '%s.tar.gz' % os.path.basename(path)
+            if suffix:
+                tarname = '%s%s.tar.gz' % (suffix, os.path.basename(path))
+            else:
+                tarname = '%s.tar.gz' % os.path.basename(path)
 
             try:
                 with tarfile.open(tarname, 'w:gz') as tar:

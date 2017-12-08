@@ -1,6 +1,7 @@
 import collections
 import os
 import os.path
+import platform
 import sys
 
 from pyant import git, maven
@@ -122,6 +123,26 @@ def package(version, *arg):
 
     if not type:
         type = 'ems'
+
+    if build.package(version, None, 'stn', expand_filename):
+        if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
+            generic_path = ARTIFACT_REPOS['snapshot']
+        else:
+            generic_path = ARTIFACT_REPOS['alpha']
+
+        suffix = '-%s' % platform.system().lower()
+
+        if os.environ.get('X64'):
+            suffix += '-x64'
+
+        return build.artifactory(build.package_home(version),
+            os.path.join(generic_path, version),
+            os.path.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
+            suffix
+        )
+    else:
+        return False
+
 
     return build.package(version, None, type, expand_filename)
 

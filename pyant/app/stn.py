@@ -99,7 +99,16 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
         return False
 
 def package(version, *arg):
-    return build.package(version, None, 'stn', expand_filename)
+    if build.package(version, None, 'stn', expand_filename):
+        if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
+            generic_path = ARTIFACT_REPOS['snapshot']
+        else:
+            generic_path = ARTIFACT_REPOS['alpha']
+
+        return build.artifactory(build.package_home(version), generic_path,
+            os.path.join(ARTIFACT_REPOS['release'], 'OSCP/current.tar.gz'))
+    else:
+        return False
 
 # ----------------------------------------------------------
 

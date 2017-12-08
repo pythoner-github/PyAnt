@@ -286,7 +286,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                 for dirname, dest_info in dirname_info.items():
                     for dest, filename_list in dest_info.items():
                         for filename in filename_list:
-                            if filename.endswith('.so.debuginfo'):
+                            if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib'):
                                 continue
 
                             if os.path.isfile(os.path.join(dirname, filename)):
@@ -309,7 +309,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
             for dirname, dest_info in dirname_info.items():
                 for dest, filename_list in dest_info.items():
                     for filename in filename_list:
-                        if filename.endswith('.so.debuginfo'):
+                        if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib'):
                             continue
 
                         if os.path.isfile(os.path.join(dirname, filename)):

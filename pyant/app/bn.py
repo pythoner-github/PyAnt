@@ -188,7 +188,34 @@ def environ(lang = None):
             if os.path.isdir(path):
                 os.environ['WDM_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
-def expand_filename(version, dirname, filename):
-    dst = filename.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
+def expand_filename(version, dirname, filename, type):
+    dst = filename
+    name = os.path.join(dirname, filename)
+
+    dst = dst.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
+
+    if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml', 'u3backup.xml', 'u3backupme.xml', 'dbtool-config.xml'):
+        try:
+            tree = xml.etree.ElementTree.parse(name)
+        except:
+            tree = build.xml_etree_with_encoding(name, 'gb2312')
+
+        if tree is not None:
+            if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml'):
+                if version:
+                    for e in tree.findall('info'):
+                        e.set('version', version)
+                        e.set('display-version', version)
+            elif os.path.basename(name) in ('u3backup.xml', 'u3backupme.xml'):
+                if version:
+                    for e in tree.findall('version'):
+                        e.text = version
+            elif os.path.basename(name) in ('dbtool-config.xml'):
+                for e in tree.findall('ems_type'):
+                    e.text = type
+            else:
+                pass
+
+            tree.write(name, encoding = 'utf-8', xml_declaration = True)
 
     return (filename, dst)

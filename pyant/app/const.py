@@ -15,12 +15,17 @@ else:
 if os.environ.get('ARTIFACT_USERNAME'):
     ARTIFACT_USERNAME = os.environ['ARTIFACT_USERNAME']
 else:
-    ARTIFACT_USERNAME = 'umebn-reader'
+    ARTIFACT_USERNAME = 'umebn-ci'
 
 if os.environ.get('ARTIFACT_PASSWORD'):
     ARTIFACT_PASSWORD = os.environ['ARTIFACT_PASSWORD']
 else:
-    ARTIFACT_PASSWORD = 'umebn-reader_123456'
+    ARTIFACT_PASSWORD = 'umebn-ci*123'
+
+if os.environ.get('ARTIFACT_ENCRYPTED_PASSWORD'):
+    ARTIFACT_ENCRYPTED_PASSWORD = os.environ['ARTIFACT_ENCRYPTED_PASSWORD']
+else:
+    ARTIFACT_ENCRYPTED_PASSWORD = 'AP6z7JsxazRTsehPbSn1zm6q2DZ'
 
 # METRIC
 

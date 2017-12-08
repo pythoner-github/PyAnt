@@ -49,40 +49,24 @@ def check(xpath = None, ignores = None, gb2312 = False):
         if found:
             continue
 
+        if ignores:
+            found = False
+
+            for ignore in ignores:
+                if re.search(ignore, file):
+                    found = True
+
+                    break
+
+            if found:
+                continue
+
         try:
             xml.etree.ElementTree.parse(file)
         except:
-            if ignores:
-                found = False
-
-                for ignore in ignores:
-                    if re.search(ignore, file):
-                        found = True
-
-                        break
-
-                if found:
+            if gb2312:
+                if xml_etree_with_encoding(file, 'gb2312') is not None:
                     continue
-            else:
-                if gb2312:
-                    try:
-                        string = None
-
-                        with open(file, encoding = 'gb2312') as f:
-                            string = f.read()
-
-                        if string:
-                            m = re.search(r'encoding\s*=\s*(\'|")([\w-]+)(\'|")', string.strip().splitlines()[0])
-
-                            if m:
-                                encoding = m.group(2).strip().lower()
-
-                                if encoding == 'gb2312':
-                                    xml.etree.ElementTree.parseString(string)
-
-                                    continue
-                    except:
-                        pass
 
             if 'xml' not in map:
                 map['xml'] = []
@@ -150,9 +134,12 @@ def package(version, xpath = None, type = None, expand_filename = None):
         try:
             tree = xml.etree.ElementTree.parse(file)
         except:
-            print('error: parse xml file fail: %s' % os.path.abspath(file))
+            tree = xml_etree_with_encoding(file, 'gb2312')
 
-            return False
+            if tree is None:
+                print('error: parse xml file fail: %s' % os.path.abspath(file))
+
+                return False
 
         for e in tree.findall('/'.join((type, 'packages/package'))):
             name = e.get('name')
@@ -297,7 +284,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                             arcname = None
 
                             if expand_filename:
-                                filename, arcname = expand_filename(version, dirname, filename)
+                                filename, arcname = expand_filename(version, dirname, filename, type)
 
                             zip.write(os.path.join(dirname, filename), os.path.join(dest, arcname))
         except Exception as e:
@@ -317,7 +304,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                             dst = filename
 
                             if expand_filename:
-                                filename, dst = expand_filename(version, dirname, filename)
+                                filename, dst = expand_filename(version, dirname, filename, type)
 
                             dst = os.path.join(zipfile_home, name, dest, dst)
 
@@ -385,6 +372,25 @@ def metric_end(id, status):
             print(line)
 
 # ----------------------------------------------------------
+
+def xml_etree_with_encoding(file, encoding = 'gb2312'):
+    tree = None
+
+    try:
+        string = None
+
+        with open(file, encoding = encoding) as f:
+            string = f.read()
+
+        if string:
+            m = re.search(r'encoding\s*=\s*(\'|")([\w-]+)(\'|")', string.strip().splitlines()[0])
+
+            if encoding == m.group(2).strip().lower():
+                tree = xml.etree.ElementTree.fromstring(string.strip())
+    except:
+        pass
+
+    return tree
 
 def metric_id(name, module_name = None):
     if name == 'bn':

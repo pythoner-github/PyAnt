@@ -137,7 +137,7 @@ def expand_filename(version, dirname, filename):
                     e.set('version', version)
                     e.set('display-version', version)
 
-                tree.write(name, encoding='utf-8', xml_declaration= True)
+                tree.write(name, encoding = 'utf-8', xml_declaration = True)
             except:
                 pass
     else:

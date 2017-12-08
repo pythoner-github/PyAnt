@@ -286,12 +286,16 @@ def package(version, xpath = None, type = None, expand_filename = None):
                 for dirname, dest_info in dirname_info.items():
                     for dest, filename_list in dest_info.items():
                         for filename in filename_list:
-                            arcname = None
+                            if filename.endswith('.so.debuginfo'):
+                                continue
 
-                            if expand_filename:
-                                filename, arcname = expand_filename(version, dirname, filename, type)
+                            if os.path.isfile(os.path.join(dirname, filename)):
+                                arcname = None
 
-                            zip.write(os.path.join(dirname, filename), os.path.join(dest, arcname))
+                                if expand_filename:
+                                    filename, arcname = expand_filename(version, dirname, filename, type)
+
+                                zip.write(os.path.join(dirname, filename), os.path.join(dest, arcname))
         except Exception as e:
             print(e)
 
@@ -305,6 +309,9 @@ def package(version, xpath = None, type = None, expand_filename = None):
             for dirname, dest_info in dirname_info.items():
                 for dest, filename_list in dest_info.items():
                     for filename in filename_list:
+                        if filename.endswith('.so.debuginfo'):
+                            continue
+
                         if os.path.isfile(os.path.join(dirname, filename)):
                             dst = filename
 

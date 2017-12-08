@@ -150,14 +150,14 @@ def package(version, xpath = None, type = None, expand_filename = None):
                 dest = ''
 
             if name and dirname:
-                name = name.strip()
-                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
-                dest = dest.strip()
-
                 ############################################
                 if not os.path.isdir(dirname):
                     dirname = os.path.join('..', dirname)
                 ############################################
+
+                name = name.strip()
+                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
+                dest = dest.strip()
 
                 if os.path.isdir(dirname):
                     if name not in packages:

@@ -383,10 +383,12 @@ def xml_etree_with_encoding(file, encoding = 'gb2312'):
             string = f.read()
 
         if string:
-            m = re.search(r'encoding\s*=\s*(\'|")([\w-]+)(\'|")', string.strip().splitlines()[0])
+            string = string.strip()
+
+            m = re.search(r'encoding\s*=\s*(\'|")([\w-]+)(\'|")', string.splitlines()[0])
 
             if encoding == m.group(2).strip().lower():
-                tree = xml.etree.ElementTree.fromstring(string.strip())
+                tree = xml.etree.ElementTree.fromstring(string)
     except:
         pass
 

@@ -29,7 +29,7 @@ class command:
         else:
             cmd = subprocess.list2cmdline([arg.strip() for arg in args])
 
-        for line in ('$ ' + cmd, '  (' + os.getcwd() + ')'):
+        for line in ('$ ' + cmd, '  in (' + os.getcwd() + ')'):
             yield line
 
         t = time.time()

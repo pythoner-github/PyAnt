@@ -12,7 +12,7 @@ from pyant import command
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ['check', 'package', 'metric_start', 'metric_end']
+__all__ = ['check', 'package', 'package_home', 'metric_start', 'metric_end']
 
 def check(xpath = None, ignores = None, gb2312 = False):
     if not xpath:
@@ -138,7 +138,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
     if not type:
         type = '*'
 
-    zipfile_home = os.path.abspath(os.path.join('../zipfile', version))
+    zipfile_home = package_home(version)
 
     shutil.rmtree(zipfile_home, ignore_errors = True)
     os.makedirs(zipfile_home, exist_ok = True)
@@ -288,8 +288,8 @@ def package(version, xpath = None, type = None, expand_filename = None):
                 os.makedirs(os.path.dirname(zipname), exist_ok = True)
 
             with zipfile.ZipFile(zipname, 'w') as zip:
-                print('$ zipfile: %s' % zip.filename)
-                print('  (' + os.getcwd() + ')')
+                for line in ('$ zipfile: %s' % zip.filename, '  in (' + os.getcwd() + ')'):
+                    yield line
 
                 for dirname, dest_info in dirname_info.items():
                     for dest, filename_list in dest_info.items():
@@ -307,8 +307,8 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
     for name, dirname_info in copies.items():
         try:
-            print('$ copy: %s' % name)
-            print('  (' + os.getcwd() + ')')
+            for line in ('$ copy: %s' % name, '  in (' + os.getcwd() + ')'):
+                yield line
 
             for dirname, dest_info in dirname_info.items():
                 for dest, filename_list in dest_info.items():
@@ -331,6 +331,9 @@ def package(version, xpath = None, type = None, expand_filename = None):
             return False
 
     return True
+
+def package_home(version):
+    return os.path.abspath(os.path.join('../zipfile', version))
 
 def metric_start(name, module_name = None, night = True):
     cmdline = None

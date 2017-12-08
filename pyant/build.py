@@ -99,7 +99,7 @@ def build(argv = None):
 
                         version = '%s_%s' % (branch, datetime.datetime.now().strftime('%Y%m%d'))
 
-                    return build.package(version, *arg)
+                    return build.package(version, *arg[1:])
                 elif command == 'check':
                     if name == 'bn':
                         return app_build.check('U31R22_*', r'error_conf\.xml', True)

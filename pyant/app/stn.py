@@ -10,14 +10,20 @@ from pyant.builtin import os as builtin_os
 __all__ = ['update', 'compile', 'package']
 
 REPOS = collections.OrderedDict([
-  ('u3_interface'     , os.path.join(const.SSH_GIT, 'U31R22_INTERFACE')),
-  ('sdn_interface'    , os.path.join(const.SSH_GIT, 'stn/sdn_interface')),
-  ('sdn_framework'    , os.path.join(const.SSH_GIT, 'stn/sdn_framework')),
-  ('sdn_application'  , os.path.join(const.SSH_GIT, 'stn/sdn_application')),
-  ('sdn_tunnel'       , os.path.join(const.SSH_GIT, 'stn/sdn_tunnel')),
-  ('SPTN-E2E'         , os.path.join(const.SSH_GIT, 'stn/SPTN-E2E')),
-  ('CTR-ICT'          , os.path.join(const.SSH_GIT, 'stn/CTR-ICT'))
+    ('u3_interface'     , os.path.join(const.SSH_GIT, 'U31R22_INTERFACE')),
+    ('sdn_interface'    , os.path.join(const.SSH_GIT, 'stn/sdn_interface')),
+    ('sdn_framework'    , os.path.join(const.SSH_GIT, 'stn/sdn_framework')),
+    ('sdn_application'  , os.path.join(const.SSH_GIT, 'stn/sdn_application')),
+    ('sdn_tunnel'       , os.path.join(const.SSH_GIT, 'stn/sdn_tunnel')),
+    ('SPTN-E2E'         , os.path.join(const.SSH_GIT, 'stn/SPTN-E2E')),
+    ('CTR-ICT'          , os.path.join(const.SSH_GIT, 'stn/CTR-ICT'))
 ])
+
+ARTIFACT_REPOS = {
+    'snapshot'  : 'stn_contoller-snapshot-generic',
+    'alpha'     : 'stn_contoller-alpha-generic',
+    'release'   : 'stn_contoller-release-generic'
+}
 
 def update(name = None, branch = None, *arg):
     if name in REPOS.keys():

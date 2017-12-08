@@ -8,6 +8,12 @@ __all__ = ['update', 'compile', 'package']
 
 REPOS = os.path.join(const.SSH_GIT, 'umebn')
 
+ARTIFACT_REPOS = {
+    'snapshot'  : 'umebn-snapshot-generic',
+    'alpha'     : 'umebn-alpha-generic',
+    'release'   : 'umebn-release-generic'
+}
+
 def update(name = None, branch = None, *arg):
     if name:
         path = name

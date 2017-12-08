@@ -8,6 +8,12 @@ __all__ = ['update', 'compile', 'package']
 
 REPOS = os.path.join(const.SSH_GIT, 'sdno')
 
+ARTIFACT_REPOS = {
+    'snapshot'  : 'sdno-snapshot-generic',
+    'alpha'     : 'sdno-alpha-generic',
+    'release'   : 'sdno-release-generic'
+}
+
 def update(name = None, branch = None, *arg):
     if name:
         path = name

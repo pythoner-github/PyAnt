@@ -10,21 +10,27 @@ from pyant.builtin import os as builtin_os
 __all__ = ['update', 'compile', 'package']
 
 REPOS = collections.OrderedDict([
-  ('interface', os.path.join(const.SSH_GIT, 'U31R22_INTERFACE')),
-  ('platform' , os.path.join(const.SSH_GIT, 'U31R22_PLATFORM')),
-  ('necommon' , os.path.join(const.SSH_GIT, 'U31R22_NECOMMON')),
-  ('e2e'      , os.path.join(const.SSH_GIT, 'U31R22_E2E')),
-  ('uca'      , os.path.join(const.SSH_GIT, 'U31R22_UCA')),
-  ('xmlfile'  , os.path.join(const.SSH_GIT, 'U31R22_NBI_XMLFILE')),
-  ('nbi'      , os.path.join(const.SSH_GIT, 'U31R22_NBI')),
-  ('sdh'      , os.path.join(const.SSH_GIT, 'U31R22_SDH')),
-  ('wdm'      , os.path.join(const.SSH_GIT, 'U31R22_WDM')),
-  ('ptn'      , os.path.join(const.SSH_GIT, 'U31R22_PTN')),
-  ('ptn2'     , os.path.join(const.SSH_GIT, 'U31R22_PTN2')),
-  ('ip'       , os.path.join(const.SSH_GIT, 'U31R22_IP'))
+    ('interface', os.path.join(const.SSH_GIT, 'U31R22_INTERFACE')),
+    ('platform' , os.path.join(const.SSH_GIT, 'U31R22_PLATFORM')),
+    ('necommon' , os.path.join(const.SSH_GIT, 'U31R22_NECOMMON')),
+    ('e2e'      , os.path.join(const.SSH_GIT, 'U31R22_E2E')),
+    ('uca'      , os.path.join(const.SSH_GIT, 'U31R22_UCA')),
+    ('xmlfile'  , os.path.join(const.SSH_GIT, 'U31R22_NBI_XMLFILE')),
+    ('nbi'      , os.path.join(const.SSH_GIT, 'U31R22_NBI')),
+    ('sdh'      , os.path.join(const.SSH_GIT, 'U31R22_SDH')),
+    ('wdm'      , os.path.join(const.SSH_GIT, 'U31R22_WDM')),
+    ('ptn'      , os.path.join(const.SSH_GIT, 'U31R22_PTN')),
+    ('ptn2'     , os.path.join(const.SSH_GIT, 'U31R22_PTN2')),
+    ('ip'       , os.path.join(const.SSH_GIT, 'U31R22_IP'))
 ])
 
 REPOS_DEVTOOLS = const.SSH_GIT
+
+ARTIFACT_REPOS = {
+    'snapshot'  : 'U31R22-snapshot-generic',
+    'alpha'     : 'U31R22-alpha-generic',
+    'release'   : 'U31R22-release-generic'
+}
 
 def update(name = None, branch = None, *arg):
     if name in REPOS.keys():

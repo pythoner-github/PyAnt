@@ -151,7 +151,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
             if name and dirname:
                 ############################################
-                if not os.path.isdir(dirname):
+                if not os.path.isdir(os.path.join(os.path.dirname(file), dirname.strip())):
                     dirname = os.path.join('..', dirname)
                 ############################################
 

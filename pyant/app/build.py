@@ -389,7 +389,7 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
                     return False
 
             if suffix:
-                tarname = '%s%s.tar.gz' % (suffix, os.path.basename(path))
+                tarname = '%s%s.tar.gz' % (os.path.basename(path), suffix)
             else:
                 tarname = '%s.tar.gz' % os.path.basename(path)
 

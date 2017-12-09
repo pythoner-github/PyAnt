@@ -118,7 +118,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = Non
 
 def package(version, *arg):
     if arg:
-        type = arg[0].strip()
+        type = arg[0].strip().lower()
     else:
         type = None
 
@@ -136,6 +136,9 @@ def package(version, *arg):
         if suffix in ('-windows'):
             if os.environ.get('WIN64'):
                 suffix += '-x64'
+
+        if type not in ('ems'):
+            suffix += '(%s)' % type
 
         return build.artifactory(build.package_home(version),
             os.path.join(generic_path, version),

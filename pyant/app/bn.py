@@ -133,8 +133,9 @@ def package(version, *arg):
 
         suffix = '-%s' % platform.system().lower()
 
-        if os.environ.get('X64'):
-            suffix += '-x64'
+        if suffix in ('-windows'):
+            if os.environ.get('WIN64'):
+                suffix += '-x64'
 
         return build.artifactory(build.package_home(version),
             os.path.join(generic_path, version),

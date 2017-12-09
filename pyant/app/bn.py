@@ -125,7 +125,7 @@ def package(version, *arg):
     if not type:
         type = 'ems'
 
-    if build.package(version, None, 'stn', expand_filename):
+    if build.package(version, None, type, expand_filename):
         if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
             generic_path = ARTIFACT_REPOS['snapshot']
         else:
@@ -139,7 +139,7 @@ def package(version, *arg):
 
         return build.artifactory(build.package_home(version),
             os.path.join(generic_path, version),
-            os.path.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
+            os.path.join(ARTIFACT_REPOS['release'], ['UEP/current.tar.gz', 'UEP/extends/%s.tar.gz' % type]),
             suffix
         )
     else:

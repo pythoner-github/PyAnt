@@ -340,32 +340,36 @@ def package(version, xpath = None, type = None, expand_filename = None):
 def package_home(version):
     return os.path.abspath(os.path.join('../zipfile', version))
 
-def artifactory(path, generic_path, generic_base_file = None, suffix = None):
+def artifactory(path, generic_path, generic_base_list = None, suffix = None):
     if os.path.isdir(path):
         with builtin_os.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
-            if generic_base_file:
+            if generic_base_list:
                 # download
 
-                artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_base_file)
+                if not isinstance(generic_base_list, list):
+                    generic_base_list = [generic_base_list]
 
-                cmdline = 'curl -H "X-JFrog-Art-Api: %s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_path)
-                display_cmd = 'curl -H "X-JFrog-Art-Api: %s" -O "%s"' % (password.password(const.ARTIFACT_APIKEY), artifact_path)
+                for generic_base_file in generic_base_list:
+                    artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_base_file)
 
-                cmd = command.command()
+                    cmdline = 'curl -H "X-JFrog-Art-Api: %s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_path)
+                    display_cmd = 'curl -H "X-JFrog-Art-Api: %s" -O "%s"' % (password.password(const.ARTIFACT_APIKEY), artifact_path)
 
-                for line in cmd.command(cmdline, display_cmd = display_cmd):
-                    print(line)
+                    cmd = command.command()
 
-                if not cmd.result():
-                    return False
+                    for line in cmd.command(cmdline, display_cmd = display_cmd):
+                        print(line)
 
-                try:
-                    with tarfile.open(os.path.basename(generic_base_file)) as tar:
-                        tar.extractall('installation')
-                except Exception as e:
-                    print(e)
+                    if not cmd.result():
+                        return False
 
-                    return False
+                    try:
+                        with tarfile.open(os.path.basename(generic_base_file)) as tar:
+                            tar.extractall('installation')
+                    except Exception as e:
+                        print(e)
+
+                        return False
 
             dst = os.path.join(os.getcwd(), 'installation')
 

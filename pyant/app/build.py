@@ -10,7 +10,7 @@ import tempfile
 import xml.etree.ElementTree
 import zipfile
 
-from pyant import command
+from pyant import command, password
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
@@ -347,11 +347,13 @@ def artifactory(path, generic_path, generic_base_file = None, suffix = None):
                 # download
 
                 artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_base_file)
-                cmdline = 'curl -H "%s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_path)
+
+                cmdline = 'curl -H "X-JFrog-Art-Api: %s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_path)
+                display_cmd = 'curl -H "X-JFrog-Art-Api: %s" -O "%s"' % (password.password(const.ARTIFACT_APIKEY), artifact_path)
 
                 cmd = command.command()
 
-                for line in cmd.command(cmdline, display_cmd = 'artifact download: %s' % artifact_path):
+                for line in cmd.command(cmdline, display_cmd = display_cmd):
                     print(line)
 
                 if not cmd.result():
@@ -397,14 +399,19 @@ def artifactory(path, generic_path, generic_base_file = None, suffix = None):
             # upload
 
             artifact_file = os.path.join(const.ARTIFACT_HTTP, generic_path, tarname)
+
             cmdline = 'curl -u%s:%s -T "%s" "%s"' % (
                 const.ARTIFACT_USERNAME, const.ARTIFACT_ENCRYPTED_PASSWORD,
+                tarname, artifact_file
+            )
+            display_cmd = 'curl -u%s:%s -T "%s" "%s"' % (
+                password.password(const.ARTIFACT_USERNAME), password.password(const.ARTIFACT_ENCRYPTED_PASSWORD),
                 tarname, artifact_file
             )
 
             cmd = command.command()
 
-            for line in cmd.command(cmdline, display_cmd = 'artifact upload: %s' % artifact_file):
+            for line in cmd.command(cmdline, display_cmd = display_cmd):
                 print(line)
 
             if not cmd.result():

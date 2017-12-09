@@ -210,6 +210,8 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                                 if os.path.isfile(filename):
                                                     if filename in packages[name][dirname]:
                                                         packages[name][dirname][dest].remove(filename)
+                else:
+                    print('no such directory: %s' % dirname)
 
         for e in tree.findall('/'.join((type, 'copies/copy'))):
             name = e.get('name')
@@ -273,6 +275,8 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                                 if os.path.isfile(filename):
                                                     if filename in copies[name][dirname]:
                                                         copies[name][dirname][dest].remove(filename)
+                else:
+                    print('no such directory: %s' % dirname)
 
     for name, dirname_info in packages.items():
         try:

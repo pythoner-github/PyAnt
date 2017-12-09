@@ -374,10 +374,11 @@ def artifactory(path, generic_path, generic_base_file = None, suffix = None):
                     for file in glob.iglob('**/*', recursive = True):
                         filename = os.path.join(dst, file)
 
-                        if not os.path.isdir(os.path.dirname(filename)):
-                            os.makedirs(os.path.dirname(filename), exist_ok = True)
+                        if os.path.isfile(file):
+                            if not os.path.isdir(os.path.dirname(filename)):
+                                os.makedirs(os.path.dirname(filename), exist_ok = True)
 
-                        shutil.copyfile(file, filename)
+                            shutil.copyfile(file, filename)
                 except Exception as e:
                     print(e)
 

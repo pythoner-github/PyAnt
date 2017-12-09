@@ -145,9 +145,6 @@ def package(version, *arg):
     else:
         return False
 
-
-    return build.package(version, None, type, expand_filename)
-
 # ----------------------------------------------------------
 
 def update_devtools(branch = None):

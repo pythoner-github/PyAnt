@@ -142,7 +142,10 @@ def package(version, *arg):
 
         return build.artifactory(build.package_home(version),
             os.path.join(generic_path, version),
-            os.path.join(ARTIFACT_REPOS['release'], ['UEP/current.tar.gz', 'UEP/extends/%s.tar.gz' % type]),
+            [
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/extends/%s.tar.gz' % type)
+            ],
             suffix
         )
     else:

@@ -157,9 +157,9 @@ def package(version, xpath = None, type = None, expand_filename = None):
                     dirname = os.path.join('..', dirname)
                 ############################################
 
-                name = name.strip()
-                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
-                dest = dest.strip()
+                name = name.strip().replace('\\', '/')
+                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip().replace('\\', '/')))
+                dest = dest.strip().replace('\\', '/')
 
                 if os.path.isdir(dirname):
                     if name not in packages:
@@ -222,9 +222,9 @@ def package(version, xpath = None, type = None, expand_filename = None):
                 dest = ''
 
             if name and dirname:
-                name = name.strip()
-                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
-                dest = dest.strip()
+                name = name.strip().replace('\\', '/')
+                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip().replace('\\', '/')))
+                dest = dest.strip().replace('\\', '/')
 
                 if os.path.isdir(dirname):
                     if name not in copies:

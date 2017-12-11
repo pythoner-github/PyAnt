@@ -352,8 +352,8 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
                 for generic_base_file in generic_base_list:
                     artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_base_file)
 
-                    cmdline = 'curl -H "X-JFrog-Art-Api: %s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_path)
-                    display_cmd = 'curl -H "X-JFrog-Art-Api: %s" -O "%s"' % (password.password(const.ARTIFACT_APIKEY), artifact_path)
+                    cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_path)
+                    display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (password.password(const.ARTIFACT_APIKEY), artifact_path)
 
                     cmd = command.command()
 
@@ -405,11 +405,11 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
 
             artifact_file = os.path.join(const.ARTIFACT_HTTP, generic_path, tarname)
 
-            cmdline = 'curl -u%s:%s -T "%s" "%s"' % (
+            cmdline = 'curl -k -u%s:%s -T "%s" "%s"' % (
                 const.ARTIFACT_USERNAME, const.ARTIFACT_ENCRYPTED_PASSWORD,
                 tarname, artifact_file
             )
-            display_cmd = 'curl -u%s:%s -T "%s" "%s"' % (
+            display_cmd = 'curl -k -u%s:%s -T "%s" "%s"' % (
                 password.password(const.ARTIFACT_USERNAME), password.password(const.ARTIFACT_ENCRYPTED_PASSWORD),
                 tarname, artifact_file
             )

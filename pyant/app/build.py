@@ -152,11 +152,6 @@ def package(version, xpath = None, type = None, expand_filename = None):
                 dest = ''
 
             if name and dirname:
-                ############################################
-                if not os.path.isdir(os.path.join(os.path.dirname(file), dirname.strip())):
-                    dirname = os.path.join('..', dirname)
-                ############################################
-
                 name = name.strip().replace('\\', '/')
                 dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip().replace('\\', '/')))
                 dest = dest.strip().replace('\\', '/')
@@ -292,7 +287,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                 for dirname, dest_info in dirname_info.items():
                     for dest, filename_list in dest_info.items():
                         for filename in filename_list:
-                            if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib'):
+                            if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib', '.manifest'):
                                 continue
 
                             if os.path.isfile(os.path.join(dirname, filename)):

@@ -181,6 +181,10 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                         if os.path.isfile(filename):
                                             packages[name][dirname][dest].append(filename)
                                 else:
+                                    if os.path.basename(element_name) in ('*'):
+                                        if '**/*' not in element_name:
+                                            element_name = os.path.join(os.path.dirname(element_name), '**/*')
+
                                     for filename in glob.iglob(element_name, recursive = True):
                                         if os.path.isfile(filename):
                                             packages[name][dirname][dest].append(filename)
@@ -202,6 +206,10 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                                     if filename in packages[name][dirname]:
                                                         packages[name][dirname][dest].remove(filename)
                                         else:
+                                            if os.path.basename(element_name) in ('*'):
+                                                if '**/*' not in element_name:
+                                                    element_name = os.path.join(os.path.dirname(element_name), '**/*')
+
                                             for filename in glob.iglob(element_name, recursive = True):
                                                 if os.path.isfile(filename):
                                                     if filename in packages[name][dirname]:
@@ -246,6 +254,10 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                         if os.path.isfile(filename):
                                             copies[name][dirname][dest].append(filename)
                                 else:
+                                    if os.path.basename(element_name) in ('*'):
+                                        if '**/*' not in element_name:
+                                            element_name = os.path.join(os.path.dirname(element_name), '**/*')
+
                                     for filename in glob.iglob(element_name, recursive = True):
                                         if os.path.isfile(filename):
                                             copies[name][dirname][dest].append(filename)
@@ -267,6 +279,10 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                                     if filename in copies[name][dirname]:
                                                         copies[name][dirname][dest].remove(filename)
                                         else:
+                                            if os.path.basename(element_name) in ('*'):
+                                                if '**/*' not in element_name:
+                                                    element_name = os.path.join(os.path.dirname(element_name), '**/*')
+
                                             for filename in glob.iglob(element_name, recursive = True):
                                                 if os.path.isfile(filename):
                                                     if filename in copies[name][dirname]:

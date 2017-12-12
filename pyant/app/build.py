@@ -3,6 +3,7 @@ import datetime
 import glob
 import os
 import os.path
+import platform
 import re
 import shutil
 import tarfile
@@ -290,6 +291,13 @@ def package(version, xpath = None, type = None, expand_filename = None):
                             if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib', '.manifest'):
                                 continue
 
+                            if platform.system().lower() in ('windows'):
+                                if os.path.splitext(filename)[-1] in ('.so', '.sh'):
+                                    continue
+                            else:
+                                if os.path.splitext(filename)[-1] in ('.dll', '.bat'):
+                                    continue
+
                             if os.path.isfile(os.path.join(dirname, filename)):
                                 arcname = None
 
@@ -312,6 +320,13 @@ def package(version, xpath = None, type = None, expand_filename = None):
                     for filename in filename_list:
                         if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib'):
                             continue
+
+                        if platform.system().lower() in ('windows'):
+                            if os.path.splitext(filename)[-1] in ('.so', '.sh'):
+                                continue
+                        else:
+                            if os.path.splitext(filename)[-1] in ('.dll', '.bat'):
+                                continue
 
                         if os.path.isfile(os.path.join(dirname, filename)):
                             dst = filename

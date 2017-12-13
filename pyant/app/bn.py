@@ -140,14 +140,23 @@ def package(version, *arg):
         if type not in ('ems'):
             suffix += '(%s)' % type
 
-        return build.artifactory(build.package_home(version),
-            os.path.join(generic_path, version),
-            [
+        if type in ('lct'):
+            bases = (
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_en.tar.gz'),
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_zh.tar.gz')
+            )
+        else:
+            bases = ([
                 os.path.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
-                os.path.join(ARTIFACT_REPOS['release'], 'UEP/extends/%s.tar.gz' % type)
-            ],
-            suffix
-        )
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/TYPES/%s.tar.gz' % type)
+            ],)
+
+        for base_list in bases:
+            if not build.artifactory(build.package_home(version),
+                os.path.join(generic_path, version), base_list, suffix):
+                return False
+
+        return True
     else:
         return False
 

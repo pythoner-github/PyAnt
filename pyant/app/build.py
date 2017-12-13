@@ -137,159 +137,79 @@ def package(version, xpath = None, type = None, expand_filename = None):
         try:
             tree = xml.etree.ElementTree.parse(file)
         except:
-            tree = xml_etree_with_encoding(file, 'gb2312')
+            print('error: parse xml file fail: %s' % os.path.abspath(file))
 
-            if tree is None:
-                print('error: parse xml file fail: %s' % os.path.abspath(file))
+            return False
 
-                return False
+        for hash, _xpath in ((packages, 'packages/package'), (copies, 'copies/copy')):
+            for e in tree.findall('/'.join(type, _xpath)):
+                name = e.get('name')
+                dirname = e.get('dirname')
+                dest = e.get('dest')
 
-        for e in tree.findall('/'.join((type, 'packages/package'))):
-            name = e.get('name')
-            dirname = e.get('dirname')
-            dest = e.get('dest')
+                if dest in (None, '.'):
+                    dest = ''
 
-            if dest in (None, '.'):
-                dest = ''
+                if name and dirname:
+                    name = name.strip().replace('\\', '/')
+                    dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip().replace('\\', '/')))
+                    dest = dest.strip().replace('\\', '/')
 
-            if name and dirname:
-                name = name.strip().replace('\\', '/')
-                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip().replace('\\', '/')))
-                dest = dest.strip().replace('\\', '/')
+                    if os.path.isdir(dirname):
+                        if name not in hash:
+                            hash[name] = collections.OrderedDict()
 
-                if os.path.isdir(dirname):
-                    if name not in packages:
-                        packages[name] = collections.OrderedDict()
+                        with builtin_os.chdir(dirname) as chdir:
+                            for element in e.findall('file'):
+                                element_name = element.get('name')
 
-                    with builtin_os.chdir(dirname) as chdir:
-                        for element in e.findall('file'):
-                            element_name = element.get('name')
+                                if element_name:
+                                    element_name = element_name.strip()
 
-                            if element_name:
-                                element_name = element_name.strip()
+                                    if dirname not in hash[name]:
+                                        hash[name][dirname] = collections.OrderedDict()
 
-                                if dirname not in packages[name]:
-                                    packages[name][dirname] = collections.OrderedDict()
+                                    if dest not in hash[name][dirname]:
+                                        hash[name][dirname][dest] = []
 
-                                if dest not in packages[name][dirname]:
-                                    packages[name][dirname][dest] = []
+                                    found = False
 
-                                if os.path.isfile(element_name):
-                                    packages[name][dirname][dest].append(element_name)
-                                elif os.path.isdir(element_name):
-                                    for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                        if os.path.isfile(filename):
-                                            packages[name][dirname][dest].append(filename)
-                                else:
-                                    for filename in glob.iglob(element_name, recursive = True):
-                                        if os.path.isfile(filename):
-                                            packages[name][dirname][dest].append(filename)
-                                        else:
-                                            for _filename in glob.iglob(os.path.join(filename, '**/*'), recursive = True):
-                                                if os.path.isfile(_filename):
-                                                    packages[name][dirname][dest].append(_filename)
+                                    for path in glob.iglob(element_name):
+                                        found = True
 
-                        for element in e.findall('ignore'):
-                            element_name = element.get('name')
-
-                            if element_name:
-                                element_name = element_name.strip()
-
-                                if dirname in packages[name]:
-                                    if dest in packages[name][dirname]:
-                                        if os.path.isfile(element_name):
-                                            if element_name in packages[name][dirname][dest]:
-                                                packages[name][dirname][dest].remove(element_name)
-                                        elif os.path.isdir(element_name):
-                                            for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
+                                        if os.path.isfile(path):
+                                            hash[name][dirname][dest].append(path)
+                                        elif os.path.isdir(path):
+                                            for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
                                                 if os.path.isfile(filename):
-                                                    if filename in packages[name][dirname]:
-                                                        packages[name][dirname][dest].remove(filename)
+                                                    hash[name][dirname][dest].append(filename)
                                         else:
-                                            for filename in glob.iglob(element_name, recursive = True):
-                                                if os.path.isfile(filename):
-                                                    if filename in packages[name][dirname]:
-                                                        packages[name][dirname][dest].remove(filename)
+                                            pass
+
+                                    if not found:
+                                        print('no such file or directory: %s' % element_name)
+
+                            for element in e.findall('ignore'):
+                                element_name = element.get('name')
+
+                                if element_name:
+                                    element_name = element_name.strip()
+
+                                    if dirname in hash[name]:
+                                        if dest in hash[name][dirname]:
+                                            for path in glob.iglob(element_name):
+                                                if os.path.isfile(path):
+                                                    if path in hash[name][dirname][dest]:
+                                                        hash[name][dirname][dest].remove(path)
+                                                elif os.path.isdir(path):
+                                                    for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
+                                                        if os.path.isfile(filename):
+                                                            if filename in hash[name][dirname][dest]:
+                                                                hash[name][dirname][dest].remove(filename)
                                                 else:
-                                                    for _filename in glob.iglob(os.path.join(filename, '**/*'), recursive = True):
-                                                        if os.path.isfile(_filename):
-                                                            packages[name][dirname][dest].append(_filename)
-
-                else:
-                    print('no such directory: %s' % dirname)
-
-        for e in tree.findall('/'.join((type, 'copies/copy'))):
-            name = e.get('name')
-            dirname = e.get('dirname')
-            dest = e.get('dest')
-
-            if dest in (None, '.'):
-                dest = ''
-
-            if name and dirname:
-                name = name.strip().replace('\\', '/')
-                dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip().replace('\\', '/')))
-                dest = dest.strip().replace('\\', '/')
-
-                if os.path.isdir(dirname):
-                    if name not in copies:
-                        copies[name] = collections.OrderedDict()
-
-                    with builtin_os.chdir(dirname) as chdir:
-                        for element in e.findall('file'):
-                            element_name = element.get('name')
-
-                            if element_name:
-                                element_name = element_name.strip()
-
-                                if dirname not in copies[name]:
-                                    copies[name][dirname] = collections.OrderedDict()
-
-                                if dest not in copies[name][dirname]:
-                                    copies[name][dirname][dest] = []
-
-                                if os.path.isfile(element_name):
-                                    copies[name][dirname][dest].append(element_name)
-                                elif os.path.isdir(element_name):
-                                    for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                        if os.path.isfile(filename):
-                                            copies[name][dirname][dest].append(filename)
-                                else:
-                                    for filename in glob.iglob(element_name, recursive = True):
-                                        if os.path.isfile(filename):
-                                            copies[name][dirname][dest].append(filename)
-                                        else:
-                                            for _filename in glob.iglob(os.path.join(filename, '**/*'), recursive = True):
-                                                if os.path.isfile(_filename):
-                                                    copies[name][dirname][dest].append(_filename)
-
-                        for element in e.findall('ignore'):
-                            element_name = element.get('name')
-
-                            if element_name:
-                                element_name = element_name.strip()
-
-                                if dirname in copies[name]:
-                                    if dest in copies[name][dirname]:
-                                        if os.path.isfile(element_name):
-                                            if element_name in copies[name][dirname][dest]:
-                                                copies[name][dirname][dest].remove(element_name)
-                                        elif os.path.isdir(element_name):
-                                            for filename in glob.iglob(os.path.join(element_name, '**/*'), recursive = True):
-                                                if os.path.isfile(filename):
-                                                    if filename in copies[name][dirname]:
-                                                        copies[name][dirname][dest].remove(filename)
-                                        else:
-                                            for filename in glob.iglob(element_name, recursive = True):
-                                                if os.path.isfile(filename):
-                                                    if filename in copies[name][dirname]:
-                                                        copies[name][dirname][dest].remove(filename)
-                                                else:
-                                                    for _filename in glob.iglob(os.path.join(filename, '**/*'), recursive = True):
-                                                        if os.path.isfile(_filename):
-                                                            copies[name][dirname][dest].append(_filename)
-                else:
-                    print('no such directory: %s' % dirname)
+                                                    pass
+                    else:
+                        print('no such directory: %s' % dirname)
 
     for name, dirname_info in packages.items():
         try:

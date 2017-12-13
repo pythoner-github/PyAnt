@@ -339,10 +339,10 @@ class maven:
                         filename = '%s.java' % m.string[m.end():].replace('.', '/')
                         file = None
 
-                        if os.path.isfile(builtin_os.join('src/test/java', filename)):
-                            file = os.path.abspath(builtin_os.join('src/test/java', filename))
+                        if os.path.isfile(os.path.join('src/test/java', filename)):
+                            file = os.path.abspath(os.path.join('src/test/java', filename))
                         else:
-                            for name in glob.iglob(builtin_os.join('**', filename), recursive = True):
+                            for name in glob.iglob(os.path.join('**', filename), recursive = True):
                                 file = os.path.abspath(name)
 
                                 if name.startswith('src/'):
@@ -543,7 +543,7 @@ class maven:
         if os.path.isfile(path):
             return self.artifactid(os.path.dirname(path))
         elif os.path.isdir(path):
-            if os.path.isfile(builtin_os.join(path, 'pom.xml')):
+            if os.path.isfile(os.path.join(path, 'pom.xml')):
                 try:
                     xmlns = 'http://maven.apache.org/POM/4.0.0'
                     xml.etree.ElementTree.register_namespace('', xmlns)
@@ -552,7 +552,7 @@ class maven:
                         'ns': xmlns
                     }
 
-                    tree = xml.etree.ElementTree.parse(builtin_os.join(path, 'pom.xml'))
+                    tree = xml.etree.ElementTree.parse(os.path.join(path, 'pom.xml'))
                     e = tree.find('ns:artifactId', namespace)
 
                     if e is not None:
@@ -583,7 +583,7 @@ class maven:
 
         map = {}
 
-        if os.path.isfile(builtin_os.join(dirname, 'pom.xml')):
+        if os.path.isfile(os.path.join(dirname, 'pom.xml')):
             with builtin_os.chdir(dirname) as chdir:
                 try:
                     xmlns = 'http://maven.apache.org/POM/4.0.0'
@@ -699,7 +699,7 @@ class maven:
 
             for module, path in modules.items():
                 element = xml.etree.ElementTree.Element('{%s}module' % namespace['ns'])
-                element.text = builtin_os.join('..', path)
+                element.text = '/'.join(('..', path))
                 e.append(element)
 
             tree.write('pom.xml', encoding = 'utf-8', xml_declaration= True)

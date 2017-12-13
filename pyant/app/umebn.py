@@ -7,7 +7,7 @@ from pyant.builtin import os as builtin_os
 
 __all__ = ['update', 'compile', 'package']
 
-REPOS = builtin_os.join(const.SSH_GIT, 'umebn')
+REPOS = os.path.join(const.SSH_GIT, 'umebn')
 
 ARTIFACT_REPOS = {
     'snapshot'  : 'umebn-snapshot-generic',
@@ -61,9 +61,9 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
         dirname = 'build'
 
     if name:
-        path = builtin_os.join(name, dirname)
+        path = os.path.join(name, dirname)
     else:
-        path = builtin_os.join(os.path.basename(REPOS), dirname)
+        path = os.path.join(os.path.basename(REPOS), dirname)
 
     if os.path.isdir(path):
         with builtin_os.chdir(path) as chdir:

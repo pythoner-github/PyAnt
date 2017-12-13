@@ -12,18 +12,18 @@ from pyant.builtin import os as builtin_os
 __all__ = ['update', 'compile', 'package']
 
 REPOS = collections.OrderedDict([
-    ('interface', builtin_os.join(const.SSH_GIT, 'U31R22_INTERFACE')),
-    ('platform' , builtin_os.join(const.SSH_GIT, 'U31R22_PLATFORM')),
-    ('necommon' , builtin_os.join(const.SSH_GIT, 'U31R22_NECOMMON')),
-    ('e2e'      , builtin_os.join(const.SSH_GIT, 'U31R22_E2E')),
-    ('uca'      , builtin_os.join(const.SSH_GIT, 'U31R22_UCA')),
-    ('xmlfile'  , builtin_os.join(const.SSH_GIT, 'U31R22_NBI_XMLFILE')),
-    ('nbi'      , builtin_os.join(const.SSH_GIT, 'U31R22_NBI')),
-    ('sdh'      , builtin_os.join(const.SSH_GIT, 'U31R22_SDH')),
-    ('wdm'      , builtin_os.join(const.SSH_GIT, 'U31R22_WDM')),
-    ('ptn'      , builtin_os.join(const.SSH_GIT, 'U31R22_PTN')),
-    ('ptn2'     , builtin_os.join(const.SSH_GIT, 'U31R22_PTN2')),
-    ('ip'       , builtin_os.join(const.SSH_GIT, 'U31R22_IP'))
+    ('interface', os.path.join(const.SSH_GIT, 'U31R22_INTERFACE')),
+    ('platform' , os.path.join(const.SSH_GIT, 'U31R22_PLATFORM')),
+    ('necommon' , os.path.join(const.SSH_GIT, 'U31R22_NECOMMON')),
+    ('e2e'      , os.path.join(const.SSH_GIT, 'U31R22_E2E')),
+    ('uca'      , os.path.join(const.SSH_GIT, 'U31R22_UCA')),
+    ('xmlfile'  , os.path.join(const.SSH_GIT, 'U31R22_NBI_XMLFILE')),
+    ('nbi'      , os.path.join(const.SSH_GIT, 'U31R22_NBI')),
+    ('sdh'      , os.path.join(const.SSH_GIT, 'U31R22_SDH')),
+    ('wdm'      , os.path.join(const.SSH_GIT, 'U31R22_WDM')),
+    ('ptn'      , os.path.join(const.SSH_GIT, 'U31R22_PTN')),
+    ('ptn2'     , os.path.join(const.SSH_GIT, 'U31R22_PTN2')),
+    ('ip'       , os.path.join(const.SSH_GIT, 'U31R22_IP'))
 ])
 
 REPOS_DEVTOOLS = const.SSH_GIT
@@ -68,7 +68,7 @@ def compile_base(name = None, cmd = None):
                     return False
 
         for http in REPOS.values():
-            path = builtin_os.join(os.path.basename(http), 'code/build/thirdparty')
+            path = os.path.join(os.path.basename(http), 'code/build/thirdparty')
 
             if os.path.isdir(path):
                 with builtin_os.chdir(path) as chdir:
@@ -97,7 +97,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = Non
             else:
                 dirname = 'code/build'
 
-        path = builtin_os.join(os.path.basename(REPOS[name]), dirname)
+        path = os.path.join(os.path.basename(REPOS[name]), dirname)
 
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:
@@ -142,18 +142,18 @@ def package(version, *arg):
 
         if type in ('lct'):
             bases = (
-                builtin_os.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_en.tar.gz'),
-                builtin_os.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_zh.tar.gz')
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_en.tar.gz'),
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_zh.tar.gz')
             )
         else:
             bases = ([
-                builtin_os.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
-                builtin_os.join(ARTIFACT_REPOS['release'], 'UEP/TYPES/%s.tar.gz' % type)
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/TYPES/%s.tar.gz' % type)
             ],)
 
         for base_list in bases:
             if not build.artifactory(build.package_home(version),
-                builtin_os.join(generic_path, version), base_list, suffix):
+                os.path.join(generic_path, version), base_list, suffix):
                 return False
 
         return True
@@ -164,14 +164,14 @@ def package(version, *arg):
 
 def update_devtools(branch = None):
     if sys.platform == 'linux':
-        url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_LINUX')
+        url = os.path.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_LINUX')
     elif sys.platform == 'sunos':
-        url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_SOLARIS')
+        url = os.path.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_SOLARIS')
     else:
         if os.environ.get('X64') == '1':
-            url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS-x64')
+            url = os.path.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS-x64')
         else:
-            url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS')
+            url = os.path.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS')
 
     path = 'DEVTOOLS'
 
@@ -190,53 +190,53 @@ def environ(lang = None):
             path = os.path.basename(REPOS['interface'])
 
             if os.path.isdir(path):
-                os.environ['INTERFACE_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                os.environ['INTERFACE_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('PLATFORM_OUTPUT_HOME'):
             path = os.path.basename(REPOS['platform'])
 
             if os.path.isdir(path):
-                os.environ['PLATFORM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                os.environ['PLATFORM_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('NECOMMON_OUTPUT_HOME'):
             path = os.path.basename(REPOS['necommon'])
 
             if os.path.isdir(path):
-                os.environ['NECOMMON_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                os.environ['NECOMMON_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('E2E_OUTPUT_HOME'):
             path = os.path.basename(REPOS['e2e'])
 
             if os.path.isdir(path):
-                os.environ['E2E_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                os.environ['E2E_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('UCA_OUTPUT_HOME'):
             path = os.path.basename(REPOS['uca'])
 
             if os.path.isdir(path):
-                os.environ['UCA_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                os.environ['UCA_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('NAF_OUTPUT_HOME'):
             path = os.path.basename(REPOS['nbi'])
 
             if os.path.isdir(path):
-                os.environ['NAF_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                os.environ['NAF_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('SDH_OUTPUT_HOME'):
             path = os.path.basename(REPOS['sdh'])
 
             if os.path.isdir(path):
-                os.environ['SDH_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                os.environ['SDH_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('WDM_OUTPUT_HOME'):
             path = os.path.basename(REPOS['wdm'])
 
             if os.path.isdir(path):
-                os.environ['WDM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                os.environ['WDM_OUTPUT_HOME'] = os.path.join(os.path.abspath(path), 'code_c/build/output')
 
 def expand_filename(version, dirname, filename, type):
     dst = filename
-    name = builtin_os.join(dirname, filename)
+    name = os.path.join(dirname, filename)
 
     dst = dst.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
 

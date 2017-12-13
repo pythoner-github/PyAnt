@@ -11,13 +11,13 @@ from pyant.builtin import os as builtin_os
 __all__ = ['update', 'compile', 'package']
 
 REPOS = collections.OrderedDict([
-    ('u3_interface'     , builtin_os.join(const.SSH_GIT, 'U31R22_INTERFACE')),
-    ('sdn_interface'    , builtin_os.join(const.SSH_GIT, 'stn/sdn_interface')),
-    ('sdn_framework'    , builtin_os.join(const.SSH_GIT, 'stn/sdn_framework')),
-    ('sdn_application'  , builtin_os.join(const.SSH_GIT, 'stn/sdn_application')),
-    ('sdn_tunnel'       , builtin_os.join(const.SSH_GIT, 'stn/sdn_tunnel')),
-    ('SPTN-E2E'         , builtin_os.join(const.SSH_GIT, 'stn/SPTN-E2E')),
-    ('CTR-ICT'          , builtin_os.join(const.SSH_GIT, 'stn/CTR-ICT'))
+    ('u3_interface'     , os.path.join(const.SSH_GIT, 'U31R22_INTERFACE')),
+    ('sdn_interface'    , os.path.join(const.SSH_GIT, 'stn/sdn_interface')),
+    ('sdn_framework'    , os.path.join(const.SSH_GIT, 'stn/sdn_framework')),
+    ('sdn_application'  , os.path.join(const.SSH_GIT, 'stn/sdn_application')),
+    ('sdn_tunnel'       , os.path.join(const.SSH_GIT, 'stn/sdn_tunnel')),
+    ('SPTN-E2E'         , os.path.join(const.SSH_GIT, 'stn/SPTN-E2E')),
+    ('CTR-ICT'          , os.path.join(const.SSH_GIT, 'stn/CTR-ICT'))
 ])
 
 ARTIFACT_REPOS = {
@@ -78,9 +78,9 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
                 dirname = 'code/build'
 
         if name == 'u3_interface':
-            path = builtin_os.join('u3_interface', dirname)
+            path = os.path.join('u3_interface', dirname)
         else:
-            path = builtin_os.join(os.path.basename(REPOS[name]), dirname)
+            path = os.path.join(os.path.basename(REPOS[name]), dirname)
 
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:
@@ -107,7 +107,7 @@ def package(version, *arg):
             generic_path = ARTIFACT_REPOS['alpha']
 
         return build.artifactory(build.package_home(version), generic_path,
-            builtin_os.join(ARTIFACT_REPOS['release'], 'OSCP/current.tar.gz'))
+            os.path.join(ARTIFACT_REPOS['release'], 'OSCP/current.tar.gz'))
     else:
         return False
 
@@ -115,7 +115,7 @@ def package(version, *arg):
 
 def expand_filename(version, dirname, filename, type):
     dst = filename
-    name = builtin_os.join(dirname, filename)
+    name = os.path.join(dirname, filename)
 
     if os.path.basename(name) == 'sptnconf.properties':
         if os.path.basename(dirname).endswith('_anode'):

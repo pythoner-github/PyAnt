@@ -237,7 +237,11 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
                             if platform.system().lower() in ('windows'):
                                 if os.path.splitext(filename)[-1] in ('.so', '.sh'):
-                                    continue
+                                    if os.path.splitext(filename)[-1] in ('.so'):
+                                        if 'ruby/' not in builtin_os.join(filename):
+                                            continue
+                                    else:
+                                        continue
                             else:
                                 if os.path.splitext(filename)[-1] in ('.exe', '.dll', '.bat'):
                                     continue
@@ -267,7 +271,11 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
                         if platform.system().lower() in ('windows'):
                             if os.path.splitext(filename)[-1] in ('.so', '.sh'):
-                                continue
+                                if os.path.splitext(filename)[-1] in ('.so'):
+                                    if 'ruby/' not in builtin_os.join(filename):
+                                        continue
+                                else:
+                                    continue
                         else:
                             if os.path.splitext(filename)[-1] in ('.dll', '.bat'):
                                 continue

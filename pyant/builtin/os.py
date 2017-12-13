@@ -2,7 +2,10 @@ import os
 import os.path
 import shutil
 
-__all__ = ['chdir']
+__all__ = ['join', 'chdir']
+
+def join(path, *paths):
+    return os.path.join(path, *paths).replace('\\', '/')
 
 class chdir:
     def __init__(self, path):

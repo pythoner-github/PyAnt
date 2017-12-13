@@ -206,7 +206,7 @@ def log(path = None, arg = None):
 
                         if tmp_m:
                             with builtin_os.chdir(git_home) as chdir:
-                                for file in glob.iglob(os.path.join('**', tmp_m.string[tmp_m.end():]), recursive = True):
+                                for file in glob.iglob(builtin_os.join('**', tmp_m.string[tmp_m.end():]), recursive = True):
                                     name = file
 
                         if m.group(2):
@@ -315,7 +315,7 @@ def info(path = None):
                     git_home = home(path)
 
                     if git_home:
-                        map['url'] = os.path.join(url, os.path.relpath(path, git_home))
+                        map['url'] = builtin_os.join(url, os.path.relpath(path, git_home))
                 else:
                     map['url'] = url
 
@@ -369,7 +369,7 @@ def home(path = None):
         path = os.path.dirname(path)
 
     if os.path.isdir(path):
-        if os.path.isdir(os.path.join(path, '.git')):
+        if os.path.isdir(builtin_os.join(path, '.git')):
             return path
         else:
             if os.path.dirname(path) == path:
@@ -383,4 +383,4 @@ def is_submodule(path = None):
     if not path:
         path = '.'
 
-    return os.path.isfile(os.path.join(path, '.gitmodules'))
+    return os.path.isfile(builtin_os.join(path, '.gitmodules'))

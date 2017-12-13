@@ -7,7 +7,7 @@ from pyant.builtin import os as builtin_os
 
 __all__ = ['update', 'compile', 'package']
 
-REPOS = os.path.join(const.SSH_GIT, 'sdno')
+REPOS = builtin_os.join(const.SSH_GIT, 'sdno')
 
 ARTIFACT_REPOS = {
     'snapshot'  : 'sdno-snapshot-generic',
@@ -42,13 +42,13 @@ def compile_base(name = None, cmd = None):
                         if not mvn.compile(cmd):
                             return False
                 else:
-                    print('no such directory: %s' % os.path.normpath(home))
+                    print('no such directory: %s' % builtin_os.join(home))
 
                     return False
 
         return True
     else:
-        print('no such directory: %s' % os.path.normpath(path))
+        print('no such directory: %s' % builtin_os.join(path))
 
         return False
 
@@ -61,9 +61,9 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
         dirname = 'build'
 
     if name:
-        path = os.path.join(name, dirname)
+        path = builtin_os.join(name, dirname)
     else:
-        path = os.path.join(os.path.basename(REPOS), dirname)
+        path = builtin_os.join(os.path.basename(REPOS), dirname)
 
     if os.path.isdir(path):
         with builtin_os.chdir(path) as chdir:
@@ -74,7 +74,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
 
             return mvn.compile(cmd, retry_cmd)
     else:
-        print('no such directory: %s' % os.path.normpath(path))
+        print('no such directory: %s' % builtin_os.join(path))
 
         return False
 

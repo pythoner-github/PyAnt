@@ -27,7 +27,7 @@ def check(xpath = None, ignores = None, gb2312 = False):
 
     map = collections.OrderedDict()
 
-    for file in glob.iglob(os.path.join(xpath, '**/*.java'), recursive = True):
+    for file in glob.iglob(builtin_os.join(xpath, '**/*.java'), recursive = True):
         try:
             with open(file, encoding = 'utf8') as f:
                 for line in f.readlines():
@@ -38,7 +38,7 @@ def check(xpath = None, ignores = None, gb2312 = False):
 
             map['java'].append(file)
 
-    for file in glob.iglob(os.path.join(xpath, '**/*.xml'), recursive = True):
+    for file in glob.iglob(builtin_os.join(xpath, '**/*.xml'), recursive = True):
         found = False
 
         unix_file = file.replace('\\', '/')
@@ -137,12 +137,12 @@ def package(version, xpath = None, type = None, expand_filename = None):
         try:
             tree = xml.etree.ElementTree.parse(file)
         except:
-            print('error: parse xml file fail: %s' % os.path.abspath(file))
+            print('error: parse xml file fail: %s' % builtin_os.abspath(file))
 
             return False
 
         for hash, _xpath in ((packages, 'packages/package'), (copies, 'copies/copy')):
-            for e in tree.findall('/'.join((type, _xpath))):
+            for e in tree.findall(builtin_os.join(type, _xpath)):
                 name = e.get('name')
                 dirname = e.get('dirname')
                 dest = e.get('dest')
@@ -152,7 +152,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
                 if name and dirname:
                     name = name.strip().replace('\\', '/')
-                    dirname = os.path.normpath(os.path.join(os.path.dirname(file), dirname.strip().replace('\\', '/')))
+                    dirname = builtin_os.join(builtin_os.join(os.path.dirname(file), dirname.strip()))
                     dest = dest.strip().replace('\\', '/')
 
                     if os.path.isdir(dirname):
@@ -180,14 +180,14 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                         if os.path.isfile(path):
                                             hash[name][dirname][dest].append(path)
                                         elif os.path.isdir(path):
-                                            for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
+                                            for filename in glob.iglob(builtin_os.join(path, '**/*'), recursive = True):
                                                 if os.path.isfile(filename):
                                                     hash[name][dirname][dest].append(filename)
                                         else:
                                             pass
 
                                     if not found:
-                                        print('no such file or directory: %s' % os.path.abspath(element_name))
+                                        print('no such file or directory: %s' % builtin_os.abspath(element_name))
 
                             for element in e.findall('ignore'):
                                 element_name = element.get('name')
@@ -206,7 +206,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                                     if path in hash[name][dirname][dest]:
                                                         hash[name][dirname][dest].remove(path)
                                                 elif os.path.isdir(path):
-                                                    for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
+                                                    for filename in glob.iglob(builtin_os.join(path, '**/*'), recursive = True):
                                                         if os.path.isfile(filename):
                                                             if filename in hash[name][dirname][dest]:
                                                                 hash[name][dirname][dest].remove(filename)
@@ -214,13 +214,13 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                                     pass
 
                                             if not found:
-                                                print('no such file or directory: %s' % os.path.abspath(element_name))
+                                                print('no such file or directory: %s' % builtin_os.abspath(element_name))
                     else:
                         print('no such directory: %s' % dirname)
 
     for name, dirname_info in packages.items():
         try:
-            zipname = os.path.join(zipfile_home, '%s_%s.zip' % (name, version))
+            zipname = builtin_os.join(zipfile_home, '%s_%s.zip' % (name, version))
 
             if not os.path.isdir(os.path.dirname(zipname)):
                 os.makedirs(os.path.dirname(zipname), exist_ok = True)
@@ -242,13 +242,13 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                 if os.path.splitext(filename)[-1] in ('.exe', '.dll', '.bat'):
                                     continue
 
-                            if os.path.isfile(os.path.join(dirname, filename)):
+                            if os.path.isfile(builtin_os.join(dirname, filename)):
                                 arcname = None
 
                                 if expand_filename:
                                     filename, arcname = expand_filename(version, dirname, filename, type)
 
-                                zip.write(os.path.join(dirname, filename), os.path.join(dest, arcname))
+                                zip.write(builtin_os.join(dirname, filename), builtin_os.join(dest, arcname))
         except Exception as e:
             print(e)
 
@@ -272,18 +272,18 @@ def package(version, xpath = None, type = None, expand_filename = None):
                             if os.path.splitext(filename)[-1] in ('.dll', '.bat'):
                                 continue
 
-                        if os.path.isfile(os.path.join(dirname, filename)):
+                        if os.path.isfile(builtin_os.join(dirname, filename)):
                             dst = filename
 
                             if expand_filename:
                                 filename, dst = expand_filename(version, dirname, filename, type)
 
-                            dst = os.path.join(zipfile_home, name, dest, dst)
+                            dst = builtin_os.join(zipfile_home, name, dest, dst)
 
                             if not os.path.isdir(os.path.dirname(dst)):
                                 os.makedirs(os.path.dirname(dst), exist_ok = True)
 
-                            shutil.copyfile(os.path.join(dirname, filename), dst)
+                            shutil.copyfile(builtin_os.join(dirname, filename), dst)
         except Exception as e:
             print(e)
 
@@ -292,7 +292,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
     return True
 
 def package_home(version):
-    return os.path.abspath(os.path.join('../zipfile', version))
+    return builtin_os.abspath(builtin_os.join('../zipfile', version))
 
 def artifactory(path, generic_path, generic_base_list = None, suffix = None):
     if os.path.isdir(path):
@@ -304,7 +304,7 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
                     generic_base_list = [generic_base_list]
 
                 for generic_base_file in generic_base_list:
-                    artifact_path = os.path.join(const.ARTIFACT_HTTP, generic_base_file)
+                    artifact_path = builtin_os.join(const.ARTIFACT_HTTP, generic_base_file)
 
                     cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_path)
                     display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (password.password(const.ARTIFACT_APIKEY), artifact_path)
@@ -325,12 +325,12 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
 
                         return False
 
-            dst = os.path.join(os.getcwd(), 'installation')
+            dst = builtin_os.join(os.getcwd(), 'installation')
 
             with builtin_os.chdir(path) as chdir:
                 try:
                     for file in glob.iglob('**/*', recursive = True):
-                        filename = os.path.join(dst, file)
+                        filename = builtin_os.join(dst, file)
 
                         if os.path.isfile(file):
                             if not os.path.isdir(os.path.dirname(filename)):
@@ -357,7 +357,7 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
 
             # upload
 
-            artifact_file = os.path.join(const.ARTIFACT_HTTP, generic_path, tarname)
+            artifact_file = builtin_os.join(const.ARTIFACT_HTTP, generic_path, tarname)
 
             cmdline = 'curl -k -u%s:%s -T "%s" "%s"' % (
                 const.ARTIFACT_USERNAME, const.ARTIFACT_ENCRYPTED_PASSWORD,

@@ -21,7 +21,7 @@ def clone(url, path = None, branch = None, arg = None):
         cmdline += ' %s' % url
 
     if path:
-        cmdline += ' %s' % os.path.normpath(path)
+        cmdline += ' %s' % builtin_os.join(path)
 
     cmd = command.command()
 
@@ -110,7 +110,7 @@ def pull(path = None, arg = None, revert = False):
             else:
                 return False
     else:
-        print('no such directory: %s' % os.path.normpath(path))
+        print('no such directory: %s' % builtin_os.join(path))
 
         return False
 
@@ -206,7 +206,7 @@ def log(path = None, arg = None):
 
                         if tmp_m:
                             with builtin_os.chdir(git_home) as chdir:
-                                for file in glob.iglob(os.path.join('**', tmp_m.string[tmp_m.end():]), recursive = True):
+                                for file in glob.iglob(builtin_os.join('**', tmp_m.string[tmp_m.end():]), recursive = True):
                                     name = file
 
                         if m.group(2):
@@ -288,7 +288,7 @@ def log(path = None, arg = None):
             else:
                 return None
     else:
-        print('no such file or directory: %s' % os.path.normpath(path))
+        print('no such file or directory: %s' % builtin_os.join(path))
 
         return None
 
@@ -315,7 +315,7 @@ def info(path = None):
                     git_home = home(path)
 
                     if git_home:
-                        map['url'] = os.path.join(url, os.path.relpath(path, git_home))
+                        map['url'] = builtin_os.join(url, os.path.relpath(path, git_home))
                 else:
                     map['url'] = url
 
@@ -353,7 +353,7 @@ def config(path = None, arg = None):
                     if m:
                         conf[m.string[:m.start()]] = m.string[m.end():]
     else:
-        print('no such directory: %s' % os.path.normpath(path))
+        print('no such directory: %s' % builtin_os.join(path))
 
     return conf
 
@@ -363,13 +363,13 @@ def home(path = None):
     if not path:
         path = '.'
 
-    path = os.path.abspath(path)
+    path = builtin_os.abspath(path)
 
     if os.path.isfile(path):
         path = os.path.dirname(path)
 
     if os.path.isdir(path):
-        if os.path.isdir(os.path.join(path, '.git')):
+        if os.path.isdir(builtin_os.join(path, '.git')):
             return path
         else:
             if os.path.dirname(path) == path:
@@ -383,4 +383,4 @@ def is_submodule(path = None):
     if not path:
         path = '.'
 
-    return os.path.isfile(os.path.join(path, '.gitmodules'))
+    return os.path.isfile(builtin_os.join(path, '.gitmodules'))

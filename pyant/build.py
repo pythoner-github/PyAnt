@@ -11,7 +11,7 @@ from pyant.builtin import os as builtin_os
 __all__ = ['build']
 
 __build_name__ = ('bn', 'stn', 'umebn', 'sdno')
-__build_command__ = ('updateall', 'update', 'compile_base', 'compile', 'package', 'check')
+__build_command__ = ('updateall', 'update', 'compile_base', 'compile', 'package', 'check', 'dashboard')
 
 def build(argv = None):
     if not argv:
@@ -105,6 +105,13 @@ def build(argv = None):
                         return app_build.check('U31R22_*', r'error_conf\.xml', True)
                     else:
                         return app_build.check()
+                elif command == 'dashboard':
+                    if arg:
+                        branch = arg[0]
+                    else:
+                        branch = None
+
+                    return build.dashboard(branch)
                 else:
                     return True
         else:
@@ -123,6 +130,7 @@ Usage:
         compile         arg: module cmd clean retry_cmd dirname lang
         package         arg: branch type
         check           arg:
+        dashboard       arg: branch
         '''
 
         print(usage.strip())

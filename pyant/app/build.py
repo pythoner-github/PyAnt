@@ -1,6 +1,7 @@
 import collections
 import datetime
 import glob
+import json
 import os
 import os.path
 import platform
@@ -11,11 +12,11 @@ import tempfile
 import xml.etree.ElementTree
 import zipfile
 
-from pyant import command, password
+from pyant import command, git, password
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ['check', 'package', 'package_home', 'artifactory', 'metric_start', 'metric_end']
+__all__ = ['check', 'package', 'package_home', 'artifactory', 'dashboard', 'metric_start', 'metric_end']
 
 def check(xpath = None, ignores = None, gb2312 = False):
     if not xpath:
@@ -388,6 +389,56 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
     else:
         return False
 
+def dashboard(paths):
+    rev = {}
+
+    if os.path.isfile('change.rev'):
+        try:
+            with open('change.rev', 'w', encoding = 'utf8') as f:
+                rev = json.load(f)
+        except Exception as e:
+            print(e)
+
+    changes = collections.OrderedDict()
+
+    for path in paths:
+        if os.path.isdir(os.path.join(path, '.git')):
+            if path in rev.keys():
+                arg = '--stat=256 %s..HEAD' % rev[path][:6]
+
+                logs = git.log(path, arg)
+
+                if logs:
+                    files = []
+
+                    for log in logs:
+                        if log['changes']:
+                            for k, v in log['changes'].items():
+                                files += v
+
+                    for file in files:
+                        dir = pom_path(os.path.dirname(file))
+
+                        if dir:
+                            if path not in changes:
+                                changes[path] = []
+
+                            if dir not in changes[path]:
+                                changes[path].append(dir)
+
+            info = git.info(path)
+
+            if info:
+                rev[path] = info['revision']
+
+    try:
+        with open('change.rev', 'w', encoding = 'utf8') as f:
+            json.dump(rev, f)
+    except Exception as e:
+        print(e)
+
+    return changes
+
 def metric_start(name, module_name = None, night = True):
     cmdline = None
 
@@ -482,3 +533,13 @@ def metric_id(name, module_name = None):
         return const.METRIC_ID_SDNO
     else:
         return None
+
+def pom_path(path):
+    if not path:
+        return None
+
+    if os.path.isdir(path):
+        if os.path.isfile(os.path.join(path, 'pom.xml')):
+            return path
+
+    return pom_path(os.path.dirname(path))

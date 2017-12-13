@@ -160,6 +160,18 @@ def package(version, *arg):
     else:
         return False
 
+def dashboard(branch = None):
+    status = True
+
+    for module in REPOS.keys():
+        if not update(module, branch):
+            status = False
+
+    if not status:
+        return False
+
+    return build.dashboard([os.path.basename(REPOS[module]) for module in REPOS.keys()])
+
 # ----------------------------------------------------------
 
 def update_devtools(branch = None):

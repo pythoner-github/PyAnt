@@ -80,3 +80,6 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
 
 def package(version, *arg):
     return True
+
+def dashboard(branch = None):
+    return True

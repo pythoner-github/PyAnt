@@ -142,7 +142,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
             return False
 
         for hash, _xpath in ((packages, 'packages/package'), (copies, 'copies/copy')):
-            for e in tree.findall('/'.join(type, _xpath)):
+            for e in tree.findall('/'.join((type, _xpath))):
                 name = e.get('name')
                 dirname = e.get('dirname')
                 dest = e.get('dest')
@@ -187,7 +187,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                             pass
 
                                     if not found:
-                                        print('no such file or directory: %s' % element_name)
+                                        print('no such file or directory: %s' % os.path.abspath(element_name))
 
                             for element in e.findall('ignore'):
                                 element_name = element.get('name')
@@ -197,7 +197,11 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
                                     if dirname in hash[name]:
                                         if dest in hash[name][dirname]:
+                                            found = False
+
                                             for path in glob.iglob(element_name):
+                                                found = True
+
                                                 if os.path.isfile(path):
                                                     if path in hash[name][dirname][dest]:
                                                         hash[name][dirname][dest].remove(path)
@@ -208,6 +212,9 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                                                 hash[name][dirname][dest].remove(filename)
                                                 else:
                                                     pass
+
+                                            if not found:
+                                                print('no such file or directory: %s' % os.path.abspath(element_name))
                     else:
                         print('no such directory: %s' % dirname)
 
@@ -232,7 +239,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                 if os.path.splitext(filename)[-1] in ('.so', '.sh'):
                                     continue
                             else:
-                                if os.path.splitext(filename)[-1] in ('.dll', '.bat'):
+                                if os.path.splitext(filename)[-1] in ('.exe', '.dll', '.bat'):
                                     continue
 
                             if os.path.isfile(os.path.join(dirname, filename)):

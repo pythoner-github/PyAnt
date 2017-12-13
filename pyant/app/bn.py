@@ -63,7 +63,7 @@ def compile_base(name = None, cmd = None):
                         if not mvn.compile(cmd):
                             return False
                 else:
-                    print('no such directory: %s' % builtin_os.join(home))
+                    print('no such directory: %s' % builtin_os.normpath(home))
 
                     return False
 
@@ -79,7 +79,7 @@ def compile_base(name = None, cmd = None):
 
         return True
     else:
-        print('no such directory: %s' % builtin_os.join(path))
+        print('no such directory: %s' % builtin_os.normpath(path))
 
         return False
 
@@ -108,7 +108,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = Non
 
                 return mvn.compile(cmd, retry_cmd, lang)
         else:
-            print('no such directory: %s' % builtin_os.join(path))
+            print('no such directory: %s' % builtin_os.normpath(path))
 
             return False
     else:

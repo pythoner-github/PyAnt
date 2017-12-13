@@ -108,7 +108,7 @@ def build(argv = None):
                 else:
                     return True
         else:
-            print('no such directory: %s' % builtin_os.join(home))
+            print('no such directory: %s' % builtin_os.normpath(home))
 
             return False
     else:

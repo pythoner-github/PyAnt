@@ -2,13 +2,16 @@ import os
 import os.path
 import shutil
 
-__all__ = ['abspath', 'join', 'chdir']
+__all__ = ['abspath', 'join', 'normpath', 'chdir']
 
 def abspath(path):
     return os.path.abspath(path).replace('\\', '/')
 
 def join(path, *paths):
-    return os.path.normpath(os.path.join(path, *paths)).replace('\\', '/')
+    return os.path.join(path, *paths).replace('\\', '/')
+
+def normpath(path):
+    return os.path.normpath(path).replace('\\', '/')
 
 class chdir:
     def __init__(self, path):

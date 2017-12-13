@@ -152,7 +152,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
                 if name and dirname:
                     name = name.strip().replace('\\', '/')
-                    dirname = builtin_os.join(builtin_os.join(os.path.dirname(file), dirname.strip()))
+                    dirname = builtin_os.normpath(builtin_os.join(os.path.dirname(file), dirname.strip()))
                     dest = dest.strip().replace('\\', '/')
 
                     if os.path.isdir(dirname):
@@ -238,7 +238,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                             if platform.system().lower() in ('windows'):
                                 if os.path.splitext(filename)[-1] in ('.so', '.sh'):
                                     if os.path.splitext(filename)[-1] in ('.so'):
-                                        if 'ruby/' not in builtin_os.join(filename):
+                                        if 'ruby/' not in builtin_os.normpath(filename):
                                             continue
                                     else:
                                         continue
@@ -272,7 +272,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                         if platform.system().lower() in ('windows'):
                             if os.path.splitext(filename)[-1] in ('.so', '.sh'):
                                 if os.path.splitext(filename)[-1] in ('.so'):
-                                    if 'ruby/' not in builtin_os.join(filename):
+                                    if 'ruby/' not in builtin_os.normpath(filename):
                                         continue
                                 else:
                                     continue

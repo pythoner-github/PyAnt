@@ -21,7 +21,7 @@ def clone(url, path = None, branch = None, arg = None):
         cmdline += ' %s' % url
 
     if path:
-        cmdline += ' %s' % builtin_os.join(path)
+        cmdline += ' %s' % builtin_os.normpath(path)
 
     cmd = command.command()
 
@@ -110,7 +110,7 @@ def pull(path = None, arg = None, revert = False):
             else:
                 return False
     else:
-        print('no such directory: %s' % builtin_os.join(path))
+        print('no such directory: %s' % builtin_os.normpath(path))
 
         return False
 
@@ -288,7 +288,7 @@ def log(path = None, arg = None):
             else:
                 return None
     else:
-        print('no such file or directory: %s' % builtin_os.join(path))
+        print('no such file or directory: %s' % builtin_os.normpath(path))
 
         return None
 
@@ -353,7 +353,7 @@ def config(path = None, arg = None):
                     if m:
                         conf[m.string[:m.start()]] = m.string[m.end():]
     else:
-        print('no such directory: %s' % builtin_os.join(path))
+        print('no such directory: %s' % builtin_os.normpath(path))
 
     return conf
 

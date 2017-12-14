@@ -425,6 +425,8 @@ def dashboard(paths):
                                 changes[path].append(dir)
 
                     changes_rev[path] = logs[-1]['revision']
+                else:
+                    changes_rev[path] = rev[path]
             else:
                 info = git.info(path)
 

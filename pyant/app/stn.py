@@ -115,7 +115,8 @@ def dashboard(branch = None):
     if not status:
         return False
 
-    print(build.dashboard([os.path.basename(REPOS[module]) for module in REPOS.keys()]))
+    for path, pom_paths in build.dashboard([os.path.basename(REPOS[module]) for module in REPOS.keys()]).items():
+        print((path, pom_paths))
 
     return True
 

@@ -125,7 +125,7 @@ def package(version, *arg):
     if not type:
         type = 'ems'
 
-    if build.package(version, None, type, expand_filename):
+    if build.package(version, None, type, expand_filename, False):
         if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
             generic_path = ARTIFACT_REPOS['snapshot']
         else:

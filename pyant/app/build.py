@@ -119,7 +119,7 @@ def check(xpath = None, ignores = None, gb2312 = False):
 #        </copies>
 #      </type>
 #    </install>
-def package(version, xpath = None, type = None, expand_filename = None):
+def package(version, xpath = None, type = None, expand_filename = None, cross_platform = True):
     if not xpath:
         xpath = '*/installdisk/installdisk.xml'
 
@@ -237,16 +237,17 @@ def package(version, xpath = None, type = None, expand_filename = None):
                             if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib', '.manifest'):
                                 continue
 
-                            if platform.system().lower() in ('windows'):
-                                if os.path.splitext(filename)[-1] in ('.so', '.sh'):
-                                    if os.path.splitext(filename)[-1] in ('.so'):
-                                        if 'ruby/' not in builtin_os.normpath(filename):
+                            if not cross_platform:
+                                if platform.system().lower() in ('windows'):
+                                    if os.path.splitext(filename)[-1] in ('.so', '.sh'):
+                                        if os.path.splitext(filename)[-1] in ('.so'):
+                                            if 'ruby/' not in builtin_os.normpath(filename):
+                                                continue
+                                        else:
                                             continue
-                                    else:
+                                else:
+                                    if os.path.splitext(filename)[-1] in ('.exe', '.dll', '.bat'):
                                         continue
-                            else:
-                                if os.path.splitext(filename)[-1] in ('.exe', '.dll', '.bat'):
-                                    continue
 
                             if os.path.isfile(os.path.join(dirname, filename)):
                                 arcname = None
@@ -271,16 +272,17 @@ def package(version, xpath = None, type = None, expand_filename = None):
                         if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib'):
                             continue
 
-                        if platform.system().lower() in ('windows'):
-                            if os.path.splitext(filename)[-1] in ('.so', '.sh'):
-                                if os.path.splitext(filename)[-1] in ('.so'):
-                                    if 'ruby/' not in builtin_os.normpath(filename):
+                        if not cross_platform:
+                            if platform.system().lower() in ('windows'):
+                                if os.path.splitext(filename)[-1] in ('.so', '.sh'):
+                                    if os.path.splitext(filename)[-1] in ('.so'):
+                                        if 'ruby/' not in builtin_os.normpath(filename):
+                                            continue
+                                    else:
                                         continue
-                                else:
+                            else:
+                                if os.path.splitext(filename)[-1] in ('.dll', '.bat'):
                                     continue
-                        else:
-                            if os.path.splitext(filename)[-1] in ('.dll', '.bat'):
-                                continue
 
                         if os.path.isfile(os.path.join(dirname, filename)):
                             dst = filename

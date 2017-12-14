@@ -105,7 +105,10 @@ def package(version, *arg):
     else:
         return False
 
-def dashboard(branch = None):
+def dashboard(name = None, branch = None, paths, *arg):
+    pass
+
+def dashboard_monitor(branch = None):
     status = True
 
     for module in REPOS.keys():
@@ -120,8 +123,8 @@ def dashboard(branch = None):
     for module, url in REPOS.items():
         path_info[os.path.basename(REPOS[module])] = module
 
-    for name, (authors, paths) in build.dashboard(path_info.keys()).items():
-        build.dashboard_jenkins_cli('stn_dashboard_%s' % path_info[name], authors, paths)
+    for path, (authors, paths) in build.dashboard_monitor(path_info.keys(), expand_dashboard).items():
+        build.dashboard_jenkins_cli('stn_dashboard_%s' % path_info[path], authors, paths)
 
     return True
 
@@ -174,3 +177,14 @@ def expand_filename(version, dirname, filename, type):
         pass
 
     return (filename, dst)
+
+def expand_dashboard(path, file):
+    file = builtin_os.normpath(file)
+
+    if path in ('U31R22_INTERFACE'):
+        if file.startswith('code/asn/'):
+            return 'sdn/build'
+        else:
+            return file
+    else:
+        return file

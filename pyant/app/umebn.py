@@ -81,5 +81,8 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
 def package(version, *arg):
     return True
 
-def dashboard(branch = None):
+def dashboard(name = None, branch = None, paths, *arg):
+    pass
+
+def dashboard_monitor(branch = None):
     return True

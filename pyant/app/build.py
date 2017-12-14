@@ -388,7 +388,7 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
 
 # path:
 #   (authors, paths)
-def dashboard(paths):
+def dashboard_monitor(paths, expand_dashboard = None):
     rev = {}
 
     if os.path.isfile('change.rev'):
@@ -420,11 +420,20 @@ def dashboard(paths):
 
                                 for k, v in log['changes'].items():
                                     for file in v:
-                                        dir = pom_path(file)
+                                        if expand_dashboard:
+                                            filenames = expand_dashboard(path, file)
 
-                                        if dir:
-                                            if dir not in _paths:
-                                                _paths.append(dir)
+                                            if isinstance(filenames, str):
+                                                filenames = (filenames,)
+                                        else:
+                                            filenames = (file,)
+
+                                        for filename in filenames:
+                                            dir = pom_path(filename)
+
+                                            if dir:
+                                                if dir not in _paths:
+                                                    _paths.append(dir)
 
                         if _paths:
                             changes[path] = (authors, _paths)
@@ -443,6 +452,15 @@ def dashboard(paths):
             json.dump(changes_rev, f)
     except Exception as e:
         print(e)
+
+    print()
+    print('*' * 40)
+
+    for path, (authors, paths) in changes.items():
+        print(path, (authors, paths))
+
+    print('*' * 40)
+    print()
 
     return changes
 

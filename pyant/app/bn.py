@@ -3,6 +3,7 @@ import datetime
 import os
 import os.path
 import platform
+import re
 import sys
 
 from pyant import git, maven
@@ -160,7 +161,10 @@ def package(version, *arg):
     else:
         return False
 
-def dashboard(branch = None):
+def dashboard(name = None, branch = None, paths, *arg):
+    pass
+
+def dashboard_monitor(branch = None):
     status = True
 
     for module in REPOS.keys():
@@ -175,8 +179,8 @@ def dashboard(branch = None):
     for module, url in REPOS.items():
         path_info[os.path.basename(REPOS[module])] = module
 
-    for name, (authors, paths) in build.dashboard(path_info.keys()).items():
-        build.dashboard_jenkins_cli('bn_dashboard_%s' % path_info[name], authors, paths)
+    for path, (authors, paths) in build.dashboard_monitor(path_info.keys(), expand_dashboard).items():
+        build.dashboard_jenkins_cli('bn_dashboard_%s' % path_info[path], authors, paths)
 
     return True
 
@@ -285,3 +289,34 @@ def expand_filename(version, dirname, filename, type):
             tree.write(name, encoding = 'utf-8', xml_declaration = True)
 
     return (filename, dst)
+
+def expand_dashboard(path, file):
+    file = builtin_os.normpath(file)
+
+    if path in ('U31R22_INTERFACE'):
+        if file.startswith('code/asn/'):
+            return ('code/finterface', 'code_c/finterface')
+        elif file.startswith('code_c/asn/sdh-wdm/qx-interface/asn/'):
+            return 'code_c/qxinterface/qxinterface'
+        elif file.startswith('code_c/asn/sdh-wdm/qx-interface/asn5800/'):
+            return 'code_c/qxinterface/qx5800'
+        elif file.startswith('code_c/asn/sdh-wdm/qx-interface/asnwdm721/'):
+            return 'code_c/qxinterface/qxwdm721'
+        elif file.startswith('code_c/asn/otntlvqx/'):
+            return 'code_c/qxinterface/qxotntlv'
+        else:
+            return file
+    elif path in ('U31R22_NBI'):
+        if file.startswith('code_c/adapters/xtncorba/corbaidl/'):
+            return ('code_c/adapters/xtncorba/corbaidl/corbaidl', 'code_c/adapters/xtncorba/corbaidl/corbaidl2')
+        elif file.startswith('code_c/adapters/xtntmfcorba/corbaidl/'):
+            return ('adapters/xtntmfcorba/corbaidl/corbaidl', 'code_c/adapters/xtntmfcorba/corbaidl/corbaidl2')
+        else:
+            return file
+    else:
+        if re.search(r'^code_c\/database\/.*\/xml\/.*\.xml$', file):
+            if os.path.isfile('code_c/database/dbscript/pom.xml'):
+                if os.path.isfile(os.path.join(os.path.dirname(file), '../pom.xml')):
+                    return ('code_c/database/dbscript', file)
+
+        return file

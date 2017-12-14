@@ -106,12 +106,14 @@ def build(argv = None):
                     else:
                         return app_build.check()
                 elif command == 'dashboard':
+                    return build.dashboard(*arg)
+                elif command == 'dashboard_monitor':
                     if arg:
                         branch = arg[0]
                     else:
                         branch = None
 
-                    return build.dashboard(branch)
+                    return build.dashboard_monitor(branch)
                 else:
                     return True
         else:
@@ -124,13 +126,14 @@ Usage:
     name command home arg
 
     command:
-        updateall       arg: branch
-        update          arg: module branch
-        compile_base    arg: module cmd
-        compile         arg: module cmd clean retry_cmd dirname lang
-        package         arg: branch type
-        check           arg:
-        dashboard       arg: branch
+        updateall           arg: branch
+        update              arg: module branch
+        compile_base        arg: module cmd
+        compile             arg: module cmd clean retry_cmd dirname lang
+        package             arg: branch type
+        check               arg:
+        dashboard           arg: module, branch, paths
+        dashboard_monitor   arg: branch
         '''
 
         print(usage.strip())

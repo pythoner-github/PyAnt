@@ -11,7 +11,7 @@ from pyant.builtin import os as builtin_os
 __all__ = ['build']
 
 __build_name__ = ('bn', 'stn', 'umebn', 'sdno')
-__build_command__ = ('updateall', 'update', 'compile_base', 'compile', 'package', 'check', 'dashboard')
+__build_command__ = ('updateall', 'update', 'compile_base', 'compile', 'package', 'check', 'dashboard', 'dashboard_monitor')
 
 def build(argv = None):
     if not argv:
@@ -132,7 +132,7 @@ Usage:
         compile             arg: module cmd clean retry_cmd dirname lang
         package             arg: branch type
         check               arg:
-        dashboard           arg: module, branch, paths
+        dashboard           arg: module, paths, branch
         dashboard_monitor   arg: branch
         '''
 

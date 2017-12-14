@@ -105,7 +105,7 @@ def package(version, *arg):
     else:
         return False
 
-def dashboard(name = None, branch = None, paths, *arg):
+def dashboard(name, paths, branch = None, *arg):
     pass
 
 def dashboard_monitor(branch = None):

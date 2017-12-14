@@ -254,7 +254,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                 if expand_filename:
                                     filename, arcname = expand_filename(version, dirname, filename, type)
 
-                                zip.write(os.path.join(dirname, filename), os.path.join(dest, arcname))
+                                zip.write(os.path.join(dirname, filename), builtin_os.normpath(os.path.join(dest, arcname)))
         except Exception as e:
             print(e)
 

@@ -28,10 +28,7 @@ ARTIFACT_REPOS = {
 
 def update(name = None, branch = None, *arg):
     if name in REPOS.keys():
-        if name == 'u3_interface':
-            path = name
-        else:
-            path = os.path.basename(REPOS[name])
+        path = os.path.basename(REPOS[name])
 
         if os.path.isdir(path):
             return git.pull(path, revert = True)
@@ -77,10 +74,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
             else:
                 dirname = 'code/build'
 
-        if name == 'u3_interface':
-            path = os.path.join('u3_interface', dirname)
-        else:
-            path = os.path.join(os.path.basename(REPOS[name]), dirname)
+        path = os.path.join(os.path.basename(REPOS[name]), dirname)
 
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:

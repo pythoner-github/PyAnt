@@ -15,7 +15,7 @@ def normpath(path):
 
 class chdir:
     def __init__(self, path):
-        self.path = abspath(path)
+        self.path = os.path.abspath(path)
         self.cwd = os.getcwd()
 
         os.chdir(self.path)
@@ -28,7 +28,7 @@ class chdir:
 
 class tmpdir:
     def __init__(self, path, create = True):
-        self.path = abspath(path)
+        self.path = os.path.abspath(path)
         self.cwd = os.getcwd()
 
         if create:

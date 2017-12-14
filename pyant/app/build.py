@@ -368,14 +368,8 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
 
             artifact_file = builtin_os.join(const.ARTIFACT_HTTP, generic_path, tarname)
 
-            cmdline = 'curl -k -u%s:%s -T "%s" "%s"' % (
-                const.ARTIFACT_USERNAME, const.ARTIFACT_ENCRYPTED_PASSWORD,
-                tarname, artifact_file
-            )
-            display_cmd = 'curl -k -u%s:%s -T "%s" "%s"' % (
-                password.password(const.ARTIFACT_USERNAME), password.password(const.ARTIFACT_ENCRYPTED_PASSWORD),
-                tarname, artifact_file
-            )
+            cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (const.ARTIFACT_APIKEY, tarname, artifact_file)
+            display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (password.password(const.ARTIFACT_APIKEY), tarname, artifact_file)
 
             cmd = command.command()
 

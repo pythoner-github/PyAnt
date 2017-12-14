@@ -63,3 +63,25 @@ if os.environ.get('METRIC_ID_SDNO'):
     METRIC_ID_SDNO = os.environ['METRIC_ID_SDNO']
 else:
     METRIC_ID_SDNO = '310001127575'
+
+# JENKINS
+
+if os.environ.get('JENKINS_HTTP'):
+    JENKINS_HTTP = os.environ['JENKINS_HTTP']
+else:
+    JENKINS_HTTP = 'http://10.8.9.80:8080'
+
+if os.environ.get('JENKINS_USERNAME'):
+    JENKINS_USERNAME = os.environ['JENKINS_USERNAME']
+else:
+    JENKINS_USERNAME = 'admin'
+
+if os.environ.get('JENKINS_PASSWORD'):
+    JENKINS_PASSWORD = os.environ['JENKINS_PASSWORD']
+else:
+    JENKINS_PASSWORD = 'admin-1234'
+
+if os.environ.get('JENKINS_CLI'):
+    JENKINS_CLI = os.environ['JENKINS_CLI']
+else:
+    JENKINS_CLI = '/build/jenkins/jenkins-cli.jar'

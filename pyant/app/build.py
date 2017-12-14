@@ -386,6 +386,8 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
     else:
         return False
 
+# path:
+#   (authors, paths)
 def dashboard(paths):
     rev = {}
 
@@ -401,37 +403,40 @@ def dashboard(paths):
 
     for path in paths:
         if os.path.isdir(os.path.join(path, '.git')):
-            if path in rev.keys():
-                arg = '--stat=256 %s..HEAD' % rev[path][:6]
+            with builtin_os.chdir(path) as chdir:
+                if path in rev.keys():
+                    arg = '--stat=256 %s..HEAD' % rev[path][:6]
 
-                logs = git.log(path, arg)
+                    logs = git.log(None, arg)
 
-                if logs:
-                    files = []
+                    if logs:
+                        authors = []
+                        _paths = []
 
-                    for log in logs:
-                        if log['changes']:
-                            for k, v in log['changes'].items():
-                                files += v
+                        for log in logs:
+                            if log['changes']:
+                                if log['author'] not in authors:
+                                    authors.append(log['author'])
 
-                    for file in files:
-                        dir = pom_path(os.path.dirname(os.path.join(path, file)))
+                                for k, v in log['changes'].items():
+                                    for file in v:
+                                        dir = pom_path(file)
 
-                        if dir:
-                            if path not in changes:
-                                changes[path] = []
+                                        if dir:
+                                            if dir not in _paths:
+                                                _paths.append(dir)
 
-                            if dir not in changes[path]:
-                                changes[path].append(dir)
+                        if _paths:
+                            changes[path] = (authors, _paths)
 
-                    changes_rev[path] = logs[-1]['revision']
+                        changes_rev[path] = logs[-1]['revision']
+                    else:
+                        changes_rev[path] = rev[path]
                 else:
-                    changes_rev[path] = rev[path]
-            else:
-                info = git.info(path)
+                    info = git.info()
 
-                if info:
-                    changes_rev[path] = info['revision']
+                    if info:
+                        changes_rev[path] = info['revision']
 
     try:
         with open('change.rev', 'w', encoding = 'utf8') as f:
@@ -440,6 +445,20 @@ def dashboard(paths):
         print(e)
 
     return changes
+
+def dashboard_jenkins_cli(jobname, paths, authors):
+    cmdline = 'java -jar "%s" -s %s build --username %s --password %s "%s" -p paths="%s" -p authors="%s"' % (
+        const.JENKINS_CLI, const.JENKINS_HTTP, const.JENKINS_USERNAME, const.JENKINS_PASSWORD,
+        jobname, ','.join(paths), ','.join(authors))
+
+    display_cmd = 'java -jar "%s" -s %s build --username %s --password %s "%s" -p paths="%s" -p authors="%s"' % (
+        const.JENKINS_CLI, const.JENKINS_HTTP, password.password(const.JENKINS_USERNAME), password.password(const.JENKINS_PASSWORD),
+        jobname, ','.join(paths), ','.join(authors))
+
+    cmd = command.command()
+
+    for line in cmd.command(cmdline, display_cmd = display_cmd):
+        print(line)
 
 def metric_start(name, module_name = None, night = True):
     cmdline = None

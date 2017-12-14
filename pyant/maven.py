@@ -345,7 +345,7 @@ class maven:
                             for name in glob.iglob(os.path.join('**', filename), recursive = True):
                                 file = os.path.abspath(name)
 
-                                if name.startswith('src/'):
+                                if builtin_os.normpath(name).startswith('src/'):
                                     break
 
                         if file:

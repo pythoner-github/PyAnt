@@ -391,12 +391,13 @@ def dashboard(paths):
 
     if os.path.isfile('change.rev'):
         try:
-            with open('change.rev', 'w', encoding = 'utf8') as f:
+            with open('change.rev', encoding = 'utf8') as f:
                 rev = json.load(f)
         except Exception as e:
             print(e)
 
     changes = collections.OrderedDict()
+    changes_rev = collections.OrderedDict()
 
     for path in paths:
         if os.path.isdir(os.path.join(path, '.git')):
@@ -414,7 +415,7 @@ def dashboard(paths):
                                 files += v
 
                     for file in files:
-                        dir = pom_path(os.path.dirname(file))
+                        dir = pom_path(os.path.dirname(os.path.join(path, file)))
 
                         if dir:
                             if path not in changes:
@@ -423,14 +424,16 @@ def dashboard(paths):
                             if dir not in changes[path]:
                                 changes[path].append(dir)
 
-            info = git.info(path)
+                    changes_rev[path] = logs[-1]['revision']
+            else:
+                info = git.info(path)
 
-            if info:
-                rev[path] = info['revision']
+                if info:
+                    changes_rev[path] = info['revision']
 
     try:
         with open('change.rev', 'w', encoding = 'utf8') as f:
-            json.dump(rev, f)
+            json.dump(changes_rev, f)
     except Exception as e:
         print(e)
 

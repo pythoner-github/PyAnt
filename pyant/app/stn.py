@@ -55,13 +55,13 @@ def compile_base(cmd = None):
                         if not mvn.compile(cmd):
                             return False
                 else:
-                    print('no such directory: %s' % builtin_os.normpath(home))
+                    print('no such directory: %s' % os.path.normpath(home))
 
                     return False
 
         return True
     else:
-        print('no such directory: %s' % builtin_os.normpath(path))
+        print('no such directory: %s' % os.path.normpath(path))
 
         return False
 
@@ -78,9 +78,9 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
                 dirname = 'code/build'
 
         if name == 'u3_interface':
-            path = builtin_os.join('u3_interface', dirname)
+            path = os.path.join('u3_interface', dirname)
         else:
-            path = builtin_os.join(os.path.basename(REPOS[name]), dirname)
+            path = os.path.join(os.path.basename(REPOS[name]), dirname)
 
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:
@@ -91,7 +91,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
 
                 return mvn.compile(cmd, retry_cmd)
         else:
-            print('no such directory: %s' % builtin_os.normpath(path))
+            print('no such directory: %s' % os.path.normpath(path))
 
             return False
     else:
@@ -107,7 +107,7 @@ def package(version, *arg):
             generic_path = ARTIFACT_REPOS['alpha']
 
         return build.artifactory(build.package_home(version), generic_path,
-            builtin_os.join(ARTIFACT_REPOS['release'], 'OSCP/current.tar.gz'))
+            os.path.join(ARTIFACT_REPOS['release'], 'OSCP/current.tar.gz'))
     else:
         return False
 
@@ -127,7 +127,7 @@ def dashboard(branch = None):
 
 def expand_filename(version, dirname, filename, type):
     dst = filename
-    name = builtin_os.join(dirname, filename)
+    name = os.path.join(dirname, filename)
 
     if os.path.basename(name) == 'sptnconf.properties':
         if os.path.basename(dirname).endswith('_anode'):

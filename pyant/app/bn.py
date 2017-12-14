@@ -63,12 +63,12 @@ def compile_base(name = None, cmd = None):
                         if not mvn.compile(cmd):
                             return False
                 else:
-                    print('no such directory: %s' % builtin_os.normpath(home))
+                    print('no such directory: %s' % os.path.normpath(home))
 
                     return False
 
         for http in REPOS.values():
-            path = builtin_os.join(os.path.basename(http), 'code/build/thirdparty')
+            path = os.path.join(os.path.basename(http), 'code/build/thirdparty')
 
             if os.path.isdir(path):
                 with builtin_os.chdir(path) as chdir:
@@ -79,7 +79,7 @@ def compile_base(name = None, cmd = None):
 
         return True
     else:
-        print('no such directory: %s' % builtin_os.normpath(path))
+        print('no such directory: %s' % os.path.normpath(path))
 
         return False
 
@@ -97,7 +97,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = Non
             else:
                 dirname = 'code/build'
 
-        path = builtin_os.join(os.path.basename(REPOS[name]), dirname)
+        path = os.path.join(os.path.basename(REPOS[name]), dirname)
 
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:
@@ -108,7 +108,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = Non
 
                 return mvn.compile(cmd, retry_cmd, lang)
         else:
-            print('no such directory: %s' % builtin_os.normpath(path))
+            print('no such directory: %s' % os.path.normpath(path))
 
             return False
     else:
@@ -142,18 +142,18 @@ def package(version, *arg):
 
         if type in ('lct'):
             bases = (
-                builtin_os.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_en.tar.gz'),
-                builtin_os.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_zh.tar.gz')
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_en.tar.gz'),
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_zh.tar.gz')
             )
         else:
             bases = ([
-                builtin_os.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
-                builtin_os.join(ARTIFACT_REPOS['release'], 'UEP/TYPES/%s.tar.gz' % type)
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/TYPES/%s.tar.gz' % type)
             ],)
 
         for base_list in bases:
             if not build.artifactory(build.package_home(version),
-                builtin_os.join(generic_path, version), base_list, suffix):
+                os.path.join(generic_path, version), base_list, suffix):
                 return False
 
         return True
@@ -202,53 +202,53 @@ def environ(lang = None):
             path = os.path.basename(REPOS['interface'])
 
             if os.path.isdir(path):
-                os.environ['INTERFACE_OUTPUT_HOME'] = builtin_os.join(builtin_os.abspath(path), 'code_c/build/output')
+                os.environ['INTERFACE_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('PLATFORM_OUTPUT_HOME'):
             path = os.path.basename(REPOS['platform'])
 
             if os.path.isdir(path):
-                os.environ['PLATFORM_OUTPUT_HOME'] = builtin_os.join(builtin_os.abspath(path), 'code_c/build/output')
+                os.environ['PLATFORM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('NECOMMON_OUTPUT_HOME'):
             path = os.path.basename(REPOS['necommon'])
 
             if os.path.isdir(path):
-                os.environ['NECOMMON_OUTPUT_HOME'] = builtin_os.join(builtin_os.abspath(path), 'code_c/build/output')
+                os.environ['NECOMMON_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('E2E_OUTPUT_HOME'):
             path = os.path.basename(REPOS['e2e'])
 
             if os.path.isdir(path):
-                os.environ['E2E_OUTPUT_HOME'] = builtin_os.join(builtin_os.abspath(path), 'code_c/build/output')
+                os.environ['E2E_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('UCA_OUTPUT_HOME'):
             path = os.path.basename(REPOS['uca'])
 
             if os.path.isdir(path):
-                os.environ['UCA_OUTPUT_HOME'] = builtin_os.join(builtin_os.abspath(path), 'code_c/build/output')
+                os.environ['UCA_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('NAF_OUTPUT_HOME'):
             path = os.path.basename(REPOS['nbi'])
 
             if os.path.isdir(path):
-                os.environ['NAF_OUTPUT_HOME'] = builtin_os.join(builtin_os.abspath(path), 'code_c/build/output')
+                os.environ['NAF_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('SDH_OUTPUT_HOME'):
             path = os.path.basename(REPOS['sdh'])
 
             if os.path.isdir(path):
-                os.environ['SDH_OUTPUT_HOME'] = builtin_os.join(builtin_os.abspath(path), 'code_c/build/output')
+                os.environ['SDH_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
         if not os.environ.get('WDM_OUTPUT_HOME'):
             path = os.path.basename(REPOS['wdm'])
 
             if os.path.isdir(path):
-                os.environ['WDM_OUTPUT_HOME'] = builtin_os.join(builtin_os.abspath(path), 'code_c/build/output')
+                os.environ['WDM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
 def expand_filename(version, dirname, filename, type):
     dst = filename
-    name = builtin_os.join(dirname, filename)
+    name = os.path.join(dirname, filename)
 
     dst = dst.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
 

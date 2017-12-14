@@ -233,7 +233,7 @@ class maven:
                                 m = re.search(r'^\[ERROR\]\s+.*\s+in\s+(.*?)\/target\/', tmpline)
 
                                 if m:
-                                    file = builtin_os.abspath(m.group(1))
+                                    file = os.path.abspath(m.group(1))
 
                                 if re.search(r'^\[INFO\]\s+Building\s+', tmpline):
                                     break
@@ -289,7 +289,7 @@ class maven:
         if m:
             if self.module_home and os.path.isdir(self.module_home):
                 with builtin_os.chdir(self.module_home) as chdir:
-                    file = builtin_os.abspath(m.group(1))
+                    file = os.path.abspath(m.group(1))
                     lineno = int(m.group(2))
                     message = [line]
 
@@ -339,11 +339,11 @@ class maven:
                         filename = '%s.java' % m.string[m.end():].replace('.', '/')
                         file = None
 
-                        if os.path.isfile(builtin_os.join('src/test/java', filename)):
-                            file = builtin_os.abspath(builtin_os.join('src/test/java', filename))
+                        if os.path.isfile(os.path.join('src/test/java', filename)):
+                            file = os.path.abspath(os.path.join('src/test/java', filename))
                         else:
-                            for name in glob.iglob(builtin_os.join('**', filename), recursive = True):
-                                file = builtin_os.abspath(name)
+                            for name in glob.iglob(os.path.join('**', filename), recursive = True):
+                                file = os.path.abspath(name)
 
                                 if name.startswith('src/'):
                                     break
@@ -430,7 +430,7 @@ class maven:
                         file = m.group(1).strip()
 
                     if file:
-                        file = builtin_os.abspath(file)
+                        file = os.path.abspath(file)
 
                         if not self.errors:
                             self.errors = collections.OrderedDict()
@@ -543,7 +543,7 @@ class maven:
         if os.path.isfile(path):
             return self.artifactid(os.path.dirname(path))
         elif os.path.isdir(path):
-            if os.path.isfile(builtin_os.join(path, 'pom.xml')):
+            if os.path.isfile(os.path.join(path, 'pom.xml')):
                 try:
                     xmlns = 'http://maven.apache.org/POM/4.0.0'
                     xml.etree.ElementTree.register_namespace('', xmlns)
@@ -552,7 +552,7 @@ class maven:
                         'ns': xmlns
                     }
 
-                    tree = xml.etree.ElementTree.parse(builtin_os.join(path, 'pom.xml'))
+                    tree = xml.etree.ElementTree.parse(os.path.join(path, 'pom.xml'))
                     e = tree.find('ns:artifactId', namespace)
 
                     if e is not None:
@@ -583,7 +583,7 @@ class maven:
 
         map = {}
 
-        if os.path.isfile(builtin_os.join(dirname, 'pom.xml')):
+        if os.path.isfile(os.path.join(dirname, 'pom.xml')):
             with builtin_os.chdir(dirname) as chdir:
                 try:
                     xmlns = 'http://maven.apache.org/POM/4.0.0'

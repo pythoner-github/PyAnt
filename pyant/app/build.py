@@ -175,7 +175,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
 
                                     found = False
 
-                                    for path in glob.iglob(element_name):
+                                    for path in glob.iglob(element_name, recursive = True):
                                         found = True
 
                                         if os.path.isfile(path):
@@ -183,7 +183,8 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                         elif os.path.isdir(path):
                                             for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
                                                 if os.path.isfile(filename):
-                                                    hash[name][dirname][dest].append(filename)
+                                                    if filename not in hash[name][dirname][dest]:
+                                                        hash[name][dirname][dest].append(filename)
                                         else:
                                             pass
 
@@ -200,7 +201,7 @@ def package(version, xpath = None, type = None, expand_filename = None):
                                         if dest in hash[name][dirname]:
                                             found = False
 
-                                            for path in glob.iglob(element_name):
+                                            for path in glob.iglob(element_name, recursive = True):
                                                 found = True
 
                                                 if os.path.isfile(path):

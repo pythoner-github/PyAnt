@@ -115,8 +115,13 @@ def dashboard(branch = None):
     if not status:
         return False
 
-    for name, (authors, paths) in build.dashboard([os.path.basename(REPOS[module]) for module in REPOS.keys()]).items():
-        print(name, (authors, paths))
+    path_info = collections.OrderedDict()
+
+    for module, url in REPOS.items():
+        path_info[os.path.basename(REPOS[module])] = module
+
+    for name, (authors, paths) in build.dashboard(path_info.keys()).items():
+        build.dashboard_jenkins_cli('stn_dashboard_%s' % path_info[name], authors, paths)
 
     return True
 

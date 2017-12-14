@@ -446,19 +446,22 @@ def dashboard(paths):
 
     return changes
 
-def dashboard_jenkins_cli(jobname, paths, authors):
-    cmdline = 'java -jar "%s" -s %s build --username %s --password %s "%s" -p paths="%s" -p authors="%s"' % (
+def dashboard_jenkins_cli(jobname, authors, paths):
+    cmdline = 'java -jar "%s" -s %s build --username %s --password %s "%s" -p authors="%s" -p paths="%s"' % (
         const.JENKINS_CLI, const.JENKINS_HTTP, const.JENKINS_USERNAME, const.JENKINS_PASSWORD,
-        jobname, ','.join(paths), ','.join(authors))
+        jobname, ','.join(authors), ','.join(paths))
 
-    display_cmd = 'java -jar "%s" -s %s build --username %s --password %s "%s" -p paths="%s" -p authors="%s"' % (
+    display_cmd = 'java -jar "%s" -s %s build --username %s --password %s "%s" -p authors="%s" -p paths="%s"' % (
         const.JENKINS_CLI, const.JENKINS_HTTP, password.password(const.JENKINS_USERNAME), password.password(const.JENKINS_PASSWORD),
-        jobname, ','.join(paths), ','.join(authors))
+        jobname, ','.join(authors), ','.join(paths))
 
-    cmd = command.command()
-
-    for line in cmd.command(cmdline, display_cmd = display_cmd):
+    for line in ('$ ' + display_cmd, '  in (' + os.getcwd() + ')'):
         print(line)
+
+    # cmd = command.command()
+
+    # for line in cmd.command(cmdline, display_cmd = display_cmd):
+    #    print(line)
 
 def metric_start(name, module_name = None, night = True):
     cmdline = None

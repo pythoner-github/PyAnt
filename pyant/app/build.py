@@ -16,7 +16,11 @@ from pyant import command, git, password
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ('check', 'package', 'package_home', 'artifactory', 'dashboard', 'metric_start', 'metric_end')
+__all__ = (
+    'check', 'package', 'package_home', 'artifactory',
+    'dashboard', 'dashboard_monitor', 'dashboard_jenkins_cli',
+    'metric_start', 'metric_end'
+)
 
 def check(xpath = None, ignores = None, gb2312 = False):
     if not xpath:

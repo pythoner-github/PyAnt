@@ -8,7 +8,7 @@ from pyant import git, maven
 from pyant.app import build, const
 from pyant.builtin import os as builtin_os
 
-__all__ = ('update', 'compile', 'package')
+__all__ = ('update', 'compile_base', 'compile', 'package', 'dashboard', 'dashboard_monitor')
 
 REPOS = collections.OrderedDict([
     ('u3_interface'     , builtin_os.join(const.SSH_GIT, 'U31R22_INTERFACE')),

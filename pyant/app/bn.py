@@ -168,6 +168,8 @@ def dashboard(name, paths, branch = None, *arg):
     path = os.path.basename(REPOS[name])
 
     if os.path.isdir(path):
+        environ('cpp')
+
         with builtin_os.chdir(path) as chdir:
             return build.dashboard(paths, r'error_conf\.xml', True)
     else:

@@ -106,7 +106,21 @@ def build(argv = None):
                     else:
                         return app_build.check()
                 elif command == 'dashboard':
-                    return build.dashboard(*arg)
+                    if arg:
+                        module_name = arg[0]
+                    else:
+                        module_name = None
+
+                    id = app_build.metric_start(name, module_name, False)
+
+                    if build.dashboard(*arg):
+                        app_build.metric_end(id, True)
+
+                        return True
+                    else:
+                        app_build.metric_end(id, False)
+
+                        return False
                 elif command == 'dashboard_monitor':
                     if arg:
                         branch = arg[0]

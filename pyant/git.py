@@ -7,7 +7,7 @@ import subprocess
 from pyant import command
 from pyant.builtin import os as builtin_os
 
-__all__ = ['clone', 'pull', 'log', 'info', 'config']
+__all__ = ('clone', 'pull', 'log', 'info', 'config')
 
 def clone(url, path = None, branch = None, arg = None):
     cmdline = 'git clone'
@@ -37,12 +37,12 @@ def clone(url, path = None, branch = None, arg = None):
                 branch = 'master'
 
             with builtin_os.chdir(path) as chdir:
-                cmds = [
+                cmds = (
                     'git submodule init',
                     'git submodule update',
                     'git submodule foreach git checkout %s' % branch,
                     'git submodule foreach git pull'
-                ]
+                )
 
                 for cmdline in cmds:
                     for line in cmd.command(cmdline):
@@ -93,11 +93,11 @@ def pull(path = None, arg = None, revert = False):
                         for line in cmd.command('git submodule foreach git checkout -- .'):
                             print(line)
 
-                    cmds = [
+                    cmds = (
                         'git submodule update',
                         'git submodule foreach git checkout %s' % branch,
                         'git submodule foreach git pull'
-                    ]
+                    )
 
                     for cmdline in cmds:
                         for line in cmd.command(cmdline):

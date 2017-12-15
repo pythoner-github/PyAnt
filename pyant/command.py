@@ -3,7 +3,7 @@ import os
 import time
 import subprocess
 
-__all__ = ['command']
+__all__ = ('command',)
 
 class command:
     def __init__(self):
@@ -81,8 +81,8 @@ class command:
                 self.pipe.stdin.flush()
 
     def result(self, returncode = 0):
-        if not isinstance(returncode, list):
-            returncode = [returncode]
+        if isinstance(returncode, int):
+            returncode = (returncode,)
 
         if self.pipe:
             if self.pipe.returncode in returncode:

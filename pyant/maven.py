@@ -7,7 +7,7 @@ import xml.etree.ElementTree
 from pyant import command, git
 from pyant.builtin import os as builtin_os
 
-__all__ = ['maven']
+__all__ = ('maven',)
 
 class maven:
     def __init__(self):

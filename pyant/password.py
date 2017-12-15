@@ -1,4 +1,4 @@
-__all__ = ['password']
+__all__ = ('password',)
 
 def password(string):
     return len(string) * '*'

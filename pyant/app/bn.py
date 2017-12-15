@@ -10,7 +10,7 @@ from pyant import git, maven
 from pyant.app import build, const
 from pyant.builtin import os as builtin_os
 
-__all__ = ['update', 'compile', 'package']
+__all__ = ('update', 'compile', 'package',)
 
 REPOS = collections.OrderedDict([
     ('interface', builtin_os.join(const.SSH_GIT, 'U31R22_INTERFACE')),
@@ -147,10 +147,10 @@ def package(version, *arg):
                 os.path.join(ARTIFACT_REPOS['release'], 'UEP/LCT/current_zh.tar.gz')
             )
         else:
-            bases = ([
+            bases = ((
                 os.path.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
                 os.path.join(ARTIFACT_REPOS['release'], 'UEP/TYPES/%s.tar.gz' % type)
-            ],)
+            ),)
 
         for base_list in bases:
             if not build.artifactory(build.package_home(version),

@@ -2,7 +2,7 @@ import os
 import os.path
 import shutil
 
-__all__ = ['abspath', 'join', 'normpath', 'chdir']
+__all__ = ('abspath', 'join', 'normpath', 'chdir')
 
 def abspath(path):
     return os.path.abspath(path).replace('\\', '/')

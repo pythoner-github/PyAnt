@@ -16,15 +16,15 @@ from pyant import command, git, password
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ['check', 'package', 'package_home', 'artifactory', 'dashboard', 'metric_start', 'metric_end']
+__all__ = ('check', 'package', 'package_home', 'artifactory', 'dashboard', 'metric_start', 'metric_end')
 
 def check(xpath = None, ignores = None, gb2312 = False):
     if not xpath:
         xpath = '*'
 
     if ignores:
-        if not isinstance(ignores, list):
-            ignores = [ignores]
+        if isinstance(ignores, str):
+            ignores = (ignores,)
 
     map = collections.OrderedDict()
 
@@ -312,8 +312,8 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
             if generic_base_list:
                 # download
 
-                if not isinstance(generic_base_list, list):
-                    generic_base_list = [generic_base_list]
+                if isinstance(generic_base_list, str):
+                    generic_base_list = (generic_base_list,)
 
                 for generic_base_file in generic_base_list:
                     artifact_path = builtin_os.join(const.ARTIFACT_HTTP, generic_base_file)

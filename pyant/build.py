@@ -8,7 +8,7 @@ from pyant.app import bn, stn, umebn, sdno, const
 from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
-__all__ = ['build']
+__all__ = ('build',)
 
 __build_name__ = ('bn', 'stn', 'umebn', 'sdno')
 __build_command__ = ('updateall', 'update', 'compile_base', 'compile', 'package', 'check', 'dashboard', 'dashboard_monitor')

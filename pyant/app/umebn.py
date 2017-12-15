@@ -5,7 +5,7 @@ from pyant import git, maven
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ['update', 'compile', 'package']
+__all__ = ('update', 'compile', 'package')
 
 REPOS = builtin_os.join(const.SSH_GIT, 'umebn')
 

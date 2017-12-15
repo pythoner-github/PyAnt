@@ -162,7 +162,18 @@ def package(version, *arg):
         return False
 
 def dashboard(name, paths, branch = None, *arg):
-    pass
+    if not update(name, branch):
+        return False
+
+    path = os.path.basename(REPOS[name])
+
+    if os.path.isdir(path):
+        with builtin_os.chdir(path) as chdir:
+            return build.dashboard(paths)
+    else:
+        print('no such directory: %s' % os.path.normpath(path))
+
+        return False
 
 def dashboard_monitor(branch = None):
     status = True

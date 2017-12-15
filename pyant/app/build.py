@@ -390,6 +390,9 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
     else:
         return False
 
+def dashboard(paths):
+    pass
+
 # path:
 #   (authors, paths)
 def dashboard_monitor(paths, expand_dashboard = None):

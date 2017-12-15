@@ -543,13 +543,13 @@ def dashboard_jenkins_cli(jobname, authors, paths):
         const.JENKINS_CLI, const.JENKINS_HTTP, password.password(const.JENKINS_USERNAME), password.password(const.JENKINS_PASSWORD),
         jobname, ','.join(authors), ','.join(paths))
 
-    for line in ('$ ' + display_cmd, '  in (' + os.getcwd() + ')'):
+    # for line in ('$ ' + display_cmd, '  in (' + os.getcwd() + ')'):
+    #     print(line)
+
+    cmd = command.command()
+
+    for line in cmd.command(cmdline, display_cmd = display_cmd):
         print(line)
-
-    # cmd = command.command()
-
-    # for line in cmd.command(cmdline, display_cmd = display_cmd):
-    #    print(line)
 
 def metric_start(name, module_name = None, night = True):
     cmdline = None

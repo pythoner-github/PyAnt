@@ -12,7 +12,7 @@ import tempfile
 import xml.etree.ElementTree
 import zipfile
 
-from pyant import command, git, password
+from pyant import command, git, maven, password
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
@@ -390,8 +390,71 @@ def artifactory(path, generic_path, generic_base_list = None, suffix = None):
     else:
         return False
 
-def dashboard(paths):
-    pass
+def dashboard(paths, ignores = None, gb2312 = False):
+    if isinstance(paths, str):
+        paths = tuple(path.strip() for path in paths.split(','))
+    else:
+        paths = tuple(paths)
+
+    file = os.path.join('../json', '%s.dashboard' % os.path.basename(os.getcwd()))
+
+    if os.path.isfile(file):
+        try:
+            with open(file, encoding = 'utf8') as f:
+                _paths = []
+
+                for path in json.load(f):
+                    if path not in paths:
+                        _paths.append(path)
+
+                paths = tuple(_paths) + paths
+        except Exception as e:
+            print(e)
+
+    errors = []
+
+    # compile
+
+    head('compile')
+
+    for path in paths:
+        if os.path.isdir(path):
+            with builtin_os.chdir(path) as chdir:
+                mvn = maven.maven()
+                mvn.clean()
+
+                if 'code_c/' in builtin_os.normpath(path):
+                    cmdline = 'mvn deploy -fn -U -Djobs=5'
+                    lang = 'cpp'
+                else:
+                    cmdline = 'mvn deploy -fn -U'
+                    lang = None
+
+                if not mvn.compile(cmdline, None, lang):
+                    errors.append(path)
+
+    # check
+
+    head('check')
+
+    for path in paths:
+        if os.path.isdir(path):
+            if not check(path, ignores, gb2312):
+                if path not in errors:
+                    errors.append(path)
+
+    if errors:
+        os.makedirs(os.path.dirname(file), exist_ok = True)
+
+        try:
+            with open(file, 'w', encoding = 'utf8') as f:
+                json.dump(errors, f)
+        except Exception as e:
+            print(e)
+
+        return False
+    else:
+        return True
 
 # path:
 #   (authors, paths)
@@ -592,3 +655,16 @@ def pom_path(path):
             return path
 
     return pom_path(os.path.dirname(path))
+
+def head(string):
+    print('*' * 40)
+
+    if len(string) > 38:
+        print('*' + string)
+    else:
+        size = (38 - len(string)) // 2
+
+        print('*' + ' ' * size + string + ' ' * (38 - len(string) - size) + '*')
+
+    print('*' * 40)
+    print()

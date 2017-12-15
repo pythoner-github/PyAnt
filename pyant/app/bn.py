@@ -169,7 +169,7 @@ def dashboard(name, paths, branch = None, *arg):
 
     if os.path.isdir(path):
         with builtin_os.chdir(path) as chdir:
-            return build.dashboard(paths)
+            return build.dashboard(paths, r'error_conf\.xml', True)
     else:
         print('no such directory: %s' % os.path.normpath(path))
 

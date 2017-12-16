@@ -3,6 +3,7 @@ import os
 if os.environ.get('SSH_GIT'):
     SSH_GIT = os.environ['SSH_GIT']
 else:
+    # ssh://u3build@gerrit.zte.com.cn:29418
     SSH_GIT = 'ssh://u3build@10.41.103.20:29418'
 
 # ARTIFACT
@@ -10,7 +11,8 @@ else:
 if os.environ.get('ARTIFACT_HTTP'):
     ARTIFACT_HTTP = os.environ['ARTIFACT_HTTP']
 else:
-    ARTIFACT_HTTP = 'https://artsz.zte.com.cn/artifactory'
+    # https://artsz.zte.com.cn/artifactory
+    ARTIFACT_HTTP = 'https://10.31.126.100/artifactory'
 
 if os.environ.get('ARTIFACT_APIKEY'):
     ARTIFACT_APIKEY = os.environ['ARTIFACT_APIKEY']
@@ -69,7 +71,7 @@ else:
 if os.environ.get('JENKINS_HTTP'):
     JENKINS_HTTP = os.environ['JENKINS_HTTP']
 else:
-    JENKINS_HTTP = 'http://10.8.9.80:8080'
+    JENKINS_HTTP = 'http://10.8.9.85:8080'
 
 if os.environ.get('JENKINS_USERNAME'):
     JENKINS_USERNAME = os.environ['JENKINS_USERNAME']

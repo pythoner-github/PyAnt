@@ -82,6 +82,7 @@ class maven:
             else:
                 self.set_errors(lang)
                 self.puts_errors()
+                self.sendmail()
 
                 return False
 
@@ -542,6 +543,9 @@ class maven:
 
                     print()
 
+    def sendmail(self):
+        pass
+
     def artifactid(self, path):
         if os.path.isfile(path):
             return self.artifactid(os.path.dirname(path))
@@ -639,6 +643,7 @@ class maven:
             else:
                 self.set_errors(lang)
                 self.puts_errors()
+                self.sendmail()
 
                 return False
         else:

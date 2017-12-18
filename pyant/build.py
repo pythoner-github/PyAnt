@@ -4,6 +4,7 @@ import os.path
 import sys
 import xml.etree.ElementTree
 
+from pyant import check
 from pyant.app import bn, stn, umebn, sdno, const
 from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
@@ -110,10 +111,12 @@ def build(argv = None):
 
                     return build.package(version, *arg[1:])
                 elif command == 'check':
+                    chk = check.check('U31R22_*')
+
                     if name == 'bn':
-                        return app_build.check('U31R22_*', r'error_conf\.xml', True)
+                        return chk.check(r'error_conf\.xml', True)
                     else:
-                        return app_build.check()
+                        return chk.check()
                 elif command == 'dashboard':
                     if arg:
                         module_name = arg[0]

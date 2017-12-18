@@ -6,7 +6,7 @@ import platform
 import re
 import sys
 
-from pyant import git, maven
+from pyant import check, git, maven
 from pyant.app import build, const
 from pyant.builtin import os as builtin_os
 
@@ -286,7 +286,7 @@ def expand_filename(version, dirname, filename, type):
         try:
             tree = xml.etree.ElementTree.parse(name)
         except:
-            tree = build.xml_etree_with_encoding(name, 'gb2312')
+            tree = check.xml_etree_with_encoding(name, 'gb2312')
 
         if tree is not None:
             if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml'):

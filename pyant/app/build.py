@@ -12,87 +12,15 @@ import tempfile
 import xml.etree.ElementTree
 import zipfile
 
-from pyant import command, git, maven, password
+from pyant import check, command, git, maven, password
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
 __all__ = (
-    'check', 'package', 'package_home', 'artifactory',
+    'package', 'package_home', 'artifactory',
     'dashboard', 'dashboard_monitor', 'dashboard_jenkins_cli',
     'metric_start', 'metric_end'
 )
-
-def check(xpath = None, ignores = None, gb2312 = False):
-    if not xpath:
-        xpath = '*'
-
-    if ignores:
-        if isinstance(ignores, str):
-            ignores = (ignores,)
-
-    map = collections.OrderedDict()
-
-    for file in glob.iglob(os.path.join(xpath, '**/*.java'), recursive = True):
-        try:
-            with open(file, encoding = 'utf8') as f:
-                for line in f.readlines():
-                    pass
-        except:
-            if 'java' not in map:
-                map['java'] = []
-
-            map['java'].append(file)
-
-    for file in glob.iglob(os.path.join(xpath, '**/*.xml'), recursive = True):
-        found = False
-
-        file = builtin_os.normpath(file)
-
-        for name in ('target/', 'output/'):
-            if name in file:
-                found = True
-
-                break
-
-        if found:
-            continue
-
-        if ignores:
-            found = False
-
-            for ignore in ignores:
-                if re.search(ignore, file):
-                    found = True
-
-                    break
-
-            if found:
-                continue
-
-        try:
-            xml.etree.ElementTree.parse(file)
-        except:
-            if gb2312:
-                if xml_etree_with_encoding(file, 'gb2312') is not None:
-                    continue
-
-            if 'xml' not in map:
-                map['xml'] = []
-
-            map['xml'].append(file)
-
-    if map:
-        for k, v in map.items():
-            print('encoding errors: %s' % k)
-
-            for file in v:
-                print('  %s' % file)
-
-            print()
-
-        return False
-    else:
-        return True
 
 # installdisk.xml
 #
@@ -396,7 +324,7 @@ def dashboard(paths, ignores = None, gb2312 = False):
     else:
         paths = tuple(paths)
 
-    file = os.path.join('../json', '%s.dashboard' % os.path.basename(os.getcwd()))
+    file = os.path.join('../errors', '%s.json' % os.path.basename(os.getcwd()))
 
     if os.path.isfile(file):
         try:
@@ -412,6 +340,7 @@ def dashboard(paths, ignores = None, gb2312 = False):
             print(e)
 
     errors = []
+    authors = []
 
     # compile
 
@@ -431,7 +360,14 @@ def dashboard(paths, ignores = None, gb2312 = False):
                     lang = None
 
                 if not mvn.compile(cmdline, None, lang):
-                    errors.append(path)
+                    if path not in errors:
+                        errors.append(path)
+
+                        if mvn.errors:
+                            for file, info in mvn.errors.items():
+                                if info.get('author'):
+                                    if info['author'] not in authors:
+                                        authors.append(info['author'])
 
     # check
 
@@ -439,9 +375,20 @@ def dashboard(paths, ignores = None, gb2312 = False):
 
     for path in paths:
         if os.path.isdir(path):
-            if not check(path, ignores, gb2312):
+            chk = check(path)
+            chk.check(ignores, gb2312)
+
+            if chk.errors:
                 if path not in errors:
                     errors.append(path)
+
+                    for type, file_info in chk.errors.items():
+                        for file, info in file_info.items():
+                            if info:
+                                author, *_ = info
+
+                                if author not in authors:
+                                    authors.append(author)
 
     if errors:
         os.makedirs(os.path.dirname(file), exist_ok = True)
@@ -452,8 +399,20 @@ def dashboard(paths, ignores = None, gb2312 = False):
         except Exception as e:
             print(e)
 
+        if os.environ.get('BUILD_WORKSPACE'):
+            os.makedirs(os.environ['BUILD_WORKSPACE'], exist_ok = True)
+
+            try:
+                with open(os.path.join(os.environ['BUILD_WORKSPACE'], 'authors.txt'), 'w', encoding = 'utf8') as f:
+                    f.write(','.join(authors))
+            except Exception as e:
+                print(e)
+
         return False
     else:
+        if os.path.isfile(file):
+            os.remove(file)
+
         return True
 
 # path:
@@ -602,27 +561,6 @@ def metric_end(id, status):
 
 # ----------------------------------------------------------
 
-def xml_etree_with_encoding(file, encoding = 'gb2312'):
-    tree = None
-
-    try:
-        string = None
-
-        with open(file, encoding = encoding) as f:
-            string = f.read()
-
-        if string:
-            string = string.strip()
-
-            m = re.search(r'encoding\s*=\s*(\'|")([\w-]+)(\'|")', string.splitlines()[0])
-
-            if encoding == m.group(2).strip().lower():
-                tree = xml.etree.ElementTree.ElementTree(xml.etree.ElementTree.fromstring(string))
-    except:
-        pass
-
-    return tree
-
 def metric_id(name, module_name = None):
     if name == 'bn':
         if module_name in ('interface', 'platform', 'necommon', 'uca', 'sdh', 'ptn'):
@@ -657,14 +595,15 @@ def pom_path(path):
     return pom_path(os.path.dirname(path))
 
 def head(string):
-    print('*' * 40)
+    print()
+    print('*' * 60)
 
-    if len(string) > 38:
+    if len(string) > 58:
         print('*' + string)
     else:
-        size = (38 - len(string)) // 2
+        size = (58 - len(string)) // 2
 
-        print('*' + ' ' * size + string + ' ' * (38 - len(string) - size) + '*')
+        print('*' + ' ' * size + string + ' ' * (58 - len(string) - size) + '*')
 
-    print('*' * 40)
+    print('*' * 60)
     print()

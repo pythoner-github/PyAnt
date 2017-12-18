@@ -37,16 +37,19 @@ def build(argv = None):
 
         if os.path.isdir(home):
             if os.environ.get('VERSION'):
-                version = os.environ['VERSION'].upper().replace(' ', '')
+                os.environ['VERSION'] = os.environ['VERSION'].upper().strip()
 
-                if version.endswith('_${date}'):
-                    version = version.replace('_${date}', '')
-                    os.environ['VERSION'] = '%s_%s' % (version, datetime.datetime.now().strftime('%Y%m%d'))
+                if os.environ.get('VERSION'):
+                    version = os.environ['VERSION'].replace(' ', '')
 
-                if not os.environ.get('POM_VERSION'):
-                    os.environ['POM_VERSION'] = version
+                    if version.endswith('_${date}'):
+                        version = version.replace('_${date}', '')
+                        os.environ['VERSION'] = '%s_%s' % (version, datetime.datetime.now().strftime('%Y%m%d'))
 
-                    print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
+                        if not os.environ.get('POM_VERSION'):
+                            os.environ['POM_VERSION'] = version
+
+                            print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
 
             with builtin_os.chdir(home) as chdir:
                 if name == 'bn':

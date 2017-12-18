@@ -55,7 +55,10 @@ class maven:
 
             status = self.validate(status, line)
 
-            if not self.ignore(line):
+            if retry_cmd:
+                if not self.ignore(line):
+                    print(line)
+            else:
                 print(line)
 
         if not cmd.result():
@@ -90,7 +93,7 @@ class maven:
         if re.search(r'^\$\s+', line):
             return False
 
-        if re.search(r'^\(.*\)$', line):
+        if re.search(r'^in\s+\(.*\)$', line):
             return False
 
         if re.search(r'^\[INFO\]\s+Reactor\s+Summary:$', line):

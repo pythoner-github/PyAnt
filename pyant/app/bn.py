@@ -192,8 +192,13 @@ def dashboard_monitor(branch = None):
     for module, url in REPOS.items():
         path_info[os.path.basename(REPOS[module])] = module
 
+    if os.environ.get('JOB_NAME'):
+        job_home = os.path.dirname(os.environ['JOB_NAME'])
+    else:
+        job_home = 'bn/dashboard'
+
     for path, (authors, paths) in build.dashboard_monitor(path_info.keys(), expand_dashboard).items():
-        build.dashboard_jenkins_cli(os.path.join(os.path.dirname(os.environ['JOB_NAME']), 'bn_dashboard_%s' % path_info[path]), authors, paths)
+        build.dashboard_jenkins_cli(os.path.join(job_home, 'bn_dashboard_%s' % path_info[path]), authors, paths)
 
     return True
 

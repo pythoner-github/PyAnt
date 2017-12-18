@@ -1,4 +1,5 @@
 import os
+import os.path
 
 if os.environ.get('SSH_GIT'):
     SSH_GIT = os.environ['SSH_GIT']
@@ -68,10 +69,10 @@ else:
 
 # JENKINS
 
-if os.environ.get('JENKINS_HTTP'):
-    JENKINS_HTTP = os.environ['JENKINS_HTTP']
+if os.environ.get('JENKINS_URL'):
+    JENKINS_URL = os.environ['JENKINS_URL']
 else:
-    JENKINS_HTTP = 'http://10.8.9.85:8080'
+    JENKINS_URL = 'http://10.8.9.85:8080'
 
 if os.environ.get('JENKINS_USERNAME'):
     JENKINS_USERNAME = os.environ['JENKINS_USERNAME']
@@ -86,4 +87,7 @@ else:
 if os.environ.get('JENKINS_CLI'):
     JENKINS_CLI = os.environ['JENKINS_CLI']
 else:
-    JENKINS_CLI = '/build/jenkins/jenkins-cli.jar'
+    if os.environ.get('JENKINS_HOME'):
+        JENKINS_CLI = os.path.join( os.environ['JENKINS_HOME'], 'jenkins-cli.jar')
+    else:
+        JENKINS_CLI = '/build/jenkins/jenkins-cli.jar'

@@ -536,11 +536,11 @@ def dashboard_monitor(paths, expand_dashboard = None):
 
 def dashboard_jenkins_cli(jobname, authors, paths):
     cmdline = 'java -jar "%s" -s %s build --username %s --password %s "%s" -p authors="%s" -p paths="%s"' % (
-        const.JENKINS_CLI, const.JENKINS_HTTP, const.JENKINS_USERNAME, const.JENKINS_PASSWORD,
+        const.JENKINS_CLI, const.JENKINS_URL, const.JENKINS_USERNAME, const.JENKINS_PASSWORD,
         jobname, ','.join(authors), ','.join(paths))
 
     display_cmd = 'java -jar "%s" -s %s build --username %s --password %s "%s" -p authors="%s" -p paths="%s"' % (
-        const.JENKINS_CLI, const.JENKINS_HTTP, password.password(const.JENKINS_USERNAME), password.password(const.JENKINS_PASSWORD),
+        const.JENKINS_CLI, const.JENKINS_URL, password.password(const.JENKINS_USERNAME), password.password(const.JENKINS_PASSWORD),
         jobname, ','.join(authors), ','.join(paths))
 
     # for line in ('$ ' + display_cmd, '  in (' + os.getcwd() + ')'):

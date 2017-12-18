@@ -193,7 +193,7 @@ def dashboard_monitor(branch = None):
         path_info[os.path.basename(REPOS[module])] = module
 
     for path, (authors, paths) in build.dashboard_monitor(path_info.keys(), expand_dashboard).items():
-        build.dashboard_jenkins_cli('bn_dashboard_%s' % path_info[path], authors, paths)
+        build.dashboard_jenkins_cli(os.path.join(os.path.dirname(os.environ['JOB_NAME']), 'bn_dashboard_%s' % path_info[path]), authors, paths)
 
     return True
 

@@ -48,7 +48,7 @@ def check(xpath = None, ignores = None, gb2312 = False):
 
         file = builtin_os.normpath(file)
 
-        for name in ('/target/', '/output/'):
+        for name in ('target/', 'output/'):
             if name in file:
                 found = True
 

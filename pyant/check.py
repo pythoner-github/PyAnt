@@ -1,6 +1,7 @@
 import collections
 import glob
 import os.path
+import platform
 import re
 import xml.etree.ElementTree
 
@@ -149,4 +150,38 @@ class check:
                 print()
 
     def sendmail(self):
-        pass
+        if self.errors:
+            osname = platform.system().lower()
+
+            if os.environ.get('WIN64') == '1':
+                osname += '-X64'
+
+            subject = '<CHECK 通知>文件检查失败, 请尽快处理(%s)' % osname
+
+            errors = collections.OrderedDict()
+
+            for type, file_info in self.errors.items():
+                for file, info in file_info.items():
+                    email = info['email']
+
+                    if email:
+                        if email not in errors:
+                            errors[email] = {}
+
+                        if type not in errors[email]:
+                            errors[email][type] = []
+
+                        errors[email][type].append(file)
+
+            for email, type_info in errors.items():
+                message = []
+
+                for type in sorted(type_info.keys()):
+                    message.append('<font color="red"><strong>encoding errors: %s</strong></font>:' % type)
+
+                    for file in type_info[type]:
+                        message.append('  %s' % file)
+
+                    message.append('')
+
+                smtp.sendmail(subject, email, None, '<br>\n'.join(message))

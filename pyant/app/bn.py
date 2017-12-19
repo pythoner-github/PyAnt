@@ -4,7 +4,6 @@ import os
 import os.path
 import platform
 import re
-import sys
 
 from pyant import check, git, maven
 from pyant.app import build, const
@@ -205,12 +204,12 @@ def dashboard_monitor(branch = None):
 # ----------------------------------------------------------
 
 def update_devtools(branch = None):
-    if sys.platform == 'linux':
+    if platform.system().lower() == 'linux':
         url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_LINUX')
-    elif sys.platform == 'sunos':
+    elif platform.system().lower() == 'sunos':
         url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_SOLARIS')
     else:
-        if os.environ.get('X64') == '1':
+        if os.environ.get('WIN64') == '1':
             url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS-x64')
         else:
             url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS')

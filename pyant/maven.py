@@ -1,10 +1,12 @@
 import collections
 import glob
 import os
+import platform
 import re
+import tempfile
 import xml.etree.ElementTree
 
-from pyant import command, git
+from pyant import command, git, smtp
 from pyant.builtin import os as builtin_os
 
 __all__ = ('maven',)
@@ -251,7 +253,7 @@ class maven:
                                 self.errors[file] = {
                                     'module'  : self.module_name,
                                     'logs'    : None,
-                                    'message' : {}
+                                    'message' : collections.OrderedDict()
                                 }
 
                             self.errors[file]['message'][lineno] = message
@@ -325,7 +327,7 @@ class maven:
                         self.errors[file] = {
                             'module'  : self.module_name,
                             'logs'    : None,
-                            'message' : {}
+                            'message' : collections.OrderedDict()
                         }
 
                     self.errors[file]['message'][lineno] = message
@@ -386,7 +388,7 @@ class maven:
                                 self.errors[file] = {
                                     'module'  : self.module_name,
                                     'logs'    : None,
-                                    'message' : {}
+                                    'message' : collections.OrderedDict()
                                 }
 
                             self.errors[file]['message'][lineno] = message
@@ -443,7 +445,7 @@ class maven:
                             self.errors[file] = {
                                 'module'  : self.module_name,
                                 'logs'    : None,
-                                'message' : {}
+                                'message' : collections.OrderedDict()
                             }
 
                         self.errors[file]['message'][lineno] = message
@@ -504,7 +506,7 @@ class maven:
                         self.errors[file] = {
                             'module'  : self.module_name,
                             'logs'    : None,
-                            'message' : {}
+                            'message' : collections.OrderedDict()
                         }
 
                     message.reverse()
@@ -519,7 +521,7 @@ class maven:
 
     def puts_errors(self):
         if self.errors:
-            errors = {}
+            errors = collections.OrderedDict()
 
             for file in self.errors:
                 if file:
@@ -547,7 +549,67 @@ class maven:
                     print()
 
     def sendmail(self):
-        pass
+        if self.errors:
+            osname = platform.system().lower()
+
+            if os.environ.get('WIN64') == '1':
+                osname += '-X64'
+
+            subject = '<BUILD 通知>编译失败, 请尽快处理(%s)' % osname
+
+            errors = collections.OrderedDict()
+
+            for file in self.errors:
+                if file:
+                    email = self.errors[file]['email']
+
+                    if email:
+                        if email not in errors:
+                            errors[email] = []
+
+                        message = []
+                        message.append('<font color="red"><strong>%s(%s)</strong></font>:' % (file, self.errors[file]['date']))
+                        message.append('-' * 60)
+
+                        for lineno, msg in self.errors[file]['message'].items():
+                            message.append('  lineno: %s' % lineno)
+
+                            for line in msg:
+                                message.append('  %s' % line)
+
+                            message.append('')
+
+                        message.append('')
+
+                        errors[email].append([message, self.errors[file]['logs']])
+
+            for email, info in errors.items():
+                with builtin_os.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
+                    lines = []
+                    logs = []
+
+                    for message, log in info:
+                        lines += message
+
+                        if log:
+                            if logs:
+                                logs.append('')
+                                logs.append('=' * 60)
+
+                            logs += log
+
+                    attaches = None
+
+                    if logs:
+                        try:
+                            with open('build.log', 'w', 'utf-8') as f:
+                                f.write('\n'.join(logs))
+
+                            attaches = {'build.log': 'build.log'}
+                        except Exception as e:
+                            print(e)
+
+                    smtp.sendmail(subject, email, None, '<br>\n'.join(lines), attaches)
 
     def artifactid(self, path):
         if os.path.isfile(path):

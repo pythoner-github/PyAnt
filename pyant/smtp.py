@@ -1,11 +1,15 @@
 import email.header
 import email.mime.multipart
 import email.mime.text
+import os
 import smtplib
 
 __all__ = ('sendmail',)
 
 def sendmail(subject, to_addrs, cc_addrs = None, message = None, attaches = None, html = True):
+    if not os.environ.get('SENDMAIL'):
+        return True
+
     from_addr = 'admin@zte.com.cn'
 
     msg = email.mime.multipart.MIMEMultipart()

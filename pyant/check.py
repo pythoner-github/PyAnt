@@ -162,7 +162,7 @@ class check:
 
             for type, file_info in self.errors.items():
                 for file, info in file_info.items():
-                    email = info['email']
+                    _, email, *_ = info
 
                     if email:
                         if email not in errors:

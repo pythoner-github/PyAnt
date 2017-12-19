@@ -525,6 +525,9 @@ class maven:
                 if file:
                     author = self.errors[file]['author']
 
+                    if author is None:
+                        author = ''
+
                     if author not in errors:
                         errors[author] = {}
 

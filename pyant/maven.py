@@ -617,7 +617,7 @@ class maven:
 
                     if logs:
                         try:
-                            with open('build.log', 'w', 'utf-8') as f:
+                            with open('build.log', 'w', encoding = 'utf-8') as f:
                                 f.write('\n'.join(logs))
 
                             attaches = {'build.log': 'build.log'}

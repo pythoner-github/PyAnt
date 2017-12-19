@@ -359,7 +359,7 @@ def dashboard(paths, ignores = None, gb2312 = False):
                     cmdline = 'mvn deploy -fn -U'
                     lang = None
 
-                if not mvn.compile(cmdline, None, lang):
+                if not mvn.compile(cmdline, 'mvn deploy -fn -U', lang):
                     if path not in errors:
                         errors.append(path)
 

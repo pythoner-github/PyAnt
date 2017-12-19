@@ -263,8 +263,23 @@ class maven:
                         continue
 
         if self.errors:
-            for file in self.errors:
+            for file in list(self.errors.keys()):
                 if file:
+                    found = False
+
+                    file = builtin_os.normpath(file)
+
+                    for name in ('target/', 'output/'):
+                        if name in file:
+                            found = True
+
+                            break
+
+                    if found:
+                        del self.errors[file]
+
+                        continue
+
                     artifact_id = self.artifactid(file)
 
                     if artifact_id:

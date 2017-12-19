@@ -16,21 +16,15 @@ ARTIFACT_REPOS = {
 }
 
 def update(name = None, branch = None, *arg):
-    if name:
-        path = name
-    else:
-        path = os.path.basename(REPOS)
+    path = os.path.basename(REPOS)
 
     if os.path.isdir(path):
         return git.pull(path, revert = True)
     else:
         return git.clone(REPOS, path, branch)
 
-def compile_base(name = None, cmd = None):
-    if name:
-        path = name
-    else:
-        path = os.path.basename(REPOS)
+def compile_base(cmd = None):
+    path = os.path.basename(REPOS)
 
     if os.path.isdir(path):
         with builtin_os.chdir(path) as chdir:
@@ -60,10 +54,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
     if not dirname:
         dirname = 'build'
 
-    if name:
-        path = os.path.join(name, dirname)
-    else:
-        path = os.path.join(os.path.basename(REPOS), dirname)
+    path = os.path.join(os.path.basename(REPOS), dirname)
 
     if os.path.isdir(path):
         with builtin_os.chdir(path) as chdir:

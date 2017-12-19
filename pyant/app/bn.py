@@ -51,7 +51,7 @@ def update(name = None, branch = None, *arg):
 
             return False
 
-def compile_base(name = None, cmd = None):
+def compile_base(cmd = None):
     path = os.path.basename(REPOS['platform'])
 
     if os.path.isdir(path):
@@ -84,7 +84,7 @@ def compile_base(name = None, cmd = None):
 
         return False
 
-def compile(name = None, cmd = None, clean = False, retry_cmd = None, lang = None, dirname = None, *arg):
+def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = None, lang = None, *arg):
     if isinstance(clean, str):
         if clean.lower().strip() == 'true':
             clean = True

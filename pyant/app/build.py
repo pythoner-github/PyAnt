@@ -375,7 +375,7 @@ def dashboard(paths, ignores = None, gb2312 = False):
 
     for path in paths:
         if os.path.isdir(path):
-            chk = check(path)
+            chk = check.check(path)
             chk.check(ignores, gb2312)
 
             if chk.errors:

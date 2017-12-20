@@ -643,15 +643,7 @@ class maven:
                     e = tree.find('ns:artifactId', namespace)
 
                     if e is not None:
-                        text = e.text
-
-                        if text.startswith('${prefix}'):
-                            if sys.platform == 'win32':
-                                text = text.replace('${prefix}', '')
-                            else:
-                                text = text.replace('${prefix}', 'lib')
-
-                        return text
+                        return self.artifactid_prefix(e.text.strip())
                     else:
                         return None
                 except:
@@ -684,7 +676,7 @@ class maven:
                     e = tree.find('ns:artifactId', namespace)
 
                     if e is not None:
-                        map[e.text.strip()] = os.getcwd()
+                        map[self.artifactid_prefix(e.text.strip())] = os.getcwd()
 
                     for e in tree.findall('.//ns:modules/ns:module', namespace):
                         module_path = e.text.strip()
@@ -696,6 +688,15 @@ class maven:
                     pass
 
         return map
+
+    def artifactid_prefix(self, artifactid):
+        if '${prefix}' in artifactid:
+            if platform.system().lower() == 'windows':
+                return artifactid.replace('${prefix}', '')
+            else:
+                return artifactid.replace('${prefix}', 'lib')
+        else:
+            return artifactid
 
     def retry_compile(self, cmdline, lang):
         if os.path.isfile('pom.xml'):

@@ -25,7 +25,7 @@ def update(name = None, branch = None, *arg):
 
             return True
         else:
-            git.pull(path, revert = True)
+            return git.pull(path, revert = True)
     else:
         return git.clone(REPOS, path, branch)
 

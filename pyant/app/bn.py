@@ -4,6 +4,7 @@ import os
 import os.path
 import platform
 import re
+import time
 
 from pyant import check, git, maven
 from pyant.app import build, const
@@ -40,6 +41,8 @@ def update(name = None, branch = None, *arg):
 
         if os.path.isdir(path):
             if os.path.isfile(os.path.join(path, '.git/index.lock')):
+                time.sleep(30)
+
                 return True
             else:
                 git.pull(path, revert = True)
@@ -224,6 +227,8 @@ def update_devtools(branch = None):
 
     if os.path.isdir(path):
         if os.path.isfile(os.path.join(path, '.git/index.lock')):
+            time.sleep(30)
+
             return True
         else:
             return git.pull(path, revert = True)

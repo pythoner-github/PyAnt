@@ -2,6 +2,7 @@ import collections
 import datetime
 import os.path
 import re
+import time
 import xml.etree.ElementTree
 
 from pyant import git, maven
@@ -31,7 +32,12 @@ def update(name = None, branch = None, *arg):
         path = os.path.basename(REPOS[name])
 
         if os.path.isdir(path):
-            return git.pull(path, revert = True)
+            if os.path.isfile(os.path.join(path, '.git/index.lock')):
+                time.sleep(30)
+
+                return True
+            else:
+                git.pull(path, revert = True)
         else:
             return git.clone(REPOS[name], path, branch)
     else:

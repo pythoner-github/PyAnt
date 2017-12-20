@@ -107,11 +107,24 @@ def build(argv = None):
 
                     return build.package(version, *arg[1:])
                 elif command == 'check':
-                    chk = check.check('U31R22_*')
-
                     if name == 'bn':
-                        return chk.check(r'error_conf\.xml', True)
+                        status = True
+
+                        for name in bn.REPOS.keys():
+                            if name in ('ptn2'):
+                                ignores = r'error_conf\.xml'
+                            else:
+                                ignores = None
+
+                            chk = check.check(os.path.basename(bn.REPOS[name]))
+
+                            if not chk.check(ignores, True):
+                                status = False
+
+                        return status
                     else:
+                        chk = check.check()
+
                         return chk.check()
                 elif command == 'dashboard':
                     if arg:

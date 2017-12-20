@@ -5,7 +5,7 @@ import platform
 import re
 import xml.etree.ElementTree
 
-from pyant import git
+from pyant import git, smtp
 from pyant.builtin import os as builtin_os
 
 __all__ = ('check', 'xml_etree_with_encoding')

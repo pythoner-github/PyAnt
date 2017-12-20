@@ -142,7 +142,8 @@ def log(path = None, arg = None):
             for line in cmd.command(cmdline):
                 lines.append(line)
 
-                print(line)
+                if re.search(r'^\$\s+', line.strip()) or re.search(r'^in\s+\(.*\)$', line.strip()):
+                    print(line)
 
             if cmd.result():
                 logs = []

@@ -39,7 +39,10 @@ def update(name = None, branch = None, *arg):
         path = os.path.basename(REPOS[name])
 
         if os.path.isdir(path):
-            return git.pull(path, revert = True)
+            if os.path.isfile(os.path.join(path, '.git/index.lock')):
+                return True
+            else:
+                git.pull(path, revert = True)
         else:
             return git.clone(REPOS[name], path, branch)
     else:
@@ -220,7 +223,10 @@ def update_devtools(branch = None):
     path = 'DEVTOOLS'
 
     if os.path.isdir(path):
-        return git.pull(path, revert = True)
+        if os.path.isfile(os.path.join(path, '.git/index.lock')):
+            return True
+        else:
+            return git.pull(path, revert = True)
     else:
         return git.clone(url, path, branch)
 

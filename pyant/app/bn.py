@@ -153,7 +153,7 @@ def package(version, *arg):
 
         for base_list in bases:
             if not build.artifactory(build.package_home(version),
-                os.path.join(generic_path, version), base_list, suffix):
+                os.path.join(generic_path, version.replace(' ', '')), base_list, suffix):
                 return False
 
         return True

@@ -37,20 +37,18 @@ def build(argv = None):
         os.makedirs(home, exist_ok = True)
 
         if os.path.isdir(home):
+            version = None
+
             if os.environ.get('VERSION'):
-                os.environ['VERSION'] = os.environ['VERSION'].upper().strip()
+                os.environ['VERSION'] = os.environ['VERSION'].strip()
 
                 if os.environ.get('VERSION'):
-                    version = os.environ['VERSION'].replace(' ', '')
+                    if not os.environ.get('POM_VERSION'):
+                        os.environ['POM_VERSION'] = os.environ['VERSION'].upper().replace('_${date}', '').replace(' ', '')
 
-                    if version.endswith('_${date}'):
-                        version = version.replace('_${date}', '')
-                        os.environ['VERSION'] = '%s_%s' % (version, datetime.datetime.now().strftime('%Y%m%d'))
+                        print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
 
-                        if not os.environ.get('POM_VERSION'):
-                            os.environ['POM_VERSION'] = version
-
-                            print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
+                    version = os.environ['VERSION'].replace('_${date}', datetime.datetime.now().strftime('%Y%m%d'))
 
             with builtin_os.chdir(home) as chdir:
                 if name == 'bn':
@@ -99,9 +97,7 @@ def build(argv = None):
 
                         return False
                 elif command == 'package':
-                    if os.environ.get('VERSION'):
-                        version = os.environ['VERSION']
-                    else:
+                    if not version:
                         if arg:
                             branch = arg[0]
                         else:

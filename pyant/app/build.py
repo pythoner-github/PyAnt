@@ -154,7 +154,7 @@ def package(version, xpath = None, type = None, expand_filename = None, cross_pl
 
     for name, dirname_info in packages.items():
         try:
-            zipname = os.path.join(zipfile_home, '%s_%s.zip' % (name, version))
+            zipname = os.path.join(zipfile_home, '%s_%s.zip' % (name, version.replace(' ', '')))
 
             if not os.path.isdir(os.path.dirname(zipname)):
                 os.makedirs(os.path.dirname(zipname), exist_ok = True)
@@ -236,7 +236,7 @@ def package(version, xpath = None, type = None, expand_filename = None, cross_pl
     return True
 
 def package_home(version):
-    return os.path.abspath(os.path.join('../zipfile', version))
+    return os.path.abspath(os.path.join('../zipfile', version.replace(' ', '')))
 
 def artifactory(path, generic_path, generic_base_list = None, suffix = None):
     if os.path.isdir(path):

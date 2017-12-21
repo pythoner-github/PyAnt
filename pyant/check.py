@@ -145,7 +145,7 @@ class check:
                 print('encoding errors: %s' % type)
 
                 for file, info in file_info.items():
-                    print('  %s' % file)
+                    print('  %s' % os.path.abspath(file))
 
                 print()
 
@@ -180,7 +180,7 @@ class check:
                     message.append('<font color="red"><strong>encoding errors: %s</strong></font>:' % type)
 
                     for file in type_info[type]:
-                        message.append('  %s' % file)
+                        message.append('  %s' % os.path.abspath(file))
 
                     message.append('')
 

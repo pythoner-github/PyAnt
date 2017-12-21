@@ -559,7 +559,7 @@ class maven:
                     print('=' * 30)
 
                     for file in sorted(list(errors[author].keys())):
-                        print('  %s, %s' % (file, errors[author][file]))
+                        print('  %s, %s' % (os.path.abspath(file), errors[author][file]))
 
                     print()
 
@@ -583,7 +583,7 @@ class maven:
                             errors[email] = []
 
                         message = []
-                        message.append('<font color="red"><strong>%s(%s)</strong></font>:' % (file, self.errors[file]['date']))
+                        message.append('<font color="red"><strong>%s(%s)</strong></font>:' % (os.path.abspath(file), self.errors[file]['date']))
                         message.append('-' * 60)
 
                         for lineno, msg in self.errors[file]['message'].items():

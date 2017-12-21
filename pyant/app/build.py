@@ -324,11 +324,11 @@ def dashboard(paths, ignores = None, gb2312 = False):
     else:
         paths = tuple(paths)
 
-    file = os.path.join('../errors', '%s.json' % os.path.basename(os.getcwd()))
+    filename = os.path.abspath(os.path.join('../errors', '%s.json' % os.path.basename(os.getcwd())))
 
-    if os.path.isfile(file):
+    if os.path.isfile(filename):
         try:
-            with open(file, encoding = 'utf8') as f:
+            with open(filename, encoding = 'utf8') as f:
                 _paths = []
 
                 for path in json.load(f):
@@ -391,10 +391,10 @@ def dashboard(paths, ignores = None, gb2312 = False):
                                     authors.append(author)
 
     if errors:
-        os.makedirs(os.path.dirname(file), exist_ok = True)
+        os.makedirs(os.path.dirname(filename), exist_ok = True)
 
         try:
-            with open(file, 'w', encoding = 'utf8') as f:
+            with open(filename, 'w', encoding = 'utf8') as f:
                 json.dump(errors, f)
         except Exception as e:
             print(e)
@@ -410,8 +410,8 @@ def dashboard(paths, ignores = None, gb2312 = False):
 
         return False
     else:
-        if os.path.isfile(file):
-            os.remove(file)
+        if os.path.isfile(filename):
+            os.remove(filename)
 
         return True
 

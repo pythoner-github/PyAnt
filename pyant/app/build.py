@@ -524,9 +524,9 @@ def metric_start(name, module_name = None, night = True):
                 hour = datetime.datetime.now().hour
 
                 if 0 <= hour <=8 or hour >= 22:
-                    cmdline = 'curl --data "action=buildstart&project=%s&buildtype=night&item=%s" %s' % (id, module_name, const.HTTP_METRIC)
+                    cmdline = 'curl --data "action=buildstart&project=%s&buildtype=night&item=%s" %s' % (id, module_name, const.METRIC_HTTP)
             else:
-                cmdline = 'curl --data "action=buildstart&project=%s&buildtype=CI&item=%s" %s' % (id, module_name, const.HTTP_METRIC)
+                cmdline = 'curl --data "action=buildstart&project=%s&buildtype=CI&item=%s" %s' % (id, module_name, const.METRIC_HTTP)
 
     if cmdline:
         lines = []
@@ -552,7 +552,7 @@ def metric_end(id, status):
         else:
             success = 'failed'
 
-        cmdline = 'curl --data "action=buildend&buildid=%s&buildresult=%s" %s' % (id, success, const.HTTP_METRIC)
+        cmdline = 'curl --data "action=buildend&buildid=%s&buildresult=%s" %s' % (id, success, const.METRIC_HTTP)
 
         cmd = command.command()
 

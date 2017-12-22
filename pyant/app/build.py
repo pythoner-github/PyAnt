@@ -350,6 +350,8 @@ def dashboard(paths, ignores = None, gb2312 = False):
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:
                 mvn = maven.maven()
+                mvn.notification = '<DASHBOARD_BUILD 通知>编译失败, 请尽快处理'
+
                 mvn.clean()
 
                 if 'code_c/' in builtin_os.normpath(path):

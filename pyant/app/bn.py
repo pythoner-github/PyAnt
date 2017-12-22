@@ -97,6 +97,13 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
     if name in REPOS.keys():
         environ(lang)
 
+        osname = platform.system().lower()
+
+        if os.environ.get('WIN64') == '1':
+            osname += '-X64'
+
+        notification = '<BN_BUILD 通知>编译失败, 请尽快处理(%s)' % osname
+
         if not dirname:
             if lang == 'cpp':
                 dirname = 'code_c/build'
@@ -108,6 +115,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:
                 mvn = maven.maven()
+                mvn.notification = notification
 
                 if clean:
                     mvn.clean()

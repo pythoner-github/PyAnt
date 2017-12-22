@@ -21,6 +21,7 @@ class maven:
         self.module_home = os.getcwd()
 
         self.summary = False
+        self.notification = '<BUILD 通知>编译失败, 请尽快处理'
 
     def clean(self):
         self.errors = None
@@ -565,13 +566,6 @@ class maven:
 
     def sendmail(self):
         if self.errors:
-            osname = platform.system().lower()
-
-            if os.environ.get('WIN64') == '1':
-                osname += '-X64'
-
-            subject = '<BUILD 通知>编译失败, 请尽快处理(%s)' % osname
-
             errors = collections.OrderedDict()
 
             for file in self.errors:
@@ -624,7 +618,7 @@ class maven:
                         except Exception as e:
                             print(e)
 
-                    smtp.sendmail(subject, email, None, '<br>\n'.join(lines), attaches)
+                    smtp.sendmail(self.notification, email, None, '<br>\n'.join(lines), attaches)
 
     def artifactid(self, path):
         if os.path.isfile(path):

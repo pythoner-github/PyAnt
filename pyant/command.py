@@ -50,9 +50,11 @@ class command:
             line = self.pipe.stdout.readline()
 
             if line:
-                for encoding in (locale.getpreferredencoding(False), 'utf8', 'cp936'):
+                for encoding in (locale.getpreferredencoding(False), 'cp936', 'utf8'):
                     try:
-                        yield line.decode(encoding).rstrip()
+                        string = line.decode(encoding).rstrip()
+
+                        yield string
 
                         break
                     except:

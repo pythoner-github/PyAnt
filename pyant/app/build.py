@@ -539,7 +539,7 @@ def metric_start(name, module_name = None, night = True):
             print(line)
 
         if cmd.result():
-            return ''.join(lines[2:]).strip()
+            return ''.join(lines[-1:]).strip()
         else:
             return None
     else:

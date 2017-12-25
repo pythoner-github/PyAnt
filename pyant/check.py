@@ -40,26 +40,26 @@ class check:
             self.xpath = ''
 
         self.notification = '<CHECK 通知>文件检查失败, 请尽快处理'
+        self.gb2312 = False
 
-    def check(self, ignores = None, gb2312 = False):
+    def check(self, ignores = None):
         self.errors = None
 
         self.encoding()
-        self.xml(ignores, gb2312)
+        self.xml(ignores)
 
         if self.errors:
             for type, file_info in self.errors.items():
                 for file in file_info:
-                    extend = file_info[file]
                     info = git.info(file)
 
                     if info:
                         file_info[file] = (
-                            info['author'], info['email'], info['date'], info['url'], extend
+                            info['author'], info['email'], info['date'], info['url']
                         )
                     else:
                         file_info[file] = (
-                            None, None, None, None, extend
+                            None, None, None, None
                         )
 
             self.puts_errors()
@@ -99,7 +99,7 @@ class check:
 
                 self.errors['encoding'][file] = None
 
-    def xml(self, ignores = None, gb2312 = False):
+    def xml(self, ignores = None):
         if ignores:
             if isinstance(ignores, str):
                 ignores = (ignores,)
@@ -133,7 +133,7 @@ class check:
             try:
                 xml.etree.ElementTree.parse(file)
             except:
-                if gb2312:
+                if self.gb2312:
                     if xml_etree_with_encoding(file, 'gb2312') is not None:
                         continue
 
@@ -143,22 +143,15 @@ class check:
                 if 'xml' not in self.errors:
                     self.errors['xml'] = collections.OrderedDict()
 
-                self.errors['xml'][file] = gb2312
+                self.errors['xml'][file] = None
 
     def puts_errors(self):
         if self.errors:
             for type, file_info in self.errors.items():
-                extend = None
-
-                for file, info in file_info.items():
-                    *_, extend = file_info
-
-                    break
-
                 if type in ('encoding'):
                     print('encoding errors: %s(文件编码必须为utf-8)' % type)
                 elif type in ('xml'):
-                    if extend:
+                    if self.gb2312:
                         print('encoding errors: %s(XML编码必须为utf-8或gb2312)' % type)
                     else:
                         print('encoding errors: %s(XML编码必须为utf-8)' % type)
@@ -174,11 +167,9 @@ class check:
         if self.errors:
             errors = collections.OrderedDict()
 
-            extend = None
-
             for type, file_info in self.errors.items():
                 for file, info in file_info.items():
-                    _, email, _, _, extend = info
+                    _, email, _* = info
 
                     if email:
                         if email not in errors:
@@ -196,7 +187,7 @@ class check:
                     if type in ('encoding'):
                         message.append('<font color="red"><strong>encoding errors: %s(文件编码必须为utf-8)</strong></font>:' % type)
                     elif type in ('xml'):
-                        if extend:
+                        if self.gb2312:
                             message.append('<font color="red"><strong>encoding errors: %s(XML编码必须为utf-8或gb2312)</strong></font>:' % type)
                         else:
                             message.append('<font color="red"><strong>encoding errors: %s(XML编码必须为utf-8)</strong></font>:' % type)

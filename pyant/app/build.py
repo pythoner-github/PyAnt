@@ -379,8 +379,9 @@ def dashboard(paths, ignores = None, gb2312 = False):
         if os.path.isdir(path):
             chk = check.check(path)
             chk.notification = '<DASHBOARD_CHECK 通知>文件检查失败, 请尽快处理'
+            chk.gb2312 = gb2312
 
-            chk.check(ignores, gb2312)
+            chk.check(ignores)
 
             if chk.errors:
                 if path not in errors:

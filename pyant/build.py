@@ -110,13 +110,15 @@ def build(argv = None):
                     if name == 'bn':
                         status = True
 
-                        for name in bn.REPOS.keys():
-                            if name in ('ptn2'):
+                        for _name in bn.REPOS.keys():
+                            if _name in ('ptn2'):
                                 ignores = r'error_conf\.xml'
                             else:
                                 ignores = None
 
-                            chk = check.check(os.path.basename(bn.REPOS[name]))
+                            chk = check.check(os.path.basename(bn.REPOS[_name]))
+                            chk.notification = '<%s_CHECK 通知>文件检查失败, 请尽快处理' % name.upper()
+                            chk.gb2312 = True
 
                             if not chk.check(ignores, True):
                                 status = False
@@ -124,6 +126,7 @@ def build(argv = None):
                         return status
                     else:
                         chk = check.check()
+                        chk.notification = '<%s_CHECK 通知>文件检查失败, 请尽快处理' % name.upper()
 
                         return chk.check()
                 elif command == 'dashboard':

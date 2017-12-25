@@ -50,11 +50,16 @@ class check:
         if self.errors:
             for type, file_info in self.errors.items():
                 for file in file_info:
+                    extend = file_info[file]
                     info = git.info(file)
 
                     if info:
                         file_info[file] = (
-                            info['author'], info['email'], info['date'], info['url']
+                            info['author'], info['email'], info['date'], info['url'], extend
+                        )
+                    else:
+                        file_info[file] = (
+                            None, None, None, None, extend
                         )
 
             self.puts_errors()
@@ -138,12 +143,27 @@ class check:
                 if 'xml' not in self.errors:
                     self.errors['xml'] = collections.OrderedDict()
 
-                self.errors['xml'][file] = None
+                self.errors['xml'][file] = gb2312
 
     def puts_errors(self):
         if self.errors:
             for type, file_info in self.errors.items():
-                print('encoding errors: %s' % type)
+                extend = None
+
+                for file, info in file_info.items():
+                    *_, extend = file_info
+
+                    break
+
+                if type in ('encoding'):
+                    print('encoding errors: %s(文件编码必须为utf-8)' % type)
+                elif type in ('xml'):
+                    if extend:
+                        print('encoding errors: %s(XML编码必须为utf-8或gb2312)' % type)
+                    else:
+                        print('encoding errors: %s(XML编码必须为utf-8)' % type)
+                else:
+                    print('encoding errors: %s' % type)
 
                 for file, info in file_info.items():
                     print('  %s' % os.path.abspath(file))
@@ -154,9 +174,11 @@ class check:
         if self.errors:
             errors = collections.OrderedDict()
 
+            extend = None
+
             for type, file_info in self.errors.items():
                 for file, info in file_info.items():
-                    _, email, *_ = info
+                    _, email, _, _, extend = info
 
                     if email:
                         if email not in errors:
@@ -171,7 +193,15 @@ class check:
                 message = []
 
                 for type in sorted(type_info.keys()):
-                    message.append('<font color="red"><strong>encoding errors: %s</strong></font>:' % type)
+                    if type in ('encoding'):
+                        message.append('<font color="red"><strong>encoding errors: %s(文件编码必须为utf-8)</strong></font>:' % type)
+                    elif type in ('xml'):
+                        if extend:
+                            message.append('<font color="red"><strong>encoding errors: %s(XML编码必须为utf-8或gb2312)</strong></font>:' % type)
+                        else:
+                            message.append('<font color="red"><strong>encoding errors: %s(XML编码必须为utf-8)</strong></font>:' % type)
+                    else:
+                        message.append('<font color="red"><strong>encoding errors: %s(文件编码必须为utf-8)</strong></font>:' % type)
 
                     for file in type_info[type]:
                         message.append('  %s' % os.path.abspath(file))

@@ -175,8 +175,9 @@ def package(version, *arg):
         return False
 
 def dashboard(name, paths, branch = None, *arg):
-    if not update('devtools', branch):
-        return False
+    if not os.environ.get('NOT_DASHBOARD_DEVTOOLS'):
+        if not update('devtools', branch):
+            return False
 
     if not update(name, branch):
         return False

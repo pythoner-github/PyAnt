@@ -120,7 +120,7 @@ def build(argv = None):
                             chk.notification = '<%s_CHECK 通知>文件检查失败, 请尽快处理' % name.upper()
                             chk.gb2312 = True
 
-                            if not chk.check(ignores, True):
+                            if not chk.check(ignores):
                                 status = False
 
                         return status

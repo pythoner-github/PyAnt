@@ -457,8 +457,11 @@ def dashboard_monitor(paths, expand_dashboard = None):
                                         if expand_dashboard:
                                             filenames = expand_dashboard(path, file)
 
-                                            if isinstance(filenames, str):
-                                                filenames = (filenames,)
+                                            if filenames:
+                                                if isinstance(filenames, str):
+                                                    filenames = (filenames,)
+                                            else:
+                                                filenames = ()
                                         else:
                                             filenames = (file,)
 

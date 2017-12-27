@@ -208,6 +208,9 @@ def expand_dashboard(path, file):
         if file.startswith('code/asn/'):
             return 'sdn/build'
         else:
-            return file
+            if file.startswith('sdn/'):
+                return file
+            else:
+                return None
     else:
         return file

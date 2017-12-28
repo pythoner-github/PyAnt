@@ -268,10 +268,10 @@ class maven:
                 if file:
                     found = False
 
-                    file = builtin_os.normpath(file)
+                    tmp_file = builtin_os.normpath(file)
 
                     for name in ('target/', 'output/'):
-                        if name in file:
+                        if name in tmp_file:
                             found = True
 
                             break

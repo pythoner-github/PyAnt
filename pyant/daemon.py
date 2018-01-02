@@ -10,9 +10,21 @@ from pyant.builtin import os as builtin_os
 __all__ = ('PyroCommandProxy', 'PyroFileProxy', 'daemon')
 
 @Pyro4.expose
-class PyroCommand(command.command):
+class PyroCommand():
     def __init__(self):
-        super()
+        self.cmd = None
+
+    def command(self, cmdline, timeout = None, cwd = None, async = False, display_cmd = None):
+        self.cmd = command.command()
+
+        for line in self.cmd.command(cmdline, timeout, cwd, async, display_cmd):
+            yield line
+
+    def result(self, returncode = 0):
+        if self.cmd:
+            return self.cmd.result(returncode)
+        else:
+            return None
 
 @Pyro4.expose
 class PyroFile():
@@ -40,8 +52,10 @@ class PyroFile():
             return True
         else:
             if name in self.cache:
-                self.cache[name]['file'].close()
-                del self.cache[name]
+                try:
+                    self.cache[name]['file'].close()
+                finally:
+                    del self.cache[name]
 
             return True
 
@@ -93,16 +107,23 @@ class PyroFileProxy():
     def copy_file(self, file, name):
         if os.path.isfile(file):
             try:
+                status = True
+
                 with open(file, 'rb') as f:
                     while True:
                         data = f.read(64 * 1024)
 
-                        if data:
-                            self.proxy.copy_file(name, data)
-                        else:
-                            self.proxy.copy_file(name)
+                        if not data:
+                            break
+
+                        if not self.proxy.copy_file(name, data):
+                            status = False
 
                             break
+
+                self.proxy.copy_file(name)
+
+                return status
             except Exception as e:
                 print(e)
 

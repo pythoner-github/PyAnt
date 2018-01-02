@@ -32,8 +32,6 @@ class PyroFile():
                     'addr': Pyro4.current_context.client_sock_addr
                 }
 
-            print(self.cache)
-
             if Pyro4.current_context.client_sock_addr != self.cache[name]['addr']:
                 return False
 

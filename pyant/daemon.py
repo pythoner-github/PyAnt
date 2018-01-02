@@ -11,7 +11,8 @@ __all__ = ('PyroCommandProxy', 'PyroFileProxy', 'daemon')
 
 @Pyro4.expose
 class PyroCommand(command.command):
-    pass
+    def __init__(self):
+        super()
 
 @Pyro4.expose
 class PyroFile():
@@ -159,8 +160,8 @@ class PyroFileProxy():
 
             return False
 
-def daemon(port = 9000):
-    with Pyro4.Daemon(host = '0.0.0.0', port = port) as daemon:
+def daemon():
+    with Pyro4.Daemon(host = '0.0.0.0', port = 9000) as daemon:
         print(daemon.register(PyroCommand, 'daemon.command'))
         print(daemon.register(PyroFile, 'daemon.file'))
 

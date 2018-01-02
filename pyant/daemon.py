@@ -20,7 +20,7 @@ class PyroFile():
         self.cache = {}
 
     def copy_file(self, name, data = None):
-        name = builtin_os.normpath(name)
+        name = os.path.abspath(name)
 
         if data:
             if name not in self.cache:
@@ -31,6 +31,8 @@ class PyroFile():
                     'file': open(name, 'wb'),
                     'addr': Pyro4.current_context.client_sock_addr
                 }
+
+            print(self.cache)
 
             if Pyro4.current_context.client_sock_addr != self.cache[name]['addr']:
                 return False
@@ -46,13 +48,13 @@ class PyroFile():
             return True
 
     def delete_file(self, name):
-        name = builtin_os.normpath(name)
+        name = os.path.abspath(name)
         shutil.rmtree(name, ignore_errors = True)
 
         return True
 
     def mkdir(self, name):
-        name = builtin_os.normpath(name)
+        name = os.path.abspath(name)
         os.makedirs(name, exist_ok = True)
 
         return True

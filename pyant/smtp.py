@@ -4,7 +4,7 @@ import email.mime.text
 import os
 import smtplib
 
-__all__ = ('sendmail',)
+__all__ = ('sendmail', 'smtp_sendmail')
 
 def sendmail(subject, to_addrs, cc_addrs = None, message = None, attaches = None, html = True):
     if not os.environ.get('SENDMAIL'):
@@ -51,15 +51,35 @@ def sendmail(subject, to_addrs, cc_addrs = None, message = None, attaches = None
 
                 return False
 
+    error = smtp_sendmail(from_addr, to_addrs, msg.as_string())
+
+    if error:
+        error = pyro_sendmail(from_addr, to_addrs, msg.as_string())
+
+        if error:
+            print(error)
+
+            return False
+
+    print('send mail to %s' % str(tuple(to_addrs)))
+
+    return True
+
+def smtp_sendmail(from_addr, to_addrs, string):
     try:
         with smtplib.SMTP('10.30.18.230', 25) as smtp:
             smtp.login('ZhouYanQing181524', 'smtp@2013')
-            smtp.sendmail(from_addr, to_addrs, msg.as_string())
+            smtp.sendmail(from_addr, to_addrs, string)
 
-        print('send mail to %s' % str(tuple(to_addrs)))
-
-        return True
+        return None
     except Exception as e:
-        print(e)
+        return e
 
-        return False
+def pyro_sendmail(from_addr, to_addrs, string):
+    import Pyro4
+
+    try:
+        with Pyro4.Proxy('PYRO:daemon.mail@10.8.9.85:9000') as proxy:
+            return proxy.sendmail(from_addr, to_addrs, string)
+    except Exception as e:
+        return e

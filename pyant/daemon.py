@@ -4,7 +4,7 @@ import shutil
 
 import Pyro4
 
-from pyant import command
+from pyant import command, smtp
 from pyant.builtin import os as builtin_os
 
 __all__ = ('PyroCommandProxy', 'PyroFileProxy', 'daemon')
@@ -81,6 +81,14 @@ class PyroFile():
         self.cache = {}
 
         return True
+
+@Pyro4.expose
+class PyroMail():
+    def __init__(self):
+        pass
+
+    def sendmail(self, from_addr, to_addrs, string):
+        return smtp.smtp_sendmail(from_addr, to_addrs, string)
 
 class PyroCommandProxy():
     def __init__(self, ip):
@@ -185,5 +193,6 @@ def daemon():
     with Pyro4.Daemon(host = '0.0.0.0', port = 9000) as daemon:
         print(daemon.register(PyroCommand, 'daemon.command'))
         print(daemon.register(PyroFile, 'daemon.file'))
+        print(daemon.register(PyroMail, 'daemon.mail'))
 
         daemon.requestLoop()

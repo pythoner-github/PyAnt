@@ -79,7 +79,7 @@ def pyro_sendmail(from_addr, to_addrs, string):
     import Pyro4
 
     try:
-        with Pyro4.Proxy('PYRO:daemon.mail@10.8.11.107:9000') as proxy:
+        with Pyro4.Proxy('PYRO:daemon.mail@10.8.9.85:9000') as proxy:
             return proxy.sendmail(from_addr, to_addrs, string)
     except Exception as e:
         return e

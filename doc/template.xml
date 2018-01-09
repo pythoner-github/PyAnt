@@ -7,15 +7,6 @@
   -->
   <patch name='sdn_interface'>
     <!--
-      变更信息(可选)
-
-      name  : 需要变更的文件或目录
-    -->
-    <source>
-      <attr name='code/utils/util/src'/>
-    </source>
-
-    <!--
       删除信息(可选)
 
       name  : 需要在编译环境中删除的文件或目录
@@ -23,6 +14,15 @@
     <delete>
       <attr name='code/utils/util/target'/>
     </delete>
+
+    <!--
+      变更信息(可选)
+
+      name  : 需要变更的文件或目录
+    -->
+    <source>
+      <attr name='code/utils/util/src'/>
+    </source>
 
     <!--
       编译信息(可选)

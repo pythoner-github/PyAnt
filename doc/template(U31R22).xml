@@ -22,6 +22,15 @@
   -->
   <patch name='U31R22_PLATFORM'>
     <!--
+      删除信息(可选)
+
+      name  : 需要在编译环境中删除的文件或目录
+    -->
+    <delete>
+      <attr name='code/core/explorer/src/com/zte/ican/explorer/api'/>
+    </delete>
+
+    <!--
       变更信息(可选)
 
       name  : 需要变更的文件或目录
@@ -30,15 +39,6 @@
       <attr name='code/utils/util/src/com/zte/ican/util/TDebugPrn.java'/>
       <attr name='code_c/core/embinit/src'/>
     </source>
-
-    <!--
-      删除信息(可选)
-
-      name  : 需要在编译环境中删除的文件或目录
-    -->
-    <delete>
-      <attr name='code/core/explorer/src/com/zte/ican/explorer/api'/>
-    </delete>
 
     <!--
       编译信息(可选)

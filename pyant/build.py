@@ -5,7 +5,7 @@ import sys
 import xml.etree.ElementTree
 
 from pyant import check
-from pyant.app import bn, stn, umebn, sdno, const
+from pyant.app import bn, stn, umebn, sdno, patch, const
 from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
@@ -152,6 +152,17 @@ def build(argv = None):
                         branch = None
 
                     return build.dashboard_monitor(branch)
+                elif command == 'patch':
+                    return patch.build(name, arg[0])
+                elif command == 'patch_init':
+                    if len(arg) > 1:
+                        branch = arg[1]
+                    else:
+                        branch = 'master'
+
+                    return patch.build_init(name, arg[0], branch)
+                elif command == 'patch_install':
+                    return patch.build_install(name, arg[0], version)
                 else:
                     return True
         else:
@@ -172,6 +183,9 @@ Usage:
         check               arg:
         dashboard           arg: module, paths, branch
         dashboard_monitor   arg: branch
+        patch               arg: path
+        patch_init          arg: path, branch
+        patch_install       arg: path
         '''
 
         print(usage.strip())

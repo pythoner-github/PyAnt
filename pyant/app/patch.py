@@ -10,7 +10,31 @@ from pyant import git, smtp
 from pyant.app import bn, stn
 from pyant.builtin import os as builtin_os
 
-__all__ = ('bnpatch', 'stnpatch')
+__all__ = ('build', 'build_init', 'build_install')
+
+def build(name, path):
+    if name == 'bn':
+        return bnpatch(path).build()
+    elif name == 'stn':
+        return stnpatch(path).build()
+    else:
+        return True
+
+def build_init(name, path, branch):
+    if name == 'bn':
+        return bnpatch(path).init(branch)
+    elif name == 'stn':
+        return stnpatch(path).init(branch)
+    else:
+        return True
+
+def build_install(name, path, version):
+    if name == 'bn':
+        return bnpatch(path).installation(version)
+    elif name == 'stn':
+        return stnpatch(path).installation(version)
+    else:
+        return True
 
 # 目录结构
 #   patch
@@ -76,7 +100,7 @@ class patch():
 
         return status
 
-    def installation(self):
+    def installation(self, version):
         pass
 
     # ------------------------------------------------------

@@ -1,10 +1,13 @@
 import collections
 import glob
+import os
 import os.path
 import re
+import shutil
 import xml.etree.ElementTree
 
 from pyant import git, smtp
+from pyant.app import bn, stn
 from pyant.builtin import os as builtin_os
 
 # 目录结构
@@ -23,9 +26,8 @@ from pyant.builtin import os as builtin_os
 #                   installation
 #                   patch
 class patch():
-    def __init__(self, path, modules):
+    def __init__(self, path):
         self.path = builtin_os.abspath(path)
-        self.modules = modules
 
         m = re.search(r'\/build\/(dev|release)\/', self.path)
 
@@ -34,7 +36,33 @@ class patch():
         else:
             self.output = self.path
 
-        self.notification = '<PATCH 通知>补丁编译失败, 请尽快处理'
+        self.modules = {}
+
+    def init(self, branch):
+        os.makedirs(self.path, exist_ok = True)
+        os.makedirs(self.output, exist_ok = True)
+
+        with builtin_os.chdir(self.path) as chdir:
+            os.makedirs('code', exist_ok = True)
+            os.makedirs('build', exist_ok = True)
+            os.makedirs('xml', exist_ok = True)
+
+        with builtin_os.chdir(self.output) as chdir:
+            os.makedirs('installation', exist_ok = True)
+            os.makedirs('patch', exist_ok = True)
+
+        status = True
+
+        with builtin_os.chdir(os.path.join(self.path, 'code')) as chdir:
+            for module in self.modules:
+                if os.path.isdir(module):
+                    if not git.pull(module, revert = True):
+                        status = False
+                else:
+                    if not git.clone(self.modules[module], module, branch):
+                        status = False
+
+        return status
 
     def build(self):
         status = True
@@ -45,6 +73,11 @@ class patch():
                     info_list = self.load_xml(file)
 
         return status
+
+    def installation(self):
+        pass
+
+    # ------------------------------------------------------
 
     def load_xml(self, file):
         try:
@@ -166,69 +199,34 @@ class patch():
 
                 for e_deploy in e.findall('deploy/deploy/attr'):
                     name = builtin_os.normpath(str(e_deploy.get('name')).strip())
+                    type = str(e_deploy.get('type')).strip()
+
+                    types = self.types(type)
+
+                    if not types:
+                        print('patch[%s]/deploy/deploy/attr: type值非法 - %s' % (index, type))
+
+                        status = False
 
                     if name:
                         m = re.search(r'^(code|code_c|sdn)\/build\/output\/', name)
 
                         if m:
                             dest = m.string[m.end():]
-                            type = str(e_deploy.get('type')).strip()
-
-                            if not type:
-                                type = self.default_type
 
                             m = re.search(r'^ums-(\w+)', dest)
 
                             if m:
                                 if m.group(0) in ('nms', 'lct'):
-                                    type = m.group(0)
+                                    types = [m.group(0)]
 
                                     dest = dest.repace(m.string[m.start():m.end()], 'ums-client')
 
-                            types = []
-
-                            for x in type.split(','):
-                                x = x.strip()
-
-                                if x in self.types:
-                                    if x not in types:
-                                        types.append(x)
-                                else:
-                                    print('patch[%s]/deploy/deploy/attr: type值非法 - %s' % (index, type))
-
-                                    status = False
-
-                            if 'service' in types:
-                                if 'ems' not in types:
-                                    types.append('ems')
-
-                            map['deploy'][name] = types
+                            map['deploy'][':'.join(name, dest)] = types
                         elif re.search(r'^installdisk\/', name):
                             dest = builtin_os.normpath(str(e_deploy.text).strip())
 
                             if dest:
-                                type = str(e_deploy.get('type')).strip()
-
-                                if not type:
-                                    type = self.default_type
-
-                                types = []
-
-                                for x in type.split(','):
-                                    x = x.strip()
-
-                                    if x in self.types:
-                                        if x not in types:
-                                            types.append(x)
-                                    else:
-                                        print('patch[%s]/deploy/deploy/attr: type值非法 - %s' % (index, type))
-
-                                        status = False
-
-                                if 'service' in types:
-                                    if 'ems' not in types:
-                                        types.append('ems')
-
                                 map['deploy'][':'.join(name, dest)] = types
                             else:
                                 print('patch[%s]/deploy/deploy/attr: installdisk目录下的文件, 必须提供输出路径' % index)
@@ -244,9 +242,103 @@ class patch():
                         status = False
 
                 for e_deploy_delete in e.findall('deploy/delete/attr'):
-                    pass
+                    name = builtin_os.normpath(str(e_deploy_delete.get('name')).strip())
+                    type = str(e_deploy_delete.get('type')).strip()
 
-            return info_list
+                    types = self.types(type)
+
+                    if not types:
+                        print('patch[%s]/deploy/delete/attr: type值非法 - %s' % (index, type))
+
+                        status = False
+
+                    if name:
+                        m = re.search(r'^ums-(\w+)', name)
+
+                        if m:
+                            if not m.group(0) in ('client', 'server'):
+                                print('patch[%s]/deploy/delete/attr: deploy/delete下attr节点的name属性错误, 根目录应该为ums-client或ums-server' % index)
+
+                                status = False
+
+                        map['deploy_delete'][name] = types
+                    else:
+                        print('patch[%s]/deploy/delete/attr: deploy/delete下attr节点的name属性不能为空' % index)
+
+                        status = False
+
+                for e_info in e.findall('info/attr'):
+                    name = str(e_info.get('name')).strip()
+                    value = str(e_info.text).strip()
+
+                    if name:
+                        if name in ('提交人员', '走查人员', '开发经理', '抄送人员'):
+                            value = value.replace('\\', '/')
+
+                        map['info'][name] = value
+                    else:
+                        print('patch[%s]/info/attr: info下attr节点的name属性不能为空' % index)
+
+                        status = False
+
+                for x in ('提交人员', '变更版本', '变更类型', '变更描述', '关联故障', '影响分析', '依赖变更', '自测结果', '变更来源', '开发经理', '抄送人员'):
+                    if map['info'][x] is None:
+                        print('patch[%s]/info: info节点缺少(%s)' % (index, x))
+
+                        status = False
+                        continue
+
+                    if x in ('变更类型'):
+                        if map['info'][x] not in ('需求', '优化', '故障'):
+                            print('patch[%s]/info: info节点的(%s)必须是需求, 优化 或 故障' % (index, x))
+
+                            status = False
+
+                        continue
+
+                    if x in ('变更描述'):
+                        if len(map['info'][x]) < 10:
+                            print('patch[%s]/info: info节点的(%s)必须最少10个字符, 当前字符数: %s' % (index, x, len(map['info'][x])))
+
+                            status = False
+
+                        continue
+
+                    if x in ('关联故障'):
+                        if not re.search(r'^[\d,\s]+$', map['info'][x]):
+                            print('patch[%s]/info: info节点的(%s)必须是数字' % (index, x))
+
+                            status = False
+
+                        continue
+
+                    if x in ('变更来源'):
+                        if not map['info'][x]:
+                            print('patch[%s]/info: info节点的(%s)不能为空' % (index, x))
+
+                            status = False
+
+                        continue
+
+                    if x in ('走查人员', '抄送人员'):
+                        authors = []
+
+                        for author in map['info'][x].split(','):
+                            author = author.strip()
+
+                            if author not in authors:
+                                authors.append(author)
+
+                        map['info'][x] = authors
+
+                        continue
+
+                info_list.append(map)
+
+            if status:
+                return info_list
+            else:
+                return None
         except Exception as e:
             print(e)
 
@@ -255,5 +347,43 @@ class patch():
     def to_xml(self, info, file):
         pass
 
-    def sendmail(self, notification = None):
-        smtp.sendmail(self.notification, email, None, '<br>\n'.join(lines), attaches)
+    def sendmail(self, notification):
+        smtp.sendmail(notification, email, None, '<br>\n'.join(lines))
+
+    def types(self, type):
+        return []
+
+class bnpatch(patch):
+    def __init__(self, path):
+        super.__init__(path)
+
+        for name, url in bn.REPOS.items():
+            self.modules[os.path.basename(url)] = url
+
+    def types(self, type):
+        types = []
+
+        if not type:
+            type = 'ems'
+
+        for x in type.split(','):
+            x = x.strip()
+
+            if x in ('ems', 'nms', 'lct', 'update', 'upgrade', 'service'):
+                if x not in types:
+                    types.append(x)
+            else:
+                return None
+
+        if 'service' in types:
+            if 'ems' not in types:
+                types.append('ems')
+
+        return types
+
+class stnpatch(patch):
+    def __init__(self, path):
+        super.__init__(path)
+
+        for name, url in stn.REPOS.items():
+            self.modules[os.path.basename(url)] = url

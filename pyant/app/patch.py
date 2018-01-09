@@ -10,6 +10,8 @@ from pyant import git, smtp
 from pyant.app import bn, stn
 from pyant.builtin import os as builtin_os
 
+__all__ = ('bnpatch', 'stnpatch')
+
 # 目录结构
 #   patch
 #       build

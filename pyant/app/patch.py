@@ -7,7 +7,7 @@ import shutil
 import xml.etree.ElementTree
 import xml.dom.minidom
 
-from pyant import git, smtp
+from pyant import git, maven, smtp
 from pyant.app import bn, stn
 from pyant.builtin import os as builtin_os
 
@@ -94,10 +94,51 @@ class patch():
     def build(self):
         status = True
 
+        message = []
+
         if os.path.isdir(self.path):
             with builtin_os.chdir(self.path) as chdir:
                 for file in glob.iglob('xml/**/*.xml', recursive = True):
                     info_list = self.load_xml(file)
+
+                    if info_list is None:
+                        to_addrs, cc_addrs = self.get_addrs_from_file(file)
+
+                        message.append((os.path.basename(file), '解析XML文件失败', False))
+                        self.sendmail('<PATCH 通知>解析XML文件失败, 请尽快处理', to_addrs, cc_addrs, None, file)
+
+                        shutil.rmtree(file, ignore_errors = True)
+
+                        status = False
+                        continue
+
+                    shutil.rmtree(file, ignore_errors = True)
+
+                    if info_list.empty():
+                        message.append((os.path.basename(file), '未找到补丁信息', True))
+
+                        continue
+
+                    for info in info_list:
+                        if info['os']:
+                            if builtin_os.osname() not in info['os']:
+                                continue
+
+                        if not self.build_delete(info['name'], info['delete']):
+                            status = False
+                            continue
+
+                        if not self.build_source(info['name'], info['source']):
+                            status = False
+                            continue
+
+                        if not self.build_compile(info['name'], info['compile']):
+                            status = False
+                            continue
+
+                        if not self.build_deploy(info['name'], info['deploy']):
+                            status = False
+                            continue
 
         return status
 
@@ -488,7 +529,43 @@ class patch():
 
             return False
 
-    def sendmail(self, notification):
+    def get_addrs(self, info):
+        to_addrs = '%s@zte.com.cn' % info['提交人员'].replace('\\', '/').split('/')[-1]
+        cc_addrs = ['%s@zte.com.cn' % x.replace('\\', '/').split('/')[-1] for x in info['走查人员'] + info['抄送人员']]
+
+        return (to_addrs, cc_addrs)
+
+    def get_addrs_from_file(self, file):
+        to_addrs = None
+        cc_addrs = []
+
+        for encoding in ('utf-8', 'cp936'):
+            try:
+                with open(file, encoding = encoding) as f:
+                    for line in f.readlines():
+                        line = line.strip()
+
+                    m = re.search(r'^<\s*attr\s+name\s*=.*提交人员.*>(.*)<\s*/\s*attr\s*>$', line)
+
+                    if m:
+                        to_addrs = '%s@zte.com.cn' % m.group(1).replace('\\', '/').split('/')[-1]
+
+                        continue
+
+                    m = re.search(r'^<\s*attr\s+name\s*=.*走查人员.*>(.*)<\s*/\s*attr\s*>$', line)
+
+                    if m:
+                        cc_addrs = ['%s@zte.com.cn' % x.strip().replace('\\', '/').split('/')[-1] for x in m.group(1).split(',')]
+
+                        continue
+
+                    break
+            except:
+                pass
+
+        return (to_addrs, cc_addrs)
+
+    def sendmail(self, notification, to_addrs, cc_addrs = None, lines = None, file = None):
         if os.environ.get('BUILD_URL'):
             lines = []
 
@@ -498,10 +575,83 @@ class patch():
             lines.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
             lines.append('')
 
-        smtp.sendmail(notification, email, None, '<br>\n'.join(lines))
+        smtp.sendmail(notification, to_addrs, cc_addrs, '<br>\n'.join(lines))
 
     def types(self, type):
         return []
+
+    def build_delete(self, name, deletes):
+        if not os.path.isdir(os.path.join('build', name)):
+            return False
+
+        with builtin_os.chdir(os.path.join('build', name)) as chdir:
+            for file in deletes:
+                shutil.rmtree(file, ignore_errors = True)
+
+        return True
+
+    def build_source(self, name, sources):
+        if not os.path.isdir(os.path.join('code', name)):
+            return False
+
+        if not git.pull(os.path.join('code', name), revert = True):
+            return False
+
+        with builtin_os.chdir('code') as chdir:
+            for file in sources:
+                if os.path.isfile(os.path.join(name, file)):
+                    dest = os.path.join('../build', name, file)
+                    os.makedirs(os.path.dirname(dest), exist_ok = True)
+
+                    try:
+                        shutil.copyfile(os.path.join(name, file), dest)
+                    except Exception as e:
+                        print(e)
+
+                        return False
+                elif os.path.isdir(os.path.join(name, file)):
+                    for filename in glob.iglob(os.path.join(name, file, '**/*', recursive = True)):
+                        if os.path.isfile(filename):
+                            dest = os.path.join('../build', filename)
+                            os.makedirs(os.path.dirname(dest), exist_ok = True)
+
+                            try:
+                                shutil.copyfile(filename, dest)
+                            except Exception as e:
+                                print(e)
+
+                                return False
+                else:
+                    return False
+
+        return True
+
+    def build_compile(self, name, compile_info):
+        if not os.path.isdir(os.path.join('build', name)):
+            return False
+
+        with builtin_os.chdir(os.path.join('build', name)) as chdir:
+            for path, clean in compile_info.items():
+                if not os.path.isdir(path):
+                    return False
+
+                mvn = maven.maven()
+                mvn.notification = '<PATCH 通知>编译失败, 请尽快处理'
+
+                if clean:
+                    mvn.clean()
+
+                if re.search(r'code_c\/', path):
+                    if not mvn.compile('mvn deploy -fn -U -Djobs=10', 'mvn deploy -fn -U', 'cpp'):
+                        return False
+                else:
+                    if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U'):
+                        return False
+
+        return True
+
+    def build_deploy(self, name, deploy_info):
+        return True
 
 class bnpatch(patch):
     def __init__(self, path):
@@ -530,6 +680,13 @@ class bnpatch(patch):
                 types.append('ems')
 
         return types
+
+    def build_compile(self, name, compile_info):
+        if os.path.isdir('build'):
+            with builtin_os.chdir('build') as chdir:
+                bn.environ('cpp')
+
+        return super().build_compile(name, compile_info)
 
 class stnpatch(patch):
     def __init__(self, path):

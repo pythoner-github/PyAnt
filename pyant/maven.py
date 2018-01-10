@@ -1,7 +1,6 @@
 import collections
 import glob
 import os
-import platform
 import re
 import tempfile
 import xml.etree.ElementTree
@@ -694,7 +693,7 @@ class maven:
 
     def artifactid_prefix(self, artifactid):
         if '${prefix}' in artifactid:
-            if platform.system().lower() == 'windows':
+            if builtin_os.osname() in ('windows', 'windows-x64'):
                 return artifactid.replace('${prefix}', '')
             else:
                 return artifactid.replace('${prefix}', 'lib')

@@ -2,7 +2,6 @@ import collections
 import datetime
 import os
 import os.path
-import platform
 import re
 import time
 
@@ -10,7 +9,7 @@ from pyant import check, git, maven
 from pyant.app import build, const
 from pyant.builtin import os as builtin_os
 
-__all__ = ('update', 'compile_base', 'compile', 'package', 'dashboard', 'dashboard_monitor')
+__all__ = ('update', 'compile_base', 'compile', 'package', 'dashboard', 'dashboard_monitor', 'environ')
 
 REPOS = collections.OrderedDict([
     ('interface', builtin_os.join(const.SSH_GIT, 'U31R22_INTERFACE')),
@@ -97,12 +96,7 @@ def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = 
     if name in REPOS.keys():
         environ(lang)
 
-        osname = platform.system().lower()
-
-        if os.environ.get('WIN64') == '1':
-            osname += '-X64'
-
-        notification = '<BN_BUILD 通知>编译失败, 请尽快处理(%s)' % osname
+        notification = '<BN_BUILD 通知>编译失败, 请尽快处理(%s)' % builtin_os.osname().upper()
 
         if not dirname:
             if lang == 'cpp':
@@ -145,11 +139,7 @@ def package(version, *arg):
         else:
             generic_path = ARTIFACT_REPOS['alpha']
 
-        suffix = '-%s' % platform.system().lower()
-
-        if suffix in ('-windows'):
-            if os.environ.get('WIN64'):
-                suffix += '-x64'
+        suffix = '-%s' % builtin_os.osname()
 
         if type not in ('ems'):
             suffix += '(%s)' % type
@@ -222,15 +212,14 @@ def dashboard_monitor(branch = None):
 # ----------------------------------------------------------
 
 def update_devtools(branch = None):
-    if platform.system().lower() == 'linux':
+    if builtin_os.osname() == 'linux':
         url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_LINUX')
-    elif platform.system().lower() == 'sunos':
+    elif builtin_os.osname() == 'solaris':
         url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_SOLARIS')
+    elif builtin_os.osname() == 'windows-x64':
+        url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS-x64')
     else:
-        if os.environ.get('WIN64') == '1':
-            url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS-x64')
-        else:
-            url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS')
+        url = builtin_os.join(REPOS_DEVTOOLS, 'U31R22_DEVTOOLS_WINDOWS')
 
     path = 'DEVTOOLS'
 

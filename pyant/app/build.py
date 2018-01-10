@@ -4,7 +4,6 @@ import glob
 import json
 import os
 import os.path
-import platform
 import re
 import shutil
 import tarfile
@@ -170,7 +169,7 @@ def package(version, xpath = None, type = None, expand_filename = None, cross_pl
                                 continue
 
                             if not cross_platform:
-                                if platform.system().lower() in ('windows'):
+                                if builtin_os.osname() in ('windows', 'windows-x64'):
                                     if os.path.splitext(filename)[-1] in ('.so', '.sh'):
                                         if os.path.splitext(filename)[-1] in ('.so'):
                                             if 'ruby/' not in builtin_os.normpath(filename):
@@ -205,7 +204,7 @@ def package(version, xpath = None, type = None, expand_filename = None, cross_pl
                             continue
 
                         if not cross_platform:
-                            if platform.system().lower() in ('windows'):
+                            if builtin_os.osname() in ('windows', 'windows-x64'):
                                 if os.path.splitext(filename)[-1] in ('.so', '.sh'):
                                     if os.path.splitext(filename)[-1] in ('.so'):
                                         if 'ruby/' not in builtin_os.normpath(filename):

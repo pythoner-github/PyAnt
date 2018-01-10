@@ -245,6 +245,12 @@ def update_devtools(branch = None):
         return git.clone(url, path, branch)
 
 def environ(lang = None):
+    if os.environ.get('UEP_VERSION'):
+        if not os.environ.get('POM_UEP_VERSION'):
+            os.environ['POM_UEP_VERSION'] = os.environ['UEP_VERSION'].upper()
+
+            print('export POM_UEP_VERSION=%s' % os.environ['POM_UEP_VERSION'])
+
     if not os.environ.get('DEVTOOLS_ROOT'):
         if os.path.isdir('DEVTOOLS'):
             os.environ['DEVTOOLS_ROOT'] = builtin_os.abspath('DEVTOOLS')

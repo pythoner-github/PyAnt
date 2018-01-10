@@ -618,7 +618,16 @@ class maven:
                         except Exception as e:
                             print(e)
 
-                    smtp.sendmail(self.notification, email, None, '<br>\n'.join(lines), attaches)
+                    if os.environ.get('BUILD_URL'):
+                        console_url = builtin_os.join(os.environ['BUILD_URL'], 'console')
+
+                        lines.append('')
+                        lines.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
+                        lines.append('')
+
+                        smtp.sendmail(self.notification, email, None, '<br>\n'.join(lines))
+                    else:
+                        smtp.sendmail(self.notification, email, None, '<br>\n'.join(lines), attaches)
 
     def artifactid(self, path):
         if os.path.isfile(path):

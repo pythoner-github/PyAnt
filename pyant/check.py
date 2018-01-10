@@ -199,4 +199,10 @@ class check:
 
                     message.append('')
 
+                if os.environ.get('BUILD_URL'):
+                    console_url = builtin_os.join(os.environ['BUILD_URL'], 'console')
+
+                    message.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
+                    message.append('')
+
                 smtp.sendmail(self.notification, email, None, '<br>\n'.join(message))

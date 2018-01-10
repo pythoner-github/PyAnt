@@ -5,6 +5,7 @@ import os.path
 import re
 import shutil
 import xml.etree.ElementTree
+import xml.dom.minidom
 
 from pyant import git, smtp
 from pyant.app import bn, stn
@@ -381,9 +382,122 @@ class patch():
             return None
 
     def to_xml(self, info, file):
-        pass
+        tree = xml.etree.ElementTree.ElementTree(xml.etree.ElementTree.fromstring("<patches version='2.0'/>"))
+
+        element = xml.etree.ElementTree.Element('patch')
+        element.set('name', info['name'])
+
+        if info['os']:
+            element.set('os', ', '.join(info['os']))
+
+        if info['script']:
+            element.set('script', ', '.join(info['script']))
+
+        tree.getroot().append(element)
+
+        if info['delete']:
+            delete_element = xml.etree.ElementTree.Element('delete')
+            element.append(delete_element)
+
+            for x in info['delete']:
+                e = xml.etree.ElementTree.Element('attr')
+                e.set('name', x)
+
+                delete_element.append(e)
+
+        if info['source']:
+            source_element = xml.etree.ElementTree.Element('source')
+            element.append(source_element)
+
+            for x in info['source']:
+                e = xml.etree.ElementTree.Element('attr')
+                e.set('name', x)
+
+                source_element.append(e)
+
+        if info['compile']:
+            compile_element = xml.etree.ElementTree.Element('compile')
+            element.append(compile_element)
+
+            for x in info['compile']:
+                e = xml.etree.ElementTree.Element('attr')
+                e.set('name', x)
+                e.set('clean', str(info['compile'][x]).lower())
+
+                compile_element.append(e)
+
+        if info['deploy'] or info['deploy_delete']:
+            deploy_element = xml.etree.ElementTree.Element('deploy')
+            element.append(deploy_element)
+
+            if info['deploy']:
+                deploy_deploy_element = xml.etree.ElementTree.Element('deploy')
+                deploy_element.append(deploy_deploy_element)
+
+                for x in info['deploy']:
+                    name, *dest = x.split(':', 1)
+
+                    e = xml.etree.ElementTree.Element('attr')
+                    e.set('name', name)
+
+                    if info['deploy'][x]:
+                        e.set('type', ', '.join(info['deploy'][x]))
+
+                    if not re.search(r'^(code|code_c|sdn)\/build\/output\/', name):
+                        e.text = ''.join(dest)
+
+                    deploy_deploy_element.append(e)
+
+            if info['deploy_delete']:
+                deploy_delete_element = xml.etree.ElementTree.Element('delete')
+                deploy_element.append(deploy_delete_element)
+
+                for x in info['deploy_delete']:
+                    e = xml.etree.ElementTree.Element('attr')
+                    e.set('name', x)
+
+                    if info['deploy_delete'][x]:
+                        e.set('type', ', '.join(info['deploy_delete'][x]))
+
+                    deploy_delete_element.append(e)
+
+        if info['info']:
+            info_element = xml.etree.ElementTree.Element('info')
+            element.append(info_element)
+
+            for x in info['info']:
+                e = xml.etree.ElementTree.Element('attr')
+                e.set('name', x)
+
+                if isinstance(info['info'][x], str):
+                    e.text = info['info'][x]
+                else:
+                    e.text = ', '.join(info['info'][x])
+
+                info_element.append(e)
+
+        os.makedirs(os.path.dirname(file), exist_ok = True)
+
+        try:
+            with open(file, 'w', encoding = 'utf-8') as f:
+                f.write(xml.dom.minidom.parseString(xml.etree.ElementTree.tostring(tree.getroot())).toprettyxml(indent = '  '))
+
+            return True
+        except Exception as e:
+            print(e)
+
+            return False
 
     def sendmail(self, notification):
+        if os.environ.get('BUILD_URL'):
+            lines = []
+
+            console_url = builtin_os.join(os.environ['BUILD_URL'], 'console')
+
+            lines.append('')
+            lines.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
+            lines.append('')
+
         smtp.sendmail(notification, email, None, '<br>\n'.join(lines))
 
     def types(self, type):

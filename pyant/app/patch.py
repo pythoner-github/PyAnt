@@ -74,6 +74,9 @@ class patch():
             os.makedirs('build', exist_ok = True)
             os.makedirs('xml', exist_ok = True)
 
+            for file in glob.iglob('build/*/.git', recursive = True):
+                shutil.rmtree(file, ignore_errors = True)
+
         with builtin_os.chdir(self.output) as chdir:
             os.makedirs('installation', exist_ok = True)
             os.makedirs('patch', exist_ok = True)

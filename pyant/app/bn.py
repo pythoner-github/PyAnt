@@ -4,6 +4,7 @@ import os
 import os.path
 import re
 import time
+import xml.etree.ElementTree
 
 from pyant import check, git, maven
 from pyant.app import build, const

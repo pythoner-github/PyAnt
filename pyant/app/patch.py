@@ -654,6 +654,9 @@ class patch():
         return True
 
     def build_deploy(self, name, deploy_info):
+        if not os.path.isdir(os.path.join('build', name)):
+            return False
+
         return True
 
 class bnpatch(patch):

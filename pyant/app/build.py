@@ -235,7 +235,7 @@ def package(version, xpath = None, type = None, expand_filename = None, cross_pl
     return True
 
 def package_home(version):
-    return os.path.abspath(os.path.join('../zipfile', version.replace(' ', '')))
+    return os.path.normpath(os.path.abspath(os.path.join('../zipfile', version.replace(' ', ''))))
 
 def artifactory(path, generic_path, generic_base_list = None, suffix = None):
     if os.path.isdir(path):

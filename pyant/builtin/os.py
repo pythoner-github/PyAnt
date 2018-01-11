@@ -2,8 +2,9 @@ import os
 import os.path
 import platform
 import shutil
+import tempfile
 
-__all__ = ('abspath', 'join', 'normpath', 'osname', 'chdir', 'tmpdir')
+__all__ = ('abspath', 'join', 'normpath', 'osname', 'gettempdir', 'chdir', 'tmpdir')
 
 def abspath(path):
     return os.path.abspath(path).replace('\\', '/')
@@ -26,6 +27,12 @@ def osname():
             return 'windows'
     else:
         return None
+
+def gettempdir():
+    if platform.system().lower() == 'windows':
+        return 'c:/temp'
+    else:
+        return tempfile.gettempdir()
 
 class chdir:
     def __init__(self, path):

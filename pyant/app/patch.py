@@ -1,7 +1,9 @@
 import collections
+import datetime
 import glob
 import os
 import os.path
+import random
 import re
 import shutil
 import xml.etree.ElementTree
@@ -115,33 +117,108 @@ class patch():
                         status = False
                         continue
 
-                    shutil.rmtree(file, ignore_errors = True)
-
                     if info_list.empty():
                         message.append((os.path.basename(file), '未找到补丁信息', True))
 
+                        shutil.rmtree(file, ignore_errors = True)
+
                         continue
 
+                    tempdir = os.path.join(builtin_os.gettempdir(),
+                        '%s%04d' % (datetime.datetime.now().strftime('%Y%m%d%H%M%S'), int(random.random() * 1000)))
+
+                    index = -1
+                    current = []
+
+                    to_addrs, cc_addrs = self.get_addrs(info_list[0])
+
                     for info in info_list:
+                        index += 1
+
                         if info['os']:
                             if builtin_os.osname() not in info['os']:
                                 continue
 
+                        current.append([os.path.basename(file), index, False])
+
                         if not self.build_delete(info['name'], info['delete']):
                             status = False
+
                             continue
 
                         if not self.build_source(info['name'], info['source']):
                             status = False
+
                             continue
 
                         if not self.build_compile(info['name'], info['compile']):
                             status = False
+
                             continue
 
-                        if not self.build_deploy(info['name'], info['deploy']):
+                        if not self.build_deploy(info['name'], info['deploy'], os.path.join(tempdir, str(index))):
                             status = False
+
                             continue
+
+                        current[-1][-1] = True
+
+                    status_all = True
+
+                    for filename, index, _status in current:
+                        if not _status:
+                            status_all = False
+
+                            break
+
+                    if status_all:
+                        for filename, index, _status in current:
+                            id = self.get_id()
+
+                            output = os.path.join(self.output, 'patch', id)
+                            cur_status = True
+
+                            with builtin_os.chdir(os.path.join(tempdir, str(index))) as _chdir:
+                                for filename in glob.iglob('**/*', recursive = True):
+                                    if os.path.isfile(filename):
+                                        try:
+                                            dest_file = os.path.join(output, filename)
+                                            os.makedirs(os.path.dirname(dest_file), exist_ok = True)
+
+                                            shutil.copyfile(filename, dest_file)
+                                        except Exception as e:
+                                            print(e)
+
+                                            shutil.rmtree(output)
+
+                                            status = False
+                                            cur_status = False
+
+                                            break
+
+                            if cur_status:
+                                if glob.glob(os.path.join(output, '*'), recursive = True).empty():
+                                    message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但没有输出文件(补丁号: %s)' % id, True))
+                                    self.sendmail('<PATCH 通知>补丁制作成功, 但没有输出文件(补丁号: %s)' % id, to_addrs, cc_addrs, None, file)
+                                else:
+                                    message.append(('%s(%s)' % (filename, index), '补丁制作成功(补丁号: %s)' % id, True))
+                                    self.sendmail('<PATCH 通知>补丁制作成功, 请验证(补丁号: %s)' % id, to_addrs, cc_addrs, None, file)
+
+                                self.to_xml(info_list[index], os.path.join(output, self.get_xml_filename(info_list[index])))
+                            else:
+                                message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但输出补丁失败', True))
+                                self.sendmail('<PATCH 通知>补丁制作成功, 但输出补丁失败', to_addrs, cc_addrs, None, file)
+                    else:
+                        for filename, index, _status in current:
+                            if _status:
+                                message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但关联补丁制作失败', True))
+                                self.sendmail('<PATCH 通知>补丁制作成功, 但关联补丁制作失败, 请尽快处理', to_addrs, cc_addrs, None, file)
+                            else:
+                                message.append(('%s(%s)' % (filename, index), '补丁制作失败', False))
+                                self.sendmail('<PATCH 通知>补丁制作失败, 请尽快处理', to_addrs, cc_addrs, None, file)
+
+                    shutil.rmtree(file, ignore_errors = True)
+                    shutil.rmtree(tempdir, ignore_errors = True)
 
         return status
 
@@ -533,8 +610,10 @@ class patch():
             return False
 
     def get_addrs(self, info):
-        to_addrs = '%s@zte.com.cn' % info['提交人员'].replace('\\', '/').split('/')[-1]
-        cc_addrs = ['%s@zte.com.cn' % x.replace('\\', '/').split('/')[-1] for x in info['走查人员'] + info['抄送人员']]
+        to_addrs = '%s@zte.com.cn' % info['提交人员'].replace('\\', '/').split('/', 1)[-1]
+
+        cc_addrs = ['%s@zte.com.cn' % x.replace('\\', '/').split('/', 1)[-1] for x in info['走查人员'] + info['抄送人员']]
+        cc_addrs.append('%s@zte.com.cn' % info['开发经理'].replace('\\', '/').split('/', 1)[-1])
 
         return (to_addrs, cc_addrs)
 
@@ -551,14 +630,21 @@ class patch():
                     m = re.search(r'^<\s*attr\s+name\s*=.*提交人员.*>(.*)<\s*/\s*attr\s*>$', line)
 
                     if m:
-                        to_addrs = '%s@zte.com.cn' % m.group(1).replace('\\', '/').split('/')[-1]
+                        to_addrs = '%s@zte.com.cn' % m.group(1).replace('\\', '/').split('/', 1)[-1]
 
                         continue
 
                     m = re.search(r'^<\s*attr\s+name\s*=.*走查人员.*>(.*)<\s*/\s*attr\s*>$', line)
 
                     if m:
-                        cc_addrs = ['%s@zte.com.cn' % x.strip().replace('\\', '/').split('/')[-1] for x in m.group(1).split(',')]
+                        cc_addrs += ['%s@zte.com.cn' % x.strip().replace('\\', '/').split('/', 1)[-1] for x in m.group(1).split(',')]
+
+                        continue
+
+                    m = re.search(r'^<\s*attr\s+name\s*=.*开发经理.*>(.*)<\s*/\s*attr\s*>$', line)
+
+                    if m:
+                        cc_addrs.append('%s@zte.com.cn' % m.group(1).replace('\\', '/').split('/', 1)[-1])
 
                         continue
 
@@ -567,6 +653,51 @@ class patch():
                 pass
 
         return (to_addrs, cc_addrs)
+
+    def expand_filename(self, file):
+        pathname, extname = os.path.splitext(file)
+
+        if builtin_os.osname() in ('windows', 'windows-x64'):
+            if extname.lower() in ('.sh'):
+                return '%s.bat' % pathname
+            elif extname.lower() in ('.so'):
+                m = re.search(r'^lib(.*)$', os.path.basename(pathname))
+
+                if m:
+                    return os.path.join(os.path.dirname(pathname), '%s.dll' % m.group(1))
+                else:
+                    return '%s.dll' % pathname
+            else:
+                return file
+        else:
+            if extname.lower() in ('.bat'):
+                return '%s.sh' % pathname
+            elif extname.lower() in ('.dll', '.lib'):
+                return os.path.join(os.path.dirname(pathname), 'lib%s.so' % os.path.basename(pathname))
+            elif extname.lower() in ('.exe'):
+                return pathname
+            else:
+                return file
+
+    def get_id(self):
+        prefix = datetime.datetime.now().strftime('%Y%m%d')
+        id = 0
+
+        if os.path.isdir(os.path.join(self.output, 'patch')):
+            with builtin_os.chdir(os.path.join(self.output, 'patch')) as chdir:
+                for x in glob.iglob('%s_*' % prefix):
+                    m = re.search(r'^\d{8}_(\d{4})$', x)
+
+                    if m:
+                        if id < int(m.group(1)):
+                            id = int(m.group(1))
+
+        return '%s_%04d' % (prefix, id + 1)
+
+    def get_xml_filename(self, info):
+        name, employee_id = info['提交人员'].replace('\\', '/').split('/', 1)
+
+        return '%s_%s(%s).xml' % (datetime.datetime.now().strftime('%Y%m%d'), employee_id, name)
 
     def sendmail(self, notification, to_addrs, cc_addrs = None, lines = None, file = None):
         if os.environ.get('BUILD_URL'):
@@ -613,7 +744,7 @@ class patch():
 
                         return False
                 elif os.path.isdir(os.path.join(name, file)):
-                    for filename in glob.iglob(os.path.join(name, file, '**/*', recursive = True)):
+                    for filename in glob.iglob(os.path.join(name, file, '**/*'), recursive = True):
                         if os.path.isfile(filename):
                             dest = os.path.join('../build', filename)
                             os.makedirs(os.path.dirname(dest), exist_ok = True)
@@ -653,11 +784,71 @@ class patch():
 
         return True
 
-    def build_deploy(self, name, deploy_info):
+    def build_deploy(self, name, deploy_info, tmpdir = None):
+        if tmpdir:
+            tmpdir = os.path.abspath(tmpdir)
+        else:
+            tmpdir = os.getcwd()
+
         if not os.path.isdir(os.path.join('build', name)):
             return False
 
+        with builtin_os.chdir(os.path.join('build', name)) as chdir:
+            for src_and_dest, types in deploy_info.items():
+                src, dest = src_and_dest.split(':', 1)
+
+                if os.path.isfile(src):
+                    filename = self.expand_filename(src)
+
+                    if filename:
+                        if types:
+                            for type in types:
+                                if not self.build_deploy_file(filename, os.path.join(tmpdir, type, dest)):
+                                    return False
+                        else:
+                            if not self.build_deploy_file(filename, os.path.join(tmpdir, dest)):
+                                return False
+                elif os.path.isdir(src):
+                    with builtin_os.chdir(src) as _chdir:
+                        for filename in glob.iglob('**/*', recursive = True):
+                            if os.path.isfile(filename):
+                                filename = self.expand_filename(filename)
+
+                                if filename:
+                                    if types:
+                                        for type in types:
+                                            if not self.build_deploy_file(filename, os.path.join(tmpdir, type, dest, filename)):
+                                                return False
+                                    else:
+                                        if not self.build_deploy_file(filename, os.path.join(tmpdir, dest, filename)):
+                                            return False
+                else:
+                    return False
+
         return True
+
+    def build_deploy_file(self, src_file, dest_file):
+        try:
+            os.makedirs(os.path.dirname(dest_file), exist_ok = True)
+
+            shutil.copyfile(src_file, dest_file)
+
+            pathname, extname = os.path.splitext(src_file)
+
+            if extname.lower() in ('.dll'):
+                if os.path.isfile('%s.pdb' % pathname):
+                    shutil.copyfile('%s.pdb' % pathname, '%s.pdb' % os.path.splitext(dest_file)[0])
+            elif extname.lower() in ('.so'):
+                if os.path.isfile('%s.debuginfo' % pathname):
+                    shutil.copyfile('%s.debuginfo' % pathname, '%s.debuginfo' % os.path.splitext(dest_file)[0])
+            else:
+                pass
+
+            return True
+        except Exception as e:
+            print(e)
+
+            return False
 
 class bnpatch(patch):
     def __init__(self, path):

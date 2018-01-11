@@ -1,3 +1,4 @@
+import glob
 import os
 import os.path
 import shutil
@@ -81,6 +82,18 @@ class PyroFile():
         self.cache = {}
 
         return True
+
+    def glob(self, xpath):
+        return glob.glob(xpath, recursive = True)
+
+    def exists(self, path):
+        return os.path.exists(path)
+
+    def isfile(self, path):
+        return os.path.isfile(path)
+
+    def isdir(self, path):
+        return os.path.isdir(path)
 
 @Pyro4.expose
 class PyroMail():
@@ -188,6 +201,38 @@ class PyroFileProxy():
             print(e)
 
             return False
+
+    def glob(self, xpath):
+        try:
+            return self.proxy.glob(xpath)
+        except Exception as e:
+            print(e)
+
+            return None
+
+    def exists(self, path):
+        try:
+            return self.proxy.exists(path)
+        except Exception as e:
+            print(e)
+
+            return None
+
+    def isfile(self, path):
+        try:
+            return self.proxy.isfile(path)
+        except Exception as e:
+            print(e)
+
+            return None
+
+    def isdir(self, path):
+        try:
+            return self.proxy.isdir(path)
+        except Exception as e:
+            print(e)
+
+            return None
 
 def daemon():
     with Pyro4.Daemon(host = '0.0.0.0', port = 9000) as daemon:

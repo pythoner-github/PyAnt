@@ -105,6 +105,9 @@ class patch():
         if os.path.isdir(self.path):
             with builtin_os.chdir(self.path) as chdir:
                 for file in glob.iglob('xml/**/*.xml', recursive = True):
+                    if not os.path.isfile(file):
+                        continue
+
                     info_list = self.load_xml(file)
 
                     if info_list is None:
@@ -114,6 +117,7 @@ class patch():
                         self.sendmail('<PATCH 通知>解析XML文件失败, 请尽快处理', to_addrs, cc_addrs, None, file)
 
                         shutil.rmtree(file, ignore_errors = True)
+                        shutil.rmtree(self.get_script_zipfile(file), ignore_errors = True)
 
                         status = False
                         continue
@@ -122,6 +126,7 @@ class patch():
                         message.append((os.path.basename(file), '未找到补丁信息', True))
 
                         shutil.rmtree(file, ignore_errors = True)
+                        shutil.rmtree(self.get_script_zipfile(file), ignore_errors = True)
 
                         continue
 
@@ -219,6 +224,7 @@ class patch():
                                 self.sendmail('<PATCH 通知>补丁制作失败, 请尽快处理', to_addrs, cc_addrs, None, file)
 
                     shutil.rmtree(file, ignore_errors = True)
+                    shutil.rmtree(self.get_script_zipfile(file), ignore_errors = True)
                     shutil.rmtree(tempdir, ignore_errors = True)
 
         return status
@@ -300,7 +306,7 @@ class patch():
 
             if script:
                 info['script'] = tuple(x.strip() for x in script.split(','))
-                info['zip'] = '%s.zip' % file[0:-4]
+                info['zip'] = self.get_script_zipfile(file)
 
                 if not os.path.isfile(info['zip']):
                     print('patch[%s]: 找不到增量脚本对应的zip文件 - %s' % (index, info['zip']))
@@ -693,6 +699,9 @@ class patch():
         name, employee_id = info['提交人员'].replace('\\', '/').split('/', 1)
 
         return '%s_%s(%s).xml' % (datetime.datetime.now().strftime('%Y%m%d'), employee_id, name)
+
+    def get_script_zipfile(self, file):
+        return '%s.zip' % file[0:-4]
 
     def sendmail(self, notification, to_addrs, cc_addrs = None, lines = None, file = None):
         if os.environ.get('BUILD_URL'):

@@ -8,6 +8,7 @@ import re
 import shutil
 import xml.etree.ElementTree
 import xml.dom.minidom
+import zipfile
 
 from pyant import git, maven, smtp
 from pyant.app import bn, stn
@@ -117,7 +118,11 @@ class patch():
                         self.sendmail('<PATCH 通知>解析XML文件失败, 请尽快处理', to_addrs, cc_addrs, None, file)
 
                         shutil.rmtree(file, ignore_errors = True)
-                        shutil.rmtree(self.get_script_zipfile(file), ignore_errors = True)
+
+                        zipfilename = self.get_xml_zipfile(file)
+
+                        if zipfilename:
+                            shutil.rmtree(zipfilename, ignore_errors = True)
 
                         status = False
                         continue
@@ -126,7 +131,11 @@ class patch():
                         message.append((os.path.basename(file), '未找到补丁信息', True))
 
                         shutil.rmtree(file, ignore_errors = True)
-                        shutil.rmtree(self.get_script_zipfile(file), ignore_errors = True)
+
+                        zipfilename = self.get_xml_zipfile(file)
+
+                        if zipfilename:
+                            shutil.rmtree(zipfilename, ignore_errors = True)
 
                         continue
 
@@ -167,6 +176,11 @@ class patch():
 
                             continue
 
+                        if not self.build_deploy_script(info['script'], info['zip'], os.path.join(tempdir, str(index))):
+                            status = False
+
+                            continue
+
                         current[-1][-1] = True
 
                     status_all = True
@@ -188,7 +202,7 @@ class patch():
                                 for filename in glob.iglob('**/*', recursive = True):
                                     if os.path.isfile(filename):
                                         try:
-                                            dest_file = os.path.join(output, filename)
+                                            dest_file = os.path.join(output, 'patch', filename)
                                             os.makedirs(os.path.dirname(dest_file), exist_ok = True)
 
                                             shutil.copyfile(filename, dest_file)
@@ -224,8 +238,12 @@ class patch():
                                 self.sendmail('<PATCH 通知>补丁制作失败, 请尽快处理', to_addrs, cc_addrs, None, file)
 
                     shutil.rmtree(file, ignore_errors = True)
-                    shutil.rmtree(self.get_script_zipfile(file), ignore_errors = True)
                     shutil.rmtree(tempdir, ignore_errors = True)
+
+                    zipfilename = self.get_xml_zipfile(file)
+
+                    if zipfilename:
+                        shutil.rmtree(zipfilename, ignore_errors = True)
 
         return status
 
@@ -305,13 +323,16 @@ class patch():
             script = e.get('script', '').strip()
 
             if script:
-                info['script'] = tuple(x.strip() for x in script.split(','))
-                info['zip'] = self.get_script_zipfile(file)
+                zipfilename = self.get_xml_zipfile(file)
 
-                if not os.path.isfile(info['zip']):
-                    print('patch[%s]: 找不到增量脚本对应的zip文件 - %s' % (index, info['zip']))
+                if zipfilename:
+                    info['script'] = self.types(script)
+                    info['zip'] = zipfilename
 
-                    status = False
+                    if not os.path.isfile(info['zip']):
+                        print('patch[%s]: 找不到增量脚本对应的zip文件 - %s' % (index, info['zip']))
+
+                        status = False
 
             for e_delete in e.findall('delete/attr'):
                 name = builtin_os.normpath(e_delete.get('name', '').strip())
@@ -698,10 +719,10 @@ class patch():
     def get_xml_filename(self, info):
         name, employee_id = info['提交人员'].replace('\\', '/').split('/', 1)
 
-        return '%s_%s(%s).xml' % (datetime.datetime.now().strftime('%Y%m%d'), employee_id, name)
+        return '%s_%s_%s.xml' % (datetime.datetime.now().strftime('%Y%m%d'), employee_id, name)
 
-    def get_script_zipfile(self, file):
-        return '%s.zip' % file[0:-4]
+    def get_xml_zipfile(self, file):
+        return None
 
     def sendmail(self, notification, to_addrs, cc_addrs = None, lines = None, file = None):
         if os.environ.get('BUILD_URL'):
@@ -823,6 +844,9 @@ class patch():
 
         return True
 
+    def build_deploy_script(types, zipfilename, tmpdir = None):
+        return True
+
     def build_deploy_file(self, src_file, dest_file):
         try:
             os.makedirs(os.path.dirname(dest_file), exist_ok = True)
@@ -855,6 +879,9 @@ class bnpatch(patch):
         for name, url in bn.REPOS.items():
             self.modules[os.path.basename(url)] = url
 
+    def get_xml_zipfile(self, file):
+        return '%s.zip' % file[0:-4]
+
     def types(self, type):
         types = []
 
@@ -882,6 +909,61 @@ class bnpatch(patch):
                 bn.environ('cpp')
 
         return super().build_compile(name, compile_info)
+
+    def build_deploy_script(types, zipfilename, tmpdir = None):
+        if zipfilename:
+            zipfilename = os.path.abspath(zipfilename)
+
+            if not os.path.isfile(zipfilename):
+                print('找不到增量补丁包对应的zip文件: %s' % os.path.normpath(zipfilename))
+
+                return False
+
+            if tmpdir:
+                tmpdir = os.path.abspath(tmpdir)
+            else:
+                tmpdir = os.getcwd()
+
+            with builtin_os.tmpdir(os.path.join(tmpdir, '../zip', os.path.basename(tmpdir))) as _tmpdir:
+                try:
+                    with zipfile.ZipFile(zipfilename) as zip:
+                        zip.extractall()
+                except Exception as e:
+                    print(e)
+
+                    return False
+
+                install = None
+
+                for file in glob.iglob('**/install/dbscript-patch/ums-db-update-info.xml'):
+                    install = os.path.dirname(os.path.dirname(file))
+
+                    break
+
+                if not install:
+                    print('增量补丁包中找不到install/dbscript-patch/ums-db-update-info.xml')
+
+                    return False
+
+                prefix = 'install'
+
+                m = re.search(r'\/(pmu|ppu)\/', install)
+
+                if m:
+                    prefix = os.path.join(m.group(1), m.string[m.end():])
+
+                with builtin_os.chdir(install) as chdir:
+                    for file in glob.iglob('dbscript-patch/**/*', recursive = True):
+                        if os.path.isfile(file):
+                            for type in types:
+                                try:
+                                    shutil.copyfile(file, os.path.join(tmpdir, type, prefix, file))
+                                except Exception as e:
+                                    print(e)
+
+                                    return False
+
+        return True
 
 class stnpatch(patch):
     def __init__(self, path):

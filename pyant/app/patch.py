@@ -65,6 +65,7 @@ class patch():
         else:
             self.output = self.path
 
+        self.default_type = 'none'
         self.modules = {}
 
     def init(self, branch):
@@ -248,7 +249,7 @@ class patch():
         for e in tree.findall('patch'):
             index += 1
 
-            map = {
+            info = {
                 'name'          : e.get('name', '').strip(),
                 'os'            : None,
                 'script'        : None,
@@ -275,9 +276,9 @@ class patch():
                 }
             }
 
-            if map['name']:
-                if map['name'] not in self.modules:
-                    print('patch[%s]: patch节点的name属性不是合法的模块名称 - %s' % (index, map['name']))
+            if info['name']:
+                if info['name'] not in self.modules:
+                    print('patch[%s]: patch节点的name属性不是合法的模块名称 - %s' % (index, info['name']))
 
                     status = False
             else:
@@ -288,9 +289,9 @@ class patch():
             osname = e.get('os', '').strip()
 
             if osname:
-                map['os'] = tuple(x.strip() for x in osname.split(','))
+                info['os'] = tuple(x.strip() for x in osname.split(','))
 
-                if not set(map['os']) - set(('windows', 'linux', 'solaris')):
+                if not set(info['os']) - set(('windows', 'linux', 'solaris')):
                     print('patch[%s]: patch节点的os属性值错误, 只能包含windows, linux, solaris' % index)
 
                     status = False
@@ -298,11 +299,11 @@ class patch():
             script = e.get('script', '').strip()
 
             if script:
-                map['script'] = tuple(x.strip() for x in script.split(','))
-                map['zip'] = '%s.zip' % file[0:-4]
+                info['script'] = tuple(x.strip() for x in script.split(','))
+                info['zip'] = '%s.zip' % file[0:-4]
 
-                if not os.path.isfile(map['zip']):
-                    print('patch[%s]: 找不到增量脚本对应的zip文件 - %s' % (index, map['zip']))
+                if not os.path.isfile(info['zip']):
+                    print('patch[%s]: 找不到增量脚本对应的zip文件 - %s' % (index, info['zip']))
 
                     status = False
 
@@ -310,8 +311,8 @@ class patch():
                 name = builtin_os.normpath(e_delete.get('name', '').strip())
 
                 if name:
-                    if name not in map['delete']:
-                        map['delete'].append(name)
+                    if name not in info['delete']:
+                        info['delete'].append(name)
                 else:
                     print('patch[%s]/delete/attr: delete下attr节点的name属性不能为空' % index)
 
@@ -321,8 +322,8 @@ class patch():
                 name = builtin_os.normpath(e_source.get('name', '').strip())
 
                 if name:
-                    if name not in map['source']:
-                        map['source'].append(name)
+                    if name not in info['source']:
+                        info['source'].append(name)
                 else:
                     print('patch[%s]/source/attr: source下attr节点的name属性不能为空' % index)
 
@@ -344,7 +345,7 @@ class patch():
                         else:
                             clean = False
 
-                    map['compile'][name] = clean
+                    info['compile'][name] = clean
                 else:
                     print('patch[%s]/compile/attr: compile下attr节点的name属性不能为空' % index)
 
@@ -355,11 +356,6 @@ class patch():
                 type = e_deploy.get('type', '').strip()
 
                 types = self.types(type)
-
-                if types is None:
-                    print('patch[%s]/deploy/deploy/attr: type值非法 - %s' % (index, type))
-
-                    status = False
 
                 if name:
                     m = re.search(r'^(code|code_c|sdn)\/build\/output\/', name)
@@ -375,7 +371,7 @@ class patch():
 
                                 dest = dest.replace(m.string[m.start():m.end()], 'ums-client')
 
-                        map['deploy'][':'.join((name, dest))] = types
+                        info['deploy'][':'.join((name, dest))] = types
                     elif re.search(r'^installdisk\/', name):
                         dest = e_deploy.text
 
@@ -385,7 +381,7 @@ class patch():
                         if dest:
                             dest = builtin_os.normpath(dest)
 
-                            map['deploy'][':'.join((name, dest))] = types
+                            info['deploy'][':'.join((name, dest))] = types
                         else:
                             print('patch[%s]/deploy/deploy/attr: installdisk目录下的文件, 必须提供输出路径' % index)
 
@@ -405,11 +401,6 @@ class patch():
 
                 types = self.types(type)
 
-                if types is None:
-                    print('patch[%s]/deploy/delete/attr: type值非法 - %s' % (index, type))
-
-                    status = False
-
                 if name:
                     m = re.search(r'^ums-(\w+)', name)
 
@@ -419,7 +410,7 @@ class patch():
 
                             status = False
 
-                    map['deploy_delete'][name] = types
+                    info['deploy_delete'][name] = types
                 else:
                     print('patch[%s]/deploy/delete/attr: deploy/delete下attr节点的name属性不能为空' % index)
 
@@ -437,21 +428,21 @@ class patch():
                     if name in ('提交人员', '走查人员', '开发经理', '抄送人员'):
                         value = value.replace('\\', '/')
 
-                    map['info'][name] = value
+                    info['info'][name] = value
                 else:
                     print('patch[%s]/info/attr: info下attr节点的name属性不能为空' % index)
 
                     status = False
 
-            for x in map['info']:
-                if map['info'][x] is None:
+            for x in info['info']:
+                if info['info'][x] is None:
                     print('patch[%s]/info: info节点缺少(%s)' % (index, x))
 
                     status = False
                     continue
 
                 if x in ('变更类型'):
-                    if map['info'][x] not in ('需求', '优化', '故障'):
+                    if info['info'][x] not in ('需求', '优化', '故障'):
                         print('patch[%s]/info: info节点的(%s)必须是需求, 优化 或 故障' % (index, x))
 
                         status = False
@@ -459,15 +450,15 @@ class patch():
                     continue
 
                 if x in ('变更描述'):
-                    if len(map['info'][x]) < 10:
-                        print('patch[%s]/info: info节点的(%s)必须最少10个字符, 当前字符数: %s' % (index, x, len(map['info'][x])))
+                    if len(info['info'][x]) < 10:
+                        print('patch[%s]/info: info节点的(%s)必须最少10个字符, 当前字符数: %s' % (index, x, len(info['info'][x])))
 
                         status = False
 
                     continue
 
                 if x in ('关联故障'):
-                    if not re.search(r'^[\d,\s]+$', map['info'][x]):
+                    if not re.search(r'^[\d,\s]+$', info['info'][x]):
                         print('patch[%s]/info: info节点的(%s)必须是数字' % (index, x))
 
                         status = False
@@ -475,7 +466,7 @@ class patch():
                     continue
 
                 if x in ('变更来源'):
-                    if not map['info'][x]:
+                    if not info['info'][x]:
                         print('patch[%s]/info: info节点的(%s)不能为空' % (index, x))
 
                         status = False
@@ -485,17 +476,17 @@ class patch():
                 if x in ('走查人员', '抄送人员'):
                     authors = []
 
-                    for author in map['info'][x].split(','):
+                    for author in info['info'][x].split(','):
                         author = author.strip()
 
                         if author not in authors:
                             authors.append(author)
 
-                    map['info'][x] = authors
+                    info['info'][x] = authors
 
                     continue
 
-            info_list.append(map)
+            info_list.append(info)
 
         if status:
             return info_list
@@ -561,8 +552,10 @@ class patch():
                     e = xml.etree.ElementTree.Element('attr')
                     e.set('name', name)
 
-                    if info['deploy'][x]:
-                        e.set('type', ', '.join(info['deploy'][x]))
+                    types = info['deploy'][x]
+
+                    if types != [self.default_type]:
+                        e.set('type', ', '.join(types))
 
                     if not re.search(r'^(code|code_c|sdn)\/build\/output\/', name):
                         e.text = ''.join(dest)
@@ -577,8 +570,10 @@ class patch():
                     e = xml.etree.ElementTree.Element('attr')
                     e.set('name', x)
 
-                    if info['deploy_delete'][x]:
-                        e.set('type', ', '.join(info['deploy_delete'][x]))
+                    types = info['deploy_delete'][x]
+
+                    if types != [self.default_type]:
+                        e.set('type', ', '.join(types))
 
                     deploy_delete_element.append(e)
 
@@ -712,7 +707,7 @@ class patch():
         smtp.sendmail(notification, to_addrs, cc_addrs, '<br>\n'.join(lines))
 
     def types(self, type):
-        return []
+        return [self.default_type]
 
     def build_delete(self, name, deletes):
         if not os.path.isdir(os.path.join('build', name)):
@@ -801,12 +796,8 @@ class patch():
                     filename = self.expand_filename(src)
 
                     if filename:
-                        if types:
-                            for type in types:
-                                if not self.build_deploy_file(filename, os.path.join(tmpdir, type, dest)):
-                                    return False
-                        else:
-                            if not self.build_deploy_file(filename, os.path.join(tmpdir, dest)):
+                        for type in types:
+                            if not self.build_deploy_file(filename, os.path.join(tmpdir, type, dest)):
                                 return False
                 elif os.path.isdir(src):
                     with builtin_os.chdir(src) as _chdir:
@@ -815,12 +806,8 @@ class patch():
                                 filename = self.expand_filename(filename)
 
                                 if filename:
-                                    if types:
-                                        for type in types:
-                                            if not self.build_deploy_file(filename, os.path.join(tmpdir, type, dest, filename)):
-                                                return False
-                                    else:
-                                        if not self.build_deploy_file(filename, os.path.join(tmpdir, dest, filename)):
+                                    for type in types:
+                                        if not self.build_deploy_file(filename, os.path.join(tmpdir, type, dest, filename)):
                                             return False
                 else:
                     return False
@@ -854,6 +841,8 @@ class bnpatch(patch):
     def __init__(self, path):
         super().__init__(path)
 
+        self.default_type = 'ems'
+
         for name, url in bn.REPOS.items():
             self.modules[os.path.basename(url)] = url
 
@@ -861,7 +850,7 @@ class bnpatch(patch):
         types = []
 
         if not type:
-            type = 'ems'
+            type = self.default_type
 
         for x in type.split(','):
             x = x.strip()
@@ -889,5 +878,10 @@ class stnpatch(patch):
     def __init__(self, path):
         super().__init__(path)
 
+        self.default_type = 'stn'
+
         for name, url in stn.REPOS.items():
             self.modules[os.path.basename(url)] = url
+
+    def types(self, type):
+        return [self.default_type]

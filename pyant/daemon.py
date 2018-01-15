@@ -27,6 +27,24 @@ class PyroCommand():
         else:
             return None
 
+class PyroCommandProxy():
+    def __init__(self, ip):
+        self.proxy = Pyro4.Proxy('PYRO:daemon.command@%s:9000' % ip)
+
+    def command(self, cmdline, timeout = None, cwd = None, async = False, display_cmd = None):
+        try:
+            for line in self.proxy.command(cmdline, timeout, cwd, async, display_cmd):
+                print(line)
+
+            if self.proxy.result():
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+
+            return False
+
 @Pyro4.expose
 class PyroFile():
     def __init__(self):
@@ -95,31 +113,20 @@ class PyroFile():
     def isdir(self, path):
         return os.path.isdir(path)
 
-@Pyro4.expose
-class PyroMail():
-    def __init__(self):
-        pass
+    def read(self, file):
+        if os.path.file(file):
+            with open(file, 'rb') as f:
+                return f.read(f)
+        else:
+            return None
 
-    def sendmail(self, from_addr, to_addrs, string):
-        return smtp.smtp_sendmail(from_addr, to_addrs, string)
+    def write(self, file, data):
+        os.makedirs(os.path.dirname(file), exist_ok = True)
 
-class PyroCommandProxy():
-    def __init__(self, ip):
-        self.proxy = Pyro4.Proxy('PYRO:daemon.command@%s:9000' % ip)
+        with open(file, 'wb') as f:
+            f.write(data)
 
-    def command(self, cmdline, timeout = None, cwd = None, async = False, display_cmd = None):
-        try:
-            for line in self.proxy.command(cmdline, timeout, cwd, async, display_cmd):
-                print(line)
-
-            if self.proxy.result():
-                return True
-            else:
-                return False
-        except Exception as e:
-            print(e)
-
-            return False
+        return True
 
 class PyroFileProxy():
     def __init__(self, ip):
@@ -233,6 +240,30 @@ class PyroFileProxy():
             print(e)
 
             return None
+
+    def read(self, file):
+        try:
+            return self.proxy.read(file)
+        except Exception as e:
+            print(e)
+
+            return None
+
+    def write(self, file, data):
+        try:
+            return self.proxy.write(file, data)
+        except Exception as e:
+            print(e)
+
+            return False
+
+@Pyro4.expose
+class PyroMail():
+    def __init__(self):
+        pass
+
+    def sendmail(self, from_addr, to_addrs, string):
+        return smtp.smtp_sendmail(from_addr, to_addrs, string)
 
 def daemon():
     with Pyro4.Daemon(host = '0.0.0.0', port = 9000) as daemon:

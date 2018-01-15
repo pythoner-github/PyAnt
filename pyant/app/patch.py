@@ -10,11 +10,170 @@ import xml.etree.ElementTree
 import xml.dom.minidom
 import zipfile
 
-from pyant import git, maven, smtp
-from pyant.app import bn, stn
+from pyant import daemon, git, maven, password, smtp
+from pyant.app import bn, stn, const
 from pyant.builtin import os as builtin_os
 
-__all__ = ('build', 'build_init', 'build_install')
+__all__ = ('auto', 'build', 'build_init', 'build_install')
+
+def auto():
+    home = '/home/auto/xml'
+    template = os.path.abspath(os.path.join(home, '..', 'template'))
+
+    dir_info = {
+        'stn/none'      : ['10.5.72.12',  '/build'],
+        'bn/linux'      : ['10.5.72.101', '/build/build'],
+        'bn/solaris'    : ['10.5.72.102', '/build/build'],
+        'bn/windows'    : ['10.8.11.106', 'd:/build'],
+        'bn/windows_x86': ['10.8.11.106', 'e:/build']
+    }
+
+    status = True
+
+    if os.path.isdir(home):
+        with builtin_os.chdir(home) as chdir:
+            print('===== 拷贝补丁申请单 =====')
+
+            for dir in glob.iglob('*', recursive = True):
+                if not os.path.isdir(dir):
+                    shutil.rmtree(dir, ignore_errors = True)
+
+                    continue
+
+                m = re.search(r'^(bn|stn)_.*_(\d{8})$', dir)
+
+                if not m:
+                    shutil.rmtree(dir, ignore_errors = True)
+
+                    continue
+
+                module = m.group(1)
+                name = m.group(2)
+
+                if module in ('stn'):
+                    deploy_homes = [os.path.join(template, module, 'none', name)]
+                else:
+                    deploy_homes = [
+                        os.path.join(template, module, 'linux', name),
+                        os.path.join(template, module, 'solaris', name),
+                        os.path.join(template, module, 'windows', name),
+                        os.path.join(template, module, 'windows_x86', name)
+                    ]
+
+                with builtin_os.chdir(dir) as _chdir:
+                    for file in glob.iglob('**/*.xml', recursive = True):
+                        try:
+                            for deploy_home in deploy_homes:
+                                os.makedirs(deploy_home, exist_ok = True)
+                                shutil.copyfile(file, os.path.join(deploy_home, os.path.basename(file)))
+
+                                if module in ('bn'):
+                                    zipname = '%s.zip' % os.path.splitext(file)[0]
+
+                                    if os.path.isfile(zipname):
+                                        shutil.copyfile(zipname, os.path.join(deploy_home, os.path.basename(zipname)))
+                        except Exception as e:
+                            print(e)
+
+                            status = False
+                            continue
+
+                shutil.rmtree(dir, ignore_errors = True)
+
+    auto_info = []
+
+    if os.path.isdir(template):
+        with builtin_os.chdir(template) as chdir:
+            print('===== 分发补丁申请单 =====')
+
+            for dir in glob.iglob('*/*', recursive = True):
+                if dir in dir_info:
+                    ip, _home = dir_info[dir]
+                    proxy = daemon.PyroFileProxy(ip)
+
+                    try:
+                        proxy._pyroBind()
+                    except:
+                        continue
+
+                    with builtin_os.chdir(dir) as _chdir:
+                        for name in glob.iglob('*', recursive = True):
+                            try:
+                                if proxy.isdir(builtin_os.join(_home, 'patch/build', 'dev', name)):
+                                    build_home = builtin_os.join(_home, 'patch/build', 'dev', name)
+                                elif proxy.isdir(builtin_os.join(_home, 'patch/build', 'release', name)):
+                                    build_home = builtin_os.join(_home, 'patch/build', 'release', name)
+                                else:
+                                    build_home = None
+
+                                if build_home:
+                                    for file in glob.iglob(os.path.join(name, '*/*.xml'), recursive = True):
+                                        print('  %s' % os.path.normpath(os.path.abspath(file)))
+
+                                        zipname = '%s.zip' % os.path.splitext(file)[0]
+
+                                        try:
+                                            tree = xml.etree.ElementTree.parse(file)
+
+                                            if not proxy.write(
+                                                builtin_os.join(build_home, 'xml', os.path.basename(file)),
+                                                xml.etree.ElementTree.tostring(tree.getroot()).encode('utf-8')
+                                            ):
+                                                continue
+
+                                            if os.path.isfile(zipname):
+                                                if not proxy.copy_file(
+                                                    zipname,
+                                                    builtin_os.join(build_home, 'xml', os.path.basename(zipname))
+                                                ):
+                                                    continue
+
+                                                shutil.rmtree(zipname, ignore_errors = True)
+
+                                            shutil.rmtree(file, ignore_errors = True)
+                                        except Exception as e:
+                                            print(e)
+
+                                            status = False
+                                            continue
+
+                                        if (dir, name) not in auto_info:
+                                            auto_info.append((dir, name))
+                                else:
+                                    shutil.rmtree(name, ignore_errors = True)
+                            except Exception as e:
+                                print(e)
+
+                                status = False
+                                continue
+                else:
+                    shutil.rmtree(dir, ignore_errors = True)
+
+    if auto_info:
+        print('===== 启动补丁制作 =====')
+
+        for dir, name in auto_info:
+            if dir in ('stn/none'):
+                jobname = 'stn_patch_%s' % name
+            else:
+                jobname = 'bn_patch_%s_%s' % (name, dir.split('/')[-1])
+
+            cmdline = 'java -jar "%s" -s %s build --username %s --password %s "%s"' % (
+                const.JENKINS_CLI, const.JENKINS_URL, const.JENKINS_USERNAME, const.JENKINS_PASSWORD,
+                jobname
+            )
+
+            display_cmd = 'java -jar "%s" -s %s build --username %s --password %s "%s"' % (
+                const.JENKINS_CLI, const.JENKINS_URL, password.password(const.JENKINS_USERNAME), password.password(const.JENKINS_PASSWORD),
+                jobname
+            )
+
+            cmd = command.command()
+
+            for line in cmd.command(cmdline, display_cmd = display_cmd):
+                print(line)
+
+    return status
 
 def build(name, path):
     if name == 'bn':

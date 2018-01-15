@@ -156,6 +156,8 @@ def build(argv = None):
                         branch = None
 
                     return build.dashboard_monitor(branch)
+                elif command == 'patch_auto':
+                    return patch.auto()
                 elif command == 'patch':
                     return patch.build(name, arg[0])
                 elif command == 'patch_init':
@@ -187,6 +189,7 @@ Usage:
         check               arg:
         dashboard           arg: module, paths, branch
         dashboard_monitor   arg: branch
+        patch_auto          arg:
         patch               arg: path
         patch_init          arg: path, branch
         patch_install       arg: path

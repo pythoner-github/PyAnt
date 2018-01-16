@@ -15,7 +15,7 @@ __build_name__ = ('bn', 'stn', 'umebn', 'sdno')
 __build_command__ = (
     'updateall', 'update', 'compile_base', 'compile', 'package', 'check',
     'dashboard', 'dashboard_monitor',
-    'patch', 'patch_init', 'patch_install'
+    'patch_auto', 'patch', 'patch_init', 'patch_install'
 )
 
 def build(argv = None):

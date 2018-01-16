@@ -92,7 +92,7 @@ def auto():
                     proxy = daemon.PyroFileProxy(ip)
 
                     try:
-                        proxy._pyroBind()
+                        proxy.proxy._pyroBind()
                     except:
                         continue
 
@@ -107,7 +107,7 @@ def auto():
                                     build_home = None
 
                                 if build_home:
-                                    for file in glob.iglob(os.path.join(name, '*/*.xml'), recursive = True):
+                                    for file in glob.iglob(os.path.join(name, '**/*.xml'), recursive = True):
                                         print('  %s' % os.path.normpath(os.path.abspath(file)))
 
                                         zipname = '%s.zip' % os.path.splitext(file)[0]
@@ -117,7 +117,7 @@ def auto():
 
                                             if not proxy.write(
                                                 builtin_os.join(build_home, 'xml', os.path.basename(file)),
-                                                xml.etree.ElementTree.tostring(tree.getroot()).encode('utf-8')
+                                                xml.etree.ElementTree.tostring(tree.getroot())
                                             ):
                                                 continue
 

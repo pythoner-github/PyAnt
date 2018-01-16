@@ -17,7 +17,7 @@ from pyant.builtin import os as builtin_os
 __all__ = ('auto', 'build', 'build_init', 'build_install')
 
 def auto():
-    home = '/home/auto/xml'
+    home = '/home/build/auto/xml'
     template = os.path.abspath(os.path.join(home, '..', 'template'))
 
     dir_info = {

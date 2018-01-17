@@ -290,7 +290,7 @@ class patch():
                         status = False
                         continue
 
-                    if info_list.empty():
+                    if len(info_list) == 0:
                         message.append((os.path.basename(file), '未找到补丁信息', True))
 
                         os.remove(file)
@@ -381,7 +381,7 @@ class patch():
                                             break
 
                             if cur_status:
-                                if glob.glob(os.path.join(output, '*'), recursive = True).empty():
+                                if len(glob.glob(os.path.join(output, '*'), recursive = True)) == 0:
                                     message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但没有输出文件(补丁号: %s)' % id, True))
                                     self.sendmail('<PATCH 通知>补丁制作成功, 但没有输出文件(补丁号: %s)' % id, to_addrs, cc_addrs, None, file)
                                 else:

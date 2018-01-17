@@ -36,7 +36,10 @@ def auto():
 
             for dir in glob.iglob('*', recursive = True):
                 if not os.path.isdir(dir):
-                    shutil.rmtree(dir, ignore_errors = True)
+                    try:
+                        os.remove(dir)
+                    except:
+                        pass
 
                     continue
 
@@ -128,9 +131,9 @@ def auto():
                                                 ):
                                                     continue
 
-                                                shutil.rmtree(zipname, ignore_errors = True)
+                                                os.remove(zipname)
 
-                                            shutil.rmtree(file, ignore_errors = True)
+                                            os.remove(file)
                                         except Exception as e:
                                             print(e)
 
@@ -276,12 +279,13 @@ class patch():
                         message.append((os.path.basename(file), '解析XML文件失败', False))
                         self.sendmail('<PATCH 通知>解析XML文件失败, 请尽快处理', to_addrs, cc_addrs, None, file)
 
-                        shutil.rmtree(file, ignore_errors = True)
+                        os.remove(file)
 
                         zipfilename = self.get_xml_zipfile(file)
 
                         if zipfilename:
-                            shutil.rmtree(zipfilename, ignore_errors = True)
+                            if os.path.isfile(zipfilename):
+                                os.remove(zipfilename)
 
                         status = False
                         continue
@@ -289,12 +293,13 @@ class patch():
                     if info_list.empty():
                         message.append((os.path.basename(file), '未找到补丁信息', True))
 
-                        shutil.rmtree(file, ignore_errors = True)
+                        os.remove(file)
 
                         zipfilename = self.get_xml_zipfile(file)
 
                         if zipfilename:
-                            shutil.rmtree(zipfilename, ignore_errors = True)
+                            if os.path.isfile(zipfilename):
+                                os.remove(zipfilename)
 
                         continue
 
@@ -396,13 +401,14 @@ class patch():
                                 message.append(('%s(%s)' % (filename, index), '补丁制作失败', False))
                                 self.sendmail('<PATCH 通知>补丁制作失败, 请尽快处理', to_addrs, cc_addrs, None, file)
 
-                    shutil.rmtree(file, ignore_errors = True)
+                    os.remove(file)
                     shutil.rmtree(tempdir, ignore_errors = True)
 
                     zipfilename = self.get_xml_zipfile(file)
 
                     if zipfilename:
-                        shutil.rmtree(zipfilename, ignore_errors = True)
+                        if os.path.isfile(zipfilename):
+                            os.remove(zipfilename)
 
         return status
 
@@ -904,7 +910,10 @@ class patch():
 
         with builtin_os.chdir(os.path.join('build', name)) as chdir:
             for file in deletes:
-                shutil.rmtree(file, ignore_errors = True)
+                if os.path.isfile(file):
+                    os.remove(file)
+                else:
+                    shutil.rmtree(file, ignore_errors = True)
 
         return True
 

@@ -80,7 +80,11 @@ class PyroFile():
 
     def delete_file(self, name):
         name = os.path.abspath(name)
-        shutil.rmtree(name, ignore_errors = True)
+
+        if os.path.isfile(name):
+            os.remove(name)
+        else:
+            shutil.rmtree(name, ignore_errors = True)
 
         return True
 

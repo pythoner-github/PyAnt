@@ -882,7 +882,7 @@ class patch():
         return '%s_%04d' % (prefix, id + 1)
 
     def get_xml_filename(self, info):
-        name, employee_id = info['提交人员'].replace('\\', '/').split('/', 1)
+        name, employee_id = info['info']['提交人员'].replace('\\', '/').split('/', 1)
 
         return '%s_%s_%s.xml' % (datetime.datetime.now().strftime('%Y%m%d'), employee_id, name)
 
@@ -890,9 +890,10 @@ class patch():
         return None
 
     def sendmail(self, notification, to_addrs, cc_addrs = None, lines = None, file = None):
-        if os.environ.get('BUILD_URL'):
+        if lines is None:
             lines = []
 
+        if os.environ.get('BUILD_URL'):
             console_url = builtin_os.join(os.environ['BUILD_URL'], 'console')
 
             lines.append('')

@@ -10,7 +10,7 @@ import xml.etree.ElementTree
 import xml.dom.minidom
 import zipfile
 
-from pyant import daemon, git, maven, password, smtp
+from pyant import command, daemon, git, maven, password, smtp
 from pyant.app import bn, stn, const
 from pyant.builtin import os as builtin_os
 

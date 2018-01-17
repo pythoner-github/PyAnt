@@ -797,10 +797,10 @@ class patch():
             return False
 
     def get_addrs(self, info):
-        to_addrs = '%s@zte.com.cn' % info['提交人员'].replace('\\', '/').split('/', 1)[-1]
+        to_addrs = '%s@zte.com.cn' % info['info']['提交人员'].replace('\\', '/').split('/', 1)[-1]
 
-        cc_addrs = ['%s@zte.com.cn' % x.replace('\\', '/').split('/', 1)[-1] for x in info['走查人员'] + info['抄送人员']]
-        cc_addrs.append('%s@zte.com.cn' % info['开发经理'].replace('\\', '/').split('/', 1)[-1])
+        cc_addrs = ['%s@zte.com.cn' % x.replace('\\', '/').split('/', 1)[-1] for x in info['info']['走查人员'] + info['info']['抄送人员']]
+        cc_addrs.append('%s@zte.com.cn' % info['info']['开发经理'].replace('\\', '/').split('/', 1)[-1])
 
         return (to_addrs, cc_addrs)
 
@@ -955,25 +955,30 @@ class patch():
 
     def build_compile(self, name, compile_info):
         if not os.path.isdir(os.path.join('build', name)):
+            print('no such directory: %s' % os.path.normpath(os.path.join('build', name)))
+
             return False
 
         with builtin_os.chdir(os.path.join('build', name)) as chdir:
             for path, clean in compile_info.items():
-                if not os.path.isdir(path):
-                    return False
+                if os.path.isdir(path):
+                    with builtin_os.chdir(path) as _chdir:
+                        mvn = maven.maven()
+                        mvn.notification = '<PATCH 通知>编译失败, 请尽快处理'
 
-                mvn = maven.maven()
-                mvn.notification = '<PATCH 通知>编译失败, 请尽快处理'
+                        if clean:
+                            mvn.clean()
 
-                if clean:
-                    mvn.clean()
-
-                if re.search(r'code_c\/', path):
-                    if not mvn.compile('mvn deploy -fn -U -Djobs=10', 'mvn deploy -fn -U', 'cpp'):
-                        return False
+                        if re.search(r'code_c\/', path):
+                            if not mvn.compile('mvn deploy -fn -U -Djobs=10', 'mvn deploy -fn -U', 'cpp'):
+                                return False
+                        else:
+                            if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U'):
+                                return False
                 else:
-                    if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U'):
-                        return False
+                    print('no such directory: %s' % os.path.normpath(path))
+
+                    return False
 
         return True
 
@@ -1012,7 +1017,7 @@ class patch():
 
         return True
 
-    def build_deploy_script(types, zipfilename, tmpdir = None):
+    def build_deploy_script(self, types, zipfilename, tmpdir = None):
         return True
 
     def build_deploy_file(self, src_file, dest_file):
@@ -1078,7 +1083,7 @@ class bnpatch(patch):
 
         return super().build_compile(name, compile_info)
 
-    def build_deploy_script(types, zipfilename, tmpdir = None):
+    def build_deploy_script(self, types, zipfilename, tmpdir = None):
         if zipfilename:
             zipfilename = os.path.abspath(zipfilename)
 

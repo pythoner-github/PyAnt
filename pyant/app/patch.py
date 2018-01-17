@@ -157,9 +157,9 @@ def auto():
 
         for dir, name in auto_info:
             if dir in ('stn/none'):
-                jobname = 'stn_patch_%s' % name
+                jobname = 'stn/patch/stn_patch_%s' % name
             else:
-                jobname = 'bn_patch_%s_%s' % (name, dir.split('/')[-1])
+                jobname = 'bn/patch/bn_patch_%s_%s' % (name, dir.split('/')[-1])
 
             cmdline = 'java -jar "%s" -s %s build --username %s --password %s "%s"' % (
                 const.JENKINS_CLI, const.JENKINS_URL, const.JENKINS_USERNAME, const.JENKINS_PASSWORD,

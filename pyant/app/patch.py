@@ -116,11 +116,11 @@ def auto():
                                         zipname = '%s.zip' % os.path.splitext(file)[0]
 
                                         try:
-                                            tree = xml.etree.ElementTree.parse(file)
+                                            doc = xml.dom.minidom.parse(file)
 
                                             if not proxy.write(
                                                 builtin_os.join(build_home, 'xml', os.path.basename(file)),
-                                                xml.etree.ElementTree.tostring(tree.getroot(), encoding = 'utf-8')
+                                                doc.toxml(encoding="utf-8")
                                             ):
                                                 continue
 
@@ -142,6 +142,9 @@ def auto():
 
                                         if (dir, name) not in auto_info:
                                             auto_info.append((dir, name))
+
+                                    if len(glob.glob(os.path.join(name, '**/*.xml'), recursive = True)) == 0:
+                                        shutil.rmtree(name, ignore_errors = True)
                                 else:
                                     shutil.rmtree(name, ignore_errors = True)
                             except Exception as e:

@@ -57,7 +57,7 @@
         发布到版本(可选)
 
         name  : 源文件或目录, 必须以code/build/output, code_c/build/output或installdisk开头
-        text  : 目的路径, 如不写, 则为output后的部分，则为output后的部分(installdisk开头必须写目的路径)
+        text  : 目的路径, 如不写, 则为output后的部分(installdisk开头必须写目的路径)
         type  : 版本类型(ems, nms, lct, upgrade(独立升级工具), service), 多个类型以逗号隔开, 默认为ems
 
         * 包含ums-nms的为nms, 包含ums-lct的为lct, 此时type值无效

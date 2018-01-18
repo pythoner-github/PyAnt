@@ -72,7 +72,7 @@
     -->
     <info>
       <attr name='提交人员'>苟亚斌/10067748</attr>
-      <attr name='变更版本'>2.00.00.B11</attr>
+      <attr name='变更版本'>V2.10.00.B01</attr>
       <attr name='变更类型'>故障</attr>
       <attr name='变更描述'>变更描述, 变更描述最少10个汉字或20个英文字母</attr>
       <attr name='关联故障'>613002089187</attr>

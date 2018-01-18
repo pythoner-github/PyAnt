@@ -545,7 +545,11 @@ class patch():
 
             for e_deploy in e.findall('deploy/deploy/attr'):
                 name = builtin_os.normpath(e_deploy.get('name', '').strip())
+                dest = e_deploy.text
                 type = e_deploy.get('type', '').strip()
+
+                if dest is not None:
+                    dest = builtin_os.normpath(dest.strip())
 
                 types = self.types(type)
 
@@ -553,7 +557,8 @@ class patch():
                     m = re.search(r'^(code|code_c|sdn)\/build\/output\/', name)
 
                     if m:
-                        dest = m.string[m.end():]
+                        if not dest:
+                            dest = m.string[m.end():]
 
                         m = re.search(r'^ums-(\w+)', dest)
 
@@ -565,14 +570,7 @@ class patch():
 
                         info['deploy'][':'.join((name, dest))] = types
                     elif re.search(r'^installdisk\/', name):
-                        dest = e_deploy.text
-
-                        if dest is not None:
-                            dest = dest.strip()
-
                         if dest:
-                            dest = builtin_os.normpath(dest)
-
                             info['deploy'][':'.join((name, dest))] = types
                         else:
                             print('patch[%s]/deploy/deploy/attr: installdisk目录下的文件, 必须提供输出路径' % index)
@@ -743,14 +741,12 @@ class patch():
 
                     e = xml.etree.ElementTree.Element('attr')
                     e.set('name', name)
+                    e.text = ''.join(dest)
 
                     types = info['deploy'][x]
 
                     if types != [self.default_type]:
                         e.set('type', ', '.join(types))
-
-                    if not re.search(r'^(code|code_c|sdn)\/build\/output\/', name):
-                        e.text = ''.join(dest)
 
                     deploy_deploy_element.append(e)
 

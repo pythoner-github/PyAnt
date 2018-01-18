@@ -12,7 +12,7 @@
       name  : 需要在编译环境中删除的文件或目录
     -->
     <delete>
-      <attr name='code/utils/util/target'/>
+      <attr name='code/cmcc-yang/target'/>
     </delete>
 
     <!--
@@ -21,7 +21,7 @@
       name  : 需要变更的文件或目录
     -->
     <source>
-      <attr name='code/utils/util/src'/>
+      <attr name='code/cmcc-yang/src'/>
     </source>
 
     <!--
@@ -31,7 +31,7 @@
       clean : 是否执行clean, 默认为true
     -->
     <compile>
-      <attr name='code/utils/util' clean='true'/>
+      <attr name='code/cmcc-yang' clean='true'/>
     </compile>
 
     <!-- 发布信息(可选) -->
@@ -39,11 +39,11 @@
       <!--
         发布到版本(可选)
 
-        name  : 源文件或目录, 必须以code/build/output或installdisk开头, 目的路径为output后的部分(installdisk开头的需要写目的路径)
+        name  : 源文件或目录, 必须以code/build/output或installdisk开头
+        text  : 目的路径, 如不写, 则为output后的部分(installdisk开头必须写目的路径)
       -->
       <deploy>
-        <attr name='code/build/output/ums-server/procs-nfm/plugins/com.zte.sdn.frm.util.jar'/>
-        <attr name='installdisk/installation/installation/sdn/conf/commoncustomize.xml'>conf/commoncustomize.xml</attr>
+        <attr name='code/build/output/system/com/zte/sdn/interface/mobile/cmcc-yang'>ums-server/procs-nfm/system/com/zte/sdn/interface/mobile/cmcc-yang</attr>
       </deploy>
 
       <!--
@@ -52,7 +52,7 @@
         name  : 需要从版本中删除的文件或目录
       -->
       <delete>
-        <attr name='ums-server/procs-nfm/plugins/com.zte.sdn.frm.util.jar'/>
+        <attr name='ums-server/procs-nfm/system/com/zte/sdn/interface/mobile/cmcc-yang'/>
       </delete>
     </deploy>
 

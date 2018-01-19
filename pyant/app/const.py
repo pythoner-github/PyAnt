@@ -98,9 +98,9 @@ PATCH_XML_HOME = '/home/build/auto/xml'
 PATCH_TEMPLATE_HOME = os.path.abspath(os.path.join(PATCH_XML_HOME, '..', 'template'))
 
 PATCH_NODE_INFO = {
-    'stn/none'      : ['10.5.72.12',  '/build'],
+    'stn/none'      : ['10.5.72.12',  '/build/build'],
     'bn/linux'      : ['10.5.72.101', '/build/build'],
     'bn/solaris'    : ['10.5.72.102', '/build/build'],
-    'bn/windows'    : ['10.8.11.106', 'd:/build'],
-    'bn/windows_x86': ['10.8.11.106', 'e:/build']
+    'bn/windows'    : ['10.8.11.106', 'd:/build/build'],
+    'bn/windows_x86': ['10.8.11.106', 'e:/build/build']
 }

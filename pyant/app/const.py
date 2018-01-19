@@ -94,7 +94,7 @@ else:
 
 # PATCH
 
-PATCH_XML_HOME = '/home/build/auto/xml'
+PATCH_XML_HOME = '/build/auto/xml'
 PATCH_TEMPLATE_HOME = os.path.abspath(os.path.join(PATCH_XML_HOME, '..', 'template'))
 
 PATCH_NODE_INFO = {

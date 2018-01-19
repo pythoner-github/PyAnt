@@ -17,21 +17,10 @@ from pyant.builtin import os as builtin_os
 __all__ = ('auto', 'build', 'build_init', 'build_install')
 
 def auto():
-    home = '/home/build/auto/xml'
-    template = os.path.abspath(os.path.join(home, '..', 'template'))
-
-    dir_info = {
-        'stn/none'      : ['10.5.72.12',  '/build'],
-        'bn/linux'      : ['10.5.72.101', '/build/build'],
-        'bn/solaris'    : ['10.5.72.102', '/build/build'],
-        'bn/windows'    : ['10.8.11.106', 'd:/build'],
-        'bn/windows_x86': ['10.8.11.106', 'e:/build']
-    }
-
     status = True
 
-    if os.path.isdir(home):
-        with builtin_os.chdir(home) as chdir:
+    if os.path.isdir(const.PATCH_XML_HOME):
+        with builtin_os.chdir(const.PATCH_XML_HOME) as chdir:
             print('===== 拷贝补丁申请单 =====')
 
             for dir in glob.iglob('*', recursive = True):
@@ -54,13 +43,13 @@ def auto():
                 name = m.group(2)
 
                 if module in ('stn'):
-                    deploy_homes = [os.path.join(template, module, 'none', name)]
+                    deploy_homes = [os.path.join(const.PATCH_TEMPLATE_HOME, module, 'none', name)]
                 else:
                     deploy_homes = [
-                        os.path.join(template, module, 'linux', name),
-                        os.path.join(template, module, 'solaris', name),
-                        os.path.join(template, module, 'windows', name),
-                        os.path.join(template, module, 'windows_x86', name)
+                        os.path.join(const.PATCH_TEMPLATE_HOME, module, 'linux', name),
+                        os.path.join(const.PATCH_TEMPLATE_HOME, module, 'solaris', name),
+                        os.path.join(const.PATCH_TEMPLATE_HOME, module, 'windows', name),
+                        os.path.join(const.PATCH_TEMPLATE_HOME, module, 'windows_x86', name)
                     ]
 
                 with builtin_os.chdir(dir) as _chdir:
@@ -85,13 +74,13 @@ def auto():
 
     auto_info = []
 
-    if os.path.isdir(template):
-        with builtin_os.chdir(template) as chdir:
+    if os.path.isdir(const.PATCH_TEMPLATE_HOME):
+        with builtin_os.chdir(const.PATCH_TEMPLATE_HOME) as chdir:
             print('===== 分发补丁申请单 =====')
 
             for dir in glob.iglob('*/*', recursive = True):
-                if dir in dir_info:
-                    ip, _home = dir_info[dir]
+                if dir in const.PATCH_NODE_INFO:
+                    ip, home = const.PATCH_NODE_INFO[dir]
                     proxy = daemon.PyroFileProxy(ip)
 
                     try:
@@ -102,10 +91,10 @@ def auto():
                     with builtin_os.chdir(dir) as _chdir:
                         for name in glob.iglob('*', recursive = True):
                             try:
-                                if proxy.isdir(builtin_os.join(_home, 'patch/build', 'dev', name)):
-                                    build_home = builtin_os.join(_home, 'patch/build', 'dev', name)
-                                elif proxy.isdir(builtin_os.join(_home, 'patch/build', 'release', name)):
-                                    build_home = builtin_os.join(_home, 'patch/build', 'release', name)
+                                if proxy.isdir(builtin_os.join(home, 'patch/build', 'dev', name)):
+                                    build_home = builtin_os.join(home, 'patch/build', 'dev', name)
+                                elif proxy.isdir(builtin_os.join(home, 'patch/build', 'release', name)):
+                                    build_home = builtin_os.join(home, 'patch/build', 'release', name)
                                 else:
                                     build_home = None
 

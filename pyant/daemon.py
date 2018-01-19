@@ -269,7 +269,7 @@ class PyroMail():
     def sendmail(self, from_addr, to_addrs, string):
         return smtp.smtp_sendmail(from_addr, to_addrs, string)
 
-# python3 -c "from pyant import daemon; daemon.daemon()" &
+# su - user -c 'python3 -c "from pyant import daemon; daemon.daemon()" &'
 def daemon():
     with Pyro4.Daemon(host = '0.0.0.0', port = 9000) as daemon:
         print(daemon.register(PyroCommand, 'daemon.command'))

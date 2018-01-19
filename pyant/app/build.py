@@ -535,16 +535,12 @@ def metric_start(name, module_name = None, night = True):
     if cmdline:
         lines = []
 
-        cmd = command.command()
+        for line in ('$ ' + cmdline, '  in (' + os.getcwd() + ')'):
+            yield line
 
-        for line in cmd.command(cmdline):
-            lines.append(line)
-
-            print(line)
-
-        if cmd.result():
-            return ''.join(lines[-1:]).strip()
-        else:
+        try:
+            return os.popen(cmdline).read().strip()
+        except:
             return None
     else:
         return None

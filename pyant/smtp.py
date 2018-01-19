@@ -4,6 +4,8 @@ import email.mime.text
 import os
 import smtplib
 
+from pyant.app import const
+
 __all__ = ('sendmail', 'smtp_sendmail')
 
 def sendmail(subject, to_addrs, cc_addrs = None, message = None, attaches = None, html = True):
@@ -79,7 +81,7 @@ def pyro_sendmail(from_addr, to_addrs, string):
     import Pyro4
 
     try:
-        with Pyro4.Proxy('PYRO:daemon.mail@10.8.9.85:9000') as proxy:
+        with Pyro4.Proxy(const.PYRO_MAIL) as proxy:
             return proxy.sendmail(from_addr, to_addrs, string)
     except Exception as e:
         return e

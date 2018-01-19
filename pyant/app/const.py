@@ -92,6 +92,9 @@ else:
     else:
         JENKINS_CLI = '/build/jenkins/jenkins-cli.jar'
 
+# EMAIL
+PYRO_MAIL = 'PYRO:daemon.mail@10.8.9.80:9000'
+
 # PATCH
 
 PATCH_XML_HOME = '/build/auto/xml'

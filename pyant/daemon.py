@@ -267,7 +267,12 @@ class PyroMail():
         pass
 
     def sendmail(self, from_addr, to_addrs, string):
-        return smtp.smtp_sendmail(from_addr, to_addrs, string)
+        error = smtp.smtp_sendmail(from_addr, to_addrs, string)
+
+        if error:
+            return str(error)
+
+        return None
 
 # su - user -c 'python3 -c "from pyant import daemon; daemon.daemon()" &'
 def daemon():

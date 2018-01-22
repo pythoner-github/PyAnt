@@ -246,8 +246,9 @@ def environ(lang = None):
             os.environ['DEVTOOLS_ROOT'] = builtin_os.abspath('DEVTOOLS')
 
     if lang == 'cpp':
-        if os.path.isdir(os.path.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin')):
-            os.environ['PATH'] = ';'.join((builtin_os.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin'), os.environ['PATH']))
+        if os.environ.get('DEVTOOLS_ROOT'):
+            if os.path.isdir(os.path.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin')):
+                os.environ['PATH'] = ';'.join((builtin_os.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin'), os.environ['PATH']))
 
         if not os.environ.get('INTERFACE_OUTPUT_HOME'):
             path = os.path.basename(REPOS['interface'])

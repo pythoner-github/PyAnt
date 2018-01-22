@@ -536,7 +536,7 @@ def metric_start(name, module_name = None, night = True):
         lines = []
 
         for line in ('$ ' + cmdline, '  in (' + os.getcwd() + ')'):
-            yield line
+            print(line)
 
         try:
             return os.popen(cmdline).read().strip()

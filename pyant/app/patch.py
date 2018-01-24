@@ -448,16 +448,11 @@ class patch():
                     if type in ('stn'):
                         ppuname = 'stn'
 
-
-
-
-
-
-
-
                     for file in glob.iglob('**/*', recursive = True):
                         if os.path.isfile(file):
                             info[file] = os.path.abspath(file)
+
+        return True
 
     # ------------------------------------------------------
 

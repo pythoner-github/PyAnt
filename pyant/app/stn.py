@@ -16,9 +16,7 @@ REPOS = collections.OrderedDict([
     ('sdn_interface'    , builtin_os.join(const.SSH_GIT, 'stn/sdn_interface')),
     ('sdn_framework'    , builtin_os.join(const.SSH_GIT, 'stn/sdn_framework')),
     ('sdn_application'  , builtin_os.join(const.SSH_GIT, 'stn/sdn_application')),
-    ('sdn_tunnel'       , builtin_os.join(const.SSH_GIT, 'stn/sdn_tunnel')),
-    ('SPTN-E2E'         , builtin_os.join(const.SSH_GIT, 'stn/SPTN-E2E')),
-    ('CTR-ICT'          , builtin_os.join(const.SSH_GIT, 'stn/CTR-ICT'))
+    ('sdn_tunnel'       , builtin_os.join(const.SSH_GIT, 'stn/sdn_tunnel'))
 ])
 
 ARTIFACT_REPOS = {

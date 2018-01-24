@@ -186,11 +186,11 @@ def build_init(name, path, branch):
     else:
         return True
 
-def build_install(name, path, version):
+def build_install(name, path, version, type = None):
     if name == 'bn':
-        return bnpatch(path).installation(version)
+        return bnpatch(path).installation(version, type)
     elif name == 'stn':
-        return stnpatch(path).installation(version)
+        return stnpatch(path).installation(version, type)
     else:
         return True
 
@@ -404,8 +404,60 @@ class patch():
 
         return status
 
-    def installation(self, version):
-        pass
+    def installation(self, version, type = None):
+        if not os.path.isdir(self.output):
+            print('no such directory: %s' % os.path.normpath(self.output))
+
+            return False
+
+        if type is None:
+            type = self.default_type
+
+        with builtin_os.chdir(self.output) as chdir:
+            id_info = {}
+
+            for dir in glob.iglob('patch/*', recursive = True):
+                id = os.path.basename(dir)
+
+                if not re.search(r'^\d{8}_\d{4}$', id):
+                    continue
+
+                path = os.path.join(dir, 'patch', type)
+
+                if not os.path.isdir(path):
+                    for _dir in glob.iglob(os.path.join(dir, 'patch/*', type), recursive = True):
+                        path = _dir
+
+                if os.path.isdir(path):
+                    id_info[id] = path
+
+            info = {}
+
+            for id in sorted(id_info.keys()):
+                with builtin_os.chdir(id_info[id]) as _chdir:
+                    ppuname = os.path.basename(os.path.dirname(os.getcwd()))
+
+                    if ppuname == 'ip':
+                        ppuname = 'bn-ip'
+                    else:
+                        ppuname = 'bn'
+
+                    if type in ('service'):
+                        ppuname = 'bn-servicetools'
+
+                    if type in ('stn'):
+                        ppuname = 'stn'
+
+
+
+
+
+
+
+
+                    for file in glob.iglob('**/*', recursive = True):
+                        if os.path.isfile(file):
+                            info[file] = os.path.abspath(file)
 
     # ------------------------------------------------------
 

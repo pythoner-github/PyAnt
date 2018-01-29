@@ -55,7 +55,7 @@ else:
 if os.environ.get('METRIC_ID_STN'):
     METRIC_ID_STN = os.environ['METRIC_ID_STN']
 else:
-    METRIC_ID_STN = '310001141090'
+    METRIC_ID_STN = '310001152801'
 
 if os.environ.get('METRIC_ID_UMEBN'):
     METRIC_ID_UMEBN = os.environ['METRIC_ID_UMEBN']

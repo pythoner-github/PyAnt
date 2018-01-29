@@ -527,7 +527,7 @@ def metric_start(name, module_name = None, night = True):
             if night:
                 hour = datetime.datetime.now().hour
 
-                if 0 <= hour <=8 or hour >= 22:
+                if 0 <= hour <= 8 or hour >= 22:
                     cmdline = 'curl --data "action=buildstart&project=%s&buildtype=night&item=%s" %s' % (id, module_name, const.METRIC_HTTP)
             else:
                 cmdline = 'curl --data "action=buildstart&project=%s&buildtype=CI&item=%s" %s' % (id, module_name, const.METRIC_HTTP)

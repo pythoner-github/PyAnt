@@ -15,7 +15,8 @@ __build_name__ = ('bn', 'stn', 'umebn', 'sdno')
 __build_command__ = (
     'updateall', 'update', 'compile_base', 'compile', 'package', 'check',
     'dashboard', 'dashboard_monitor',
-    'patch_auto', 'patch', 'patch_init', 'patch_install'
+    'patch_auto', 'patch', 'patch_init', 'patch_install',
+    'kw_compile'
 )
 
 def build(argv = None):
@@ -169,8 +170,50 @@ def build(argv = None):
                     return patch.build_init(name, arg[0], branch)
                 elif command == 'patch_install':
                     return patch.build_install(name, arg[0], version)
-                else:
-                    return True
+                elif command == 'kw_compile':
+                    if arg:
+                        module_name = arg[0]
+                    else:
+                        module_name = None
+
+                    if len(arg) > 1:
+                        cmd = arg[1]
+                    else:
+                        cmd = None
+
+                    if len(arg) > 2:
+                        output = arg[1]
+                    else:
+                        output = None
+
+                    if len(arg) > 3:
+                        lang = arg[1]
+                    else:
+                        lang = None
+
+                    if not cmd:
+                        if name == 'bn':
+                            if lang == 'cpp':
+                                cmd = 'kwinject mvn install -U -fn'
+                            else:
+                                cmd = 'kwmaven install -U -fn'
+                        else:
+                            cmd = 'kwmaven install -U -fn'
+
+                    if not output:
+                        output = os.path.abspath(os.path.join('../kw', name, 'kwinject/kwinject.out'))
+
+                    cmd += ' --output "%s"' % output
+
+                    if os.path.isfile(output):
+                        os.remove(output)
+                    else:
+                        os.makedirs(os.path.dirname(output), exist_ok = True)
+
+                    if name == 'bn':
+                        return build.compile(name, cmd, True, lang = lang)
+                    else:
+                        return build.compile(name, cmd, True)
         else:
             print('no such directory: %s' % os.path.normpath(home))
 
@@ -193,6 +236,7 @@ Usage:
         patch               arg: path
         patch_init          arg: path, branch
         patch_install       arg: path
+        kw_compile          arg: module cmd output lang
         '''
 
         print(usage.strip())

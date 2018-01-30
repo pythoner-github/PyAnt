@@ -1,6 +1,7 @@
 import datetime
 import os
 import os.path
+import shutil
 import sys
 import xml.etree.ElementTree
 
@@ -16,7 +17,7 @@ __build_command__ = (
     'updateall', 'update', 'compile_base', 'compile', 'package', 'check',
     'dashboard', 'dashboard_monitor',
     'patch_auto', 'patch', 'patch_init', 'patch_install',
-    'kw_compile'
+    'kw_compile', 'kw_build'
 )
 
 def build(argv = None):
@@ -40,6 +41,7 @@ def build(argv = None):
             return False
 
         os.makedirs(home, exist_ok = True)
+        pwd = os.getcwd()
 
         if os.path.isdir(home):
             version = None
@@ -171,25 +173,27 @@ def build(argv = None):
                 elif command == 'patch_install':
                     return patch.build_install(name, arg[0], version)
                 elif command == 'kw_compile':
-                    if arg:
-                        module_name = arg[0]
-                    else:
-                        module_name = None
+                    output = arg[0]
+                    module = arg[1]
 
-                    if len(arg) > 1:
-                        cmd = arg[1]
+                    if len(arg) > 2:
+                        cmd = arg[2]
                     else:
                         cmd = None
 
-                    if len(arg) > 2:
-                        output = arg[1]
-                    else:
-                        output = None
-
                     if len(arg) > 3:
-                        lang = arg[1]
+                        lang = arg[3]
                     else:
                         lang = None
+
+                    with builtin_os.chdir(pwd) as _chdir:
+                        output = os.path.abspath(output)
+
+                    path = os.path.join(output, name, module)
+
+                    if name == 'bn':
+                        if lang == 'cpp':
+                            path += '_cpp'
 
                     if not cmd:
                         if name == 'bn':
@@ -200,20 +204,37 @@ def build(argv = None):
                         else:
                             cmd = 'kwmaven install -U -fn'
 
-                    if not output:
-                        output = os.path.join('../kw', name, 'kwinject/kwinject.out')
+                    cmd += ' --output "%s"' % os.path.join(path, 'kwinject/kwinject.out')
 
-                    cmd += ' --output "%s"' % os.path.abspath(output)
-
-                    if os.path.isfile(output):
-                        os.remove(output)
-                    else:
-                        os.makedirs(os.path.dirname(output), exist_ok = True)
+                    if module in build.REPOS.keys():
+                        shutil.rmtree(os.path.join(path, 'kwinject'), ignore_errors = True)
+                        os.makedirs(os.path.join(path, 'kwinject'), exist_ok = True)
 
                     if name == 'bn':
-                        return build.compile(name, cmd, True, lang = lang)
+                        return build.compile(module, cmd, True, lang = lang)
                     else:
-                        return build.compile(name, cmd, True)
+                        return build.compile(module, cmd, True)
+                elif command == 'kw_build':
+                    module = arg[0]
+
+                    if len(arg) > 1:
+                        lang = arg[1]
+                    else:
+                        lang = None
+
+                    path = os.path.join(name, module)
+
+                    if name == 'bn':
+                        if lang == 'cpp':
+                            path += '_cpp'
+
+                    if module in build.REPOS.keys():
+                        shutil.rmtree(os.path.join(path, 'kwbuild'), ignore_errors = True)
+                        os.makedirs(os.path.join(path, 'kwbuild'), exist_ok = True)
+
+                    return app_build.kw_build(path)
+                else:
+                    return True
         else:
             print('no such directory: %s' % os.path.normpath(home))
 
@@ -236,7 +257,8 @@ Usage:
         patch               arg: path
         patch_init          arg: path, branch
         patch_install       arg: path
-        kw_compile          arg: module cmd output lang
+        kw_compile          arg: output module cmd lang
+        kw_build            arg: module lang
         '''
 
         print(usage.strip())

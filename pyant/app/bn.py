@@ -35,7 +35,7 @@ ARTIFACT_REPOS = {
     'release'   : 'U31R22-release-generic'
 }
 
-def update(name = None, branch = None, *arg):
+def update(name, branch = None, *arg):
     if name in REPOS.keys():
         path = os.path.basename(REPOS[name])
 
@@ -89,7 +89,7 @@ def compile_base(cmd = None):
 
         return False
 
-def compile(name = None, cmd = None, clean = False, retry_cmd = None, dirname = None, lang = None, *arg):
+def compile(name, cmd = None, clean = False, retry_cmd = None, dirname = None, lang = None, *arg):
     if isinstance(clean, str):
         if clean.lower().strip() == 'true':
             clean = True

@@ -18,7 +18,8 @@ from pyant.builtin import os as builtin_os
 __all__ = (
     'package', 'package_home', 'artifactory',
     'dashboard', 'dashboard_monitor', 'dashboard_jenkins_cli',
-    'metric_start', 'metric_end'
+    'metric_start', 'metric_end',
+    'kw_build'
 )
 
 # installdisk.xml
@@ -558,6 +559,17 @@ def metric_end(id, status):
 
         for line in cmd.command(cmdline):
             print(line)
+
+def kw_build(path):
+    if os.path.isdir(path):
+        with builtin_os.chdir(path) as chdir:
+            pass
+
+        return True
+    else:
+        print('no such directory: %s' % os.path.normpath(path))
+
+        return False
 
 # ----------------------------------------------------------
 

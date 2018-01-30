@@ -201,9 +201,9 @@ def build(argv = None):
                             cmd = 'kwmaven install -U -fn'
 
                     if not output:
-                        output = os.path.abspath(os.path.join('../kw', name, 'kwinject/kwinject.out'))
+                        output = os.path.join('../kw', name, 'kwinject/kwinject.out')
 
-                    cmd += ' --output "%s"' % output
+                    cmd += ' --output "%s"' % os.path.abspath(output)
 
                     if os.path.isfile(output):
                         os.remove(output)

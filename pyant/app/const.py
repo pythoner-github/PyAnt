@@ -107,3 +107,10 @@ PATCH_NODE_INFO = {
     'bn/windows'    : ['10.8.11.106', 'd:/build/build'],
     'bn/windows_x86': ['10.8.11.106', 'e:/build/build']
 }
+
+# KLOCWORK
+
+if os.environ.get('KLOCWORK_HTTP'):
+    KLOCWORK_HTTP = os.environ['KLOCWORK_HTTP']
+else:
+    KLOCWORK_HTTP = 'http://10.8.8.56:8080'

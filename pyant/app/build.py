@@ -563,7 +563,61 @@ def metric_end(id, status):
 def kw_build(path):
     if os.path.isdir(path):
         with builtin_os.chdir(path) as chdir:
-            pass
+            if os.path.isfile('kwinject/kwinject.out'):
+                name = os.path.basename(os.getcwd())
+
+                cmd = command.command()
+
+                found = False
+                cmdline = 'kwadmin --url %s list-projects' % const.KLOCWORK_HTTP
+
+                for line in cmd.command(cmdline):
+                    print(line)
+
+                    if name == line.strip():
+                        found = True
+
+                if not cmd.result():
+                    return False
+
+                if not found:
+                    cmdline = 'kwadmin --url %s create-project %s' % (const.KLOCWORK_HTTP, name)
+
+                    for line in cmd.command(cmdline):
+                        print(line)
+
+                    if not cmd.result():
+                        return False
+
+                    if '_cpp' in name:
+                        lang = 'c,cxx'
+                    else:
+                        lang = 'java'
+
+                    for property in ('auto_delete_threshold 3', 'language %s' % lang):
+                        cmdline = 'kwadmin --url %s set-project-property %s %s' % (const.KLOCWORK_HTTP, name, property)
+
+                        for line in cmd.command(cmdline):
+                            print(line)
+
+                        if not cmd.result():
+                            return False
+
+                cmdline = 'kwbuildproject --url %s/%s --tables-directory kwbuild --jobs-num auto kwinject/kwinject.out' % (const.KLOCWORK_HTTP, name)
+
+                for line in cmd.command(cmdline):
+                    print(line)
+
+                if not cmd.result():
+                    return False
+
+                cmdline = 'kwadmin --url %s load stn_sdn_framework kwbuild' % const.KLOCWORK_HTTP
+
+                for line in cmd.command(cmdline):
+                    print(line)
+
+                if not cmd.result():
+                    return False
 
         return True
     else:

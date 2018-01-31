@@ -560,11 +560,11 @@ def metric_end(id, status):
         for line in cmd.command(cmdline):
             print(line)
 
-def kw_build(path):
+def kw_build(name, path):
     if os.path.isdir(path):
         with builtin_os.chdir(path) as chdir:
             if os.path.isfile('kwinject/kwinject.out'):
-                name = os.path.basename(os.getcwd())
+                project_name = '%s_%s' % (name, os.path.basename(os.getcwd()))
 
                 cmd = command.command()
 
@@ -574,14 +574,14 @@ def kw_build(path):
                 for line in cmd.command(cmdline):
                     print(line)
 
-                    if name == line.strip():
+                    if project_name == line.strip():
                         found = True
 
                 if not cmd.result():
                     return False
 
                 if not found:
-                    cmdline = 'kwadmin --url %s create-project %s' % (const.KLOCWORK_HTTP, name)
+                    cmdline = 'kwadmin --url %s create-project %s' % (const.KLOCWORK_HTTP, project_name)
 
                     for line in cmd.command(cmdline):
                         print(line)
@@ -589,13 +589,13 @@ def kw_build(path):
                     if not cmd.result():
                         return False
 
-                    if '_cpp' in name:
+                    if '_cpp' in project_name:
                         lang = 'c,cxx'
                     else:
                         lang = 'java'
 
                     for property in ('auto_delete_threshold 3', 'language %s' % lang):
-                        cmdline = 'kwadmin --url %s set-project-property %s %s' % (const.KLOCWORK_HTTP, name, property)
+                        cmdline = 'kwadmin --url %s set-project-property %s %s' % (const.KLOCWORK_HTTP, project_name, property)
 
                         for line in cmd.command(cmdline):
                             print(line)
@@ -603,7 +603,7 @@ def kw_build(path):
                         if not cmd.result():
                             return False
 
-                cmdline = 'kwbuildproject --url %s/%s --tables-directory kwbuild --jobs-num auto kwinject/kwinject.out' % (const.KLOCWORK_HTTP, name)
+                cmdline = 'kwbuildproject --url %s/%s --tables-directory kwbuild --jobs-num auto kwinject/kwinject.out' % (const.KLOCWORK_HTTP, project_name)
 
                 for line in cmd.command(cmdline):
                     print(line)
@@ -611,7 +611,7 @@ def kw_build(path):
                 if not cmd.result():
                     return False
 
-                cmdline = 'kwadmin --url %s load stn_sdn_framework kwbuild' % const.KLOCWORK_HTTP
+                cmdline = 'kwadmin --url %s load %s kwbuild' % (const.KLOCWORK_HTTP, project_name)
 
                 for line in cmd.command(cmdline):
                     print(line)

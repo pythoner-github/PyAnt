@@ -241,7 +241,7 @@ def build(argv = None):
                         shutil.rmtree(os.path.join(path, 'kwbuild'), ignore_errors = True)
                         os.makedirs(os.path.join(path, 'kwbuild'), exist_ok = True)
 
-                    return app_build.kw_build(path)
+                    return app_build.kw_build(name, path)
                 else:
                     return True
         else:

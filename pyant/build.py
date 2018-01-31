@@ -34,6 +34,8 @@ def build(argv = None):
         for x in argv[3:]:
             if x.startswith('mvn_'):
                 arg.append(x.replace('_', ' '))
+            elif x == '_':
+                arg.append('')
             else:
                 arg.append(x)
 

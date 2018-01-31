@@ -28,7 +28,14 @@ def build(argv = None):
         name = argv[0]
         command = argv[1]
         home = argv[2]
-        arg = argv[3:]
+
+        arg = []
+
+        for x in argv[3:]:
+            if x.startswith('mvn_'):
+                arg.append(x.replace('_', ' '))
+            else:
+                arg.append(x)
 
         if not name in __build_name__:
             print('name not found in (%s)' % ', '.join(__build_name__))

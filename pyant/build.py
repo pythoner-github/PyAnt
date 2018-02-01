@@ -215,7 +215,11 @@ def build(argv = None):
 
                     cmd += ' --output "%s"' % os.path.join(path, 'kwinject/kwinject.out')
 
-                    if module in build.REPOS.keys():
+                    if name in ('bn', 'stn'):
+                        if module in build.REPOS.keys():
+                            shutil.rmtree(os.path.join(path, 'kwinject'), ignore_errors = True)
+                            os.makedirs(os.path.join(path, 'kwinject'), exist_ok = True)
+                    else:
                         shutil.rmtree(os.path.join(path, 'kwinject'), ignore_errors = True)
                         os.makedirs(os.path.join(path, 'kwinject'), exist_ok = True)
 
@@ -237,7 +241,11 @@ def build(argv = None):
                         if lang == 'cpp':
                             path += '_cpp'
 
-                    if module in build.REPOS.keys():
+                    if name in ('bn', 'stn'):
+                        if module in build.REPOS.keys():
+                            shutil.rmtree(os.path.join(path, 'kwbuild'), ignore_errors = True)
+                            os.makedirs(os.path.join(path, 'kwbuild'), exist_ok = True)
+                    else:
                         shutil.rmtree(os.path.join(path, 'kwbuild'), ignore_errors = True)
                         os.makedirs(os.path.join(path, 'kwbuild'), exist_ok = True)
 

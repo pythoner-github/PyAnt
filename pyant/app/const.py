@@ -27,30 +27,30 @@ if os.environ.get('METRIC_HTTP'):
 else:
     METRIC_HTTP = 'http://10.41.213.28/WebService/ZTE.Wireline.WebService/BuildAPI.ashx'
 
-if os.environ.get('METRIC_ID_BN_IPTN'):
-    METRIC_ID_BN_IPTN = os.environ['METRIC_ID_BN_IPTN']
+if os.environ.get('METRIC_ID_BN_ITN'):
+    METRIC_ID_BN_ITN = os.environ['METRIC_ID_BN_ITN']
 else:
-    METRIC_ID_BN_IPTN = '310001141330'
+    METRIC_ID_BN_ITN = '310001152622'
 
-if os.environ.get('METRIC_ID_BN_IPTN_NJ'):
-    METRIC_ID_BN_IPTN_NJ = os.environ['METRIC_ID_BN_IPTN_NJ']
+if os.environ.get('METRIC_ID_BN_IPN'):
+    METRIC_ID_BN_IPN = os.environ['METRIC_ID_BN_IPN']
 else:
-    METRIC_ID_BN_IPTN_NJ = '310001141084'
+    METRIC_ID_BN_IPN = '310001151021'
 
 if os.environ.get('METRIC_ID_BN_E2E'):
     METRIC_ID_BN_E2E = os.environ['METRIC_ID_BN_E2E']
 else:
-    METRIC_ID_BN_E2E = '310001142576'
+    METRIC_ID_BN_E2E = '310001152310'
 
 if os.environ.get('METRIC_ID_BN_NBI'):
     METRIC_ID_BN_NBI = os.environ['METRIC_ID_BN_NBI']
 else:
-    METRIC_ID_BN_NBI = '310001142710'
+    METRIC_ID_BN_NBI = '310001152322'
 
 if os.environ.get('METRIC_ID_BN_OTN'):
     METRIC_ID_BN_OTN = os.environ['METRIC_ID_BN_OTN']
 else:
-    METRIC_ID_BN_OTN = '310001141294'
+    METRIC_ID_BN_OTN = '310001151841'
 
 if os.environ.get('METRIC_ID_STN'):
     METRIC_ID_STN = os.environ['METRIC_ID_STN']

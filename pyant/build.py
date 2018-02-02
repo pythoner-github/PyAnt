@@ -1,6 +1,7 @@
 import datetime
 import os
 import os.path
+import re
 import shutil
 import sys
 import xml.etree.ElementTree
@@ -204,16 +205,21 @@ def build(argv = None):
                         if lang == 'cpp':
                             path += '_cpp'
 
-                    if not cmd:
+                    kw_option = '--output "%s"' % os.path.join(path, 'kwinject/kwinject.out')
+
+                    if cmd:
+                        m = re.search(r'^(kwmaven|kwinject)\s+', cmd)
+
+                        if m:
+                            cmd = '%s %s %s' % (m.group(1), kw_option, m.string[m.end():])
+                    else:
                         if name == 'bn':
                             if lang == 'cpp':
-                                cmd = 'kwinject mvn install -U -fn'
+                                cmd = 'kwinject %s mvn install -U -fn' % kw_option
                             else:
-                                cmd = 'kwmaven install -U -fn'
+                                cmd = 'kwmaven %s install -U -fn' % kw_option
                         else:
-                            cmd = 'kwmaven install -U -fn'
-
-                    cmd += ' --output "%s"' % os.path.join(path, 'kwinject/kwinject.out')
+                            cmd = 'kwmaven %s install -U -fn' % kw_option
 
                     if name in ('bn', 'stn'):
                         if module in build.REPOS.keys():

@@ -630,9 +630,9 @@ def kw_build(name, path):
 def metric_id(name, module_name = None):
     if name == 'bn':
         if module_name in ('interface', 'platform', 'necommon', 'uca', 'sdh', 'ptn'):
-            return const.METRIC_ID_BN_IPTN
+            return const.METRIC_ID_BN_ITN
         elif module_name in ('ptn2', 'ip'):
-            return const.METRIC_ID_BN_IPTN_NJ
+            return const.METRIC_ID_BN_IPN
         elif module_name in ('e2e'):
             return const.METRIC_ID_BN_E2E
         elif module_name in ('xmlfile', 'nbi'):

@@ -567,13 +567,17 @@ class maven:
         if self.errors:
             errors = collections.OrderedDict()
 
+            admin_addrs = None
+
+            if os.environ.get('SENDMAIL.ADMIN'):
+                admin_addrs = [x.strip() for x in os.environ.get('SENDMAIL.ADMIN').split(',')]
+
             for file in self.errors:
                 if file:
                     email = self.errors[file]['email']
 
                     if not email:
-                        if os.environ.get('SENDMAIL.ADMIN'):
-                            email = [x.strip() for x in os.environ.get('SENDMAIL.ADMIN').split(',')]
+                        email = admin_addrs
 
                     if email:
                         if email not in errors:
@@ -628,9 +632,9 @@ class maven:
                         lines.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
                         lines.append('')
 
-                        smtp.sendmail(self.notification, email, None, '<br>\n'.join(lines))
+                        smtp.sendmail(self.notification, email, admin_addrs, '<br>\n'.join(lines))
                     else:
-                        smtp.sendmail(self.notification, email, None, '<br>\n'.join(lines), attaches)
+                        smtp.sendmail(self.notification, email, admin_addrs, '<br>\n'.join(lines), attaches)
 
     def artifactid(self, path):
         if os.path.isfile(path):

@@ -571,6 +571,10 @@ class maven:
                 if file:
                     email = self.errors[file]['email']
 
+                    if not email:
+                        if os.environ.get('SENDMAIL.ADMIN'):
+                            email = [x.strip() for x in os.environ.get('SENDMAIL.ADMIN').split(',')]
+
                     if email:
                         if email not in errors:
                             errors[email] = []

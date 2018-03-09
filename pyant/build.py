@@ -222,7 +222,7 @@ def build(argv = None):
                             cmd = 'kwmaven %s install -U -fn' % kw_option
 
                     if name in ('bn', 'stn'):
-                        if module in build.REPOS.keys():
+                        if module in build.REPOS.keys() or module in ('wdm1', 'wdm2', 'wdm3'):
                             shutil.rmtree(os.path.join(path, 'kwinject'), ignore_errors = True)
                             os.makedirs(os.path.join(path, 'kwinject'), exist_ok = True)
                     else:
@@ -230,7 +230,10 @@ def build(argv = None):
                         os.makedirs(os.path.join(path, 'kwinject'), exist_ok = True)
 
                     if name == 'bn':
-                        return build.compile(module, cmd, True, lang = lang)
+                        if module in ('wdm1', 'wdm2', 'wdm3'):
+                            return build.compile(module, cmd, True, dirname = os.path.join('code_c/build/kw', module), lang = lang)
+                        else:
+                            return build.compile(module, cmd, True, lang = lang)
                     else:
                         return build.compile(module, cmd, True)
                 elif command == 'kw_build':

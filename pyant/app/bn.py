@@ -94,7 +94,7 @@ def compile(name, cmd = None, clean = False, retry_cmd = None, dirname = None, l
         if clean.lower().strip() == 'true':
             clean = True
 
-    if name in REPOS.keys():
+    if name in REPOS.keys() or name in ('wdm1', 'wdm2', 'wdm3'):
         environ(lang)
 
         notification = '<BN_BUILD 通知>编译失败, 请尽快处理(%s)' % builtin_os.osname().upper()

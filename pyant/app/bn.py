@@ -105,7 +105,10 @@ def compile(name, cmd = None, clean = False, retry_cmd = None, dirname = None, l
             else:
                 dirname = 'code/build'
 
-        path = os.path.join(os.path.basename(REPOS[name]), dirname)
+        if name in ('wdm1', 'wdm2', 'wdm3'):
+            path = os.path.join(os.path.basename(REPOS['wdm']), dirname)
+        else:
+            path = os.path.join(os.path.basename(REPOS[name]), dirname)
 
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:

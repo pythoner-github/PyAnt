@@ -27,9 +27,9 @@ def sendmail(subject, to_addrs, cc_addrs = None, message = None, attaches = None
         if isinstance(cc_addrs, str):
             cc_addrs = (cc_addrs, )
 
-            for cc in cc_addrs:
-                if cc not in to_addrs:
-                    to_addrs.append(cc)
+        for cc in cc_addrs:
+            if cc not in to_addrs:
+                to_addrs.append(cc)
 
         msg['Cc'] = ','.join(cc_addrs)
 

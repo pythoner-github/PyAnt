@@ -155,8 +155,8 @@ def package(version, *arg):
             )
         else:
             bases = ((
-                os.path.join(ARTIFACT_REPOS['release'], 'UEP/current.tar.gz'),
-                os.path.join(ARTIFACT_REPOS['release'], 'UEP/TYPES/%s.tar.gz' % type)
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/%s/current.tar.gz' % type.upper()),
+                os.path.join(ARTIFACT_REPOS['release'], 'UEP/%s/extend.tar.gz' % type.upper())
             ),)
 
         for base_list in bases:

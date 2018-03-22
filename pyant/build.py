@@ -179,9 +179,9 @@ def build(argv = None):
                     else:
                         branch = 'master'
 
-                    return patch.build_init(name, arg[0], branch)
+                    return patch.init(name, arg[0], branch)
                 elif command == 'patch_install':
-                    return patch.build_install(name, arg[0], version)
+                    return patch.install(name, arg[0], version)
                 elif command == 'kw_compile':
                     output = arg[0]
                     module = arg[1]

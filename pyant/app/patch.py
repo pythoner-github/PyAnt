@@ -194,9 +194,9 @@ def install(name, path, version, type = None):
     if name == 'bn':
         return bn_install(path).install(version, type)
     elif name == 'stn':
-        return stn_install(path).install(version)
+        return stn_install(path).install(version, None)
     elif name == 'umebn':
-        return umebn_install(path).install(version)
+        return umebn_install(path).install(version, None)
     else:
         return True
 
@@ -1273,7 +1273,7 @@ class installation():
 
         self.default_type = 'none'
 
-    def install(self, version):
+    def install(self, version, type = None):
         if not os.path.isdir(self.output):
             print('no such directory: %s' % os.path.normpath(self.output))
 
@@ -1304,23 +1304,29 @@ class installation():
 
             for id in sorted(id_info.keys()):
                 with builtin_os.chdir(id_info[id]) as _chdir:
-                    ppuname = os.path.basename(os.path.dirname(os.getcwd()))
-
-                    if ppuname == 'ip':
-                        ppuname = 'bn-ip'
-                    else:
-                        ppuname = 'bn'
-
-                    if type in ('service'):
-                        ppuname = 'bn-servicetools'
-
-                    if type in ('stn'):
-                        ppuname = 'stn'
-
                     for file in glob.iglob('**/*', recursive = True):
                         if os.path.isfile(file):
                             info[file] = os.path.abspath(file)
 
+            with builtin_os.tmpdir(tempfile.mkdtemp(dir=os.getcwd()), False) as _tmpdir:
+                for file in info:
+                    os.makedirs(os.path.dirname(file), exist_ok = True)
+
+                    try:
+                        shutil.copyfile(info[file], file)
+                    except Exception as e:
+                        print(e)
+
+                        return False
+
+                if not self.install_extend(version, type):
+                    return False
+
+        return True
+
+    # ------------------------------------------------------
+
+    def install_extend(self, version, type = None):
         return True
 
 class bn_installation(installation):
@@ -1329,7 +1335,7 @@ class bn_installation(installation):
 
         self.default_type = 'ems'
 
-    def install(self, version, type = None):
+    def install_extend(self, version, type = None):
         return True
 
 class stn_installation(installation):

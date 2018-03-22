@@ -1310,6 +1310,9 @@ class installation():
 
             with builtin_os.tmpdir(tempfile.mkdtemp(dir=os.getcwd()), False) as _tmpdir:
                 for file in info:
+                    if os.path.splitext(file)[1] in ['.pdb', '.exp', '.lib', '.debuginfo']:
+                        continue
+
                     os.makedirs(os.path.dirname(file), exist_ok = True)
 
                     try:

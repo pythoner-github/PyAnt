@@ -714,7 +714,7 @@ class patch():
         if not os.path.isdir(os.path.join('code', name)):
             return False
 
-        if not git.pull(os.path.join('code', name), revert = True):
+        if not build_update_source(os.path.join('code', name), sources):
             return False
 
         with builtin_os.chdir('code') as chdir:
@@ -743,6 +743,12 @@ class patch():
                                 return False
                 else:
                     return False
+
+        return True
+
+    def build_update_source(self, path, sources):
+        if not git.pull(path, revert = True):
+            return False
 
         return True
 
@@ -964,6 +970,10 @@ class bn_patch(patch):
     #   info            : {}
     def load_xml_extend(self, info, e):
         status = True
+
+        info['compile'] = collections.OrderedDict()
+        info['deploy'] = collections.OrderedDict()
+        info['deploy_delete'] = collections.OrderedDict()
 
         osname = e.get('os', '').strip()
 
@@ -1196,29 +1206,45 @@ class umebn_patch(patch):
     def load_xml_extend(self, info, e):
         status = True
 
+        info['compile'] = collections.OrderedDict()
+        info['deploy'] = collections.OrderedDict()
+
         if os.path.isdir(os.path.join(self.path, 'code', 'umebn')):
             with builtin_os.chdir(os.path.join(self.path, 'code', 'umebn')) as chdir:
                 if info.get('source'):
-                    dirs = []
+                    for dir in self.get_git_dirs(info['source']):
+                        info['compile'][os.path.join(dir, 'build')] = True
+                        info['deploy'][':'.join((os.path.join(dir, 'build/output'), ''))] = ['umebn']
+        else:
+            print('no such directory: %s' % os.path.normpath(os.path.join(self.path, 'code', 'umebn')))
 
-                    for file in info['source']:
-                        dir = self.get_build_dir(file)
-
-                        if dir:
-                            if not dir in dirs:
-                                dirs.append(dir)
-
-                    if dirs:
-                        info['compile'] = {}
-                        info['deploy'] = {}
-
-                        for dir in dirs:
-                            info['compile'][dir] = True
-                            info['deploy'][':'.join((os.path.join(dir, 'output'), ''))] = ['umebn']
+            status = False
 
         return status
 
-    def get_build_dir(self, path):
+    def build_update_source(self, path, sources):
+        status = True
+
+        with builtin_os.chdir(path) as chdir:
+            for dir in self.get_git_dirs(sources):
+                if not git.pull(dir, revert = True):
+                    status = False
+
+        return status
+
+    def get_git_dirs(self, paths):
+        dirs = []
+
+        for path in paths:
+            dir = self.get_git_home(path)
+
+            if dir:
+                if not dir in dirs:
+                    dirs.append(dir)
+
+        return dirs
+
+    def get_git_home(self, path):
         if os.path.abspath(path) == os.getcwd() or path == '/':
             return None
 
@@ -1226,7 +1252,7 @@ class umebn_patch(patch):
             path = os.path.dirname(path)
 
         if os.path.isdir(os.path.join(path, '.git')):
-            return os.path.join(path, 'build')
+            return path
 
         return self.get_build_dir(os.path.dirname(path))
 

@@ -1191,6 +1191,45 @@ class umebn_patch(patch):
             'umebn' : umebn.REPOS
         }
 
+    # ------------------------------------------------------
+
+    def load_xml_extend(self, info, e):
+        status = True
+
+        if os.path.isdir(os.path.join(self.path, 'code', 'umebn')):
+            with builtin_os.chdir(os.path.join(self.path, 'code', 'umebn')) as chdir:
+                if info.get('source'):
+                    dirs = []
+
+                    for file in info['source']:
+                        dir = self.get_build_dir(file)
+
+                        if dir:
+                            if not dir in dirs:
+                                dirs.append(dir)
+
+                    if dirs:
+                        info['compile'] = {}
+                        info['deploy'] = {}
+
+                        for dir in dirs:
+                            info['compile'][dir] = True
+                            info['deploy'][':'.join((os.path.join(dir, 'output'), ''))] = ['umebn']
+
+        return status
+
+    def get_build_dir(self, path):
+        if os.path.abspath(path) == os.getcwd() or path == '/':
+            return None
+
+        if os.path.isfile(path):
+            path = os.path.dirname(path)
+
+        if os.path.isdir(os.path.join(path, '.git')):
+            return os.path.join(path, 'build')
+
+        return self.get_build_dir(os.path.dirname(path))
+
 # ******************************************************** #
 #                    PATCH INSTALLATION                    #
 # ******************************************************** #

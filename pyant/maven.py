@@ -3,7 +3,8 @@ import glob
 import os
 import re
 import tempfile
-import xml.etree.ElementTree
+
+from lxml import etree
 
 from pyant import command, git, smtp
 from pyant.builtin import os as builtin_os
@@ -642,15 +643,10 @@ class maven:
         elif os.path.isdir(path):
             if os.path.isfile(os.path.join(path, 'pom.xml')):
                 try:
-                    xmlns = 'http://maven.apache.org/POM/4.0.0'
-                    xml.etree.ElementTree.register_namespace('', xmlns)
+                    tree = etree.parse(os.path.join(path, 'pom.xml'))
+                    namespace = tree.getroot().nsmap
 
-                    namespace = {
-                        'ns': xmlns
-                    }
-
-                    tree = xml.etree.ElementTree.parse(os.path.join(path, 'pom.xml'))
-                    e = tree.find('ns:artifactId', namespace)
+                    e = tree.find('/artifactId', namespace)
 
                     if e is not None:
                         return self.artifactid_prefix(e.text.strip())
@@ -675,20 +671,15 @@ class maven:
         if os.path.isfile(os.path.join(dirname, 'pom.xml')):
             with builtin_os.chdir(dirname) as chdir:
                 try:
-                    xmlns = 'http://maven.apache.org/POM/4.0.0'
-                    xml.etree.ElementTree.register_namespace('', xmlns)
+                    tree = etree.parse('pom.xml')
+                    namespace = tree.getroot().nsmap
 
-                    namespace = {
-                        'ns': xmlns
-                    }
-
-                    tree = xml.etree.ElementTree.parse('pom.xml')
-                    e = tree.find('ns:artifactId', namespace)
+                    e = tree.find('/artifactId', namespace)
 
                     if e is not None:
                         map[self.artifactid_prefix(e.text.strip())] = os.getcwd()
 
-                    for e in tree.findall('.//ns:modules/ns:module', namespace):
+                    for e in tree.findall('//modules/module', namespace):
                         module_path = e.text.strip()
 
                         if module_path:
@@ -775,33 +766,27 @@ class maven:
 
     def retry_pom(self, modules, template):
         try:
-            xmlns = 'http://maven.apache.org/POM/4.0.0'
-            xml.etree.ElementTree.register_namespace('', xmlns)
+            tree = etree.parse(template)
+            namespace = tree.getroot().nsmap
 
-            namespace = {
-                'ns': xmlns
-            }
-
-            tree = xml.etree.ElementTree.parse(template)
-
-            for e in tree.findall('ns:artifactId', namespace):
+            for e in tree.findall('/artifactId', namespace):
                 e.text = '%s-tmp' % e.text.strip()
 
-            for e in tree.findall('.//ns:modules', namespace):
-                for element in e.findall('ns:module', namespace):
+            for e in tree.findall('//modules', namespace):
+                for element in e.findall('module', namespace):
                     e.remove(element)
 
-            for e in tree.findall('ns:build', namespace):
+            for e in tree.findall('/build', namespace):
                 tree.getroot().remove(e)
 
-            e = tree.find('ns:modules', namespace)
+            e = tree.find('/modules', namespace)
 
             for module, path in modules.items():
-                element = xml.etree.ElementTree.Element('{%s}module' % namespace['ns'])
+                element = etree.Element('module')
                 element.text = builtin_os.join('..', path)
                 e.append(element)
 
-            tree.write('pom.xml', encoding = 'utf-8', xml_declaration = True)
+            tree.write('pom.xml', encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
         except:
             pass
 

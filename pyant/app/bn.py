@@ -4,7 +4,8 @@ import os
 import os.path
 import re
 import time
-import xml.etree.ElementTree
+
+from lxml import etree
 
 from pyant import check, git, maven
 from pyant.app import build, const
@@ -309,11 +310,8 @@ def expand_filename(version, dirname, filename, type):
 
     if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml', 'u3backup.xml', 'u3backupme.xml', 'dbtool-config.xml'):
         try:
-            tree = xml.etree.ElementTree.parse(name)
-        except:
-            tree = check.xml_etree_with_encoding(name, 'gb2312')
+            tree = etree.parse(name)
 
-        if tree is not None:
             if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml'):
                 if version:
                     for e in tree.findall('info'):
@@ -329,7 +327,9 @@ def expand_filename(version, dirname, filename, type):
             else:
                 pass
 
-            tree.write(name, encoding = 'utf-8', xml_declaration = True)
+            tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
+        except:
+            pass
 
     return (filename, dst)
 

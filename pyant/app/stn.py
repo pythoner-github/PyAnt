@@ -3,7 +3,8 @@ import datetime
 import os.path
 import re
 import time
-import xml.etree.ElementTree
+
+from lxml import etree
 
 from pyant import git, maven
 from pyant.app import build, const
@@ -185,13 +186,13 @@ def expand_filename(version, dirname, filename, type):
     elif os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml'):
         if version:
             try:
-                tree = xml.etree.ElementTree.parse(name)
+                tree = etree.parse(name)
 
                 for e in tree.findall('info'):
                     e.set('version', version)
                     e.set('display-version', version)
 
-                tree.write(name, encoding = 'utf-8', xml_declaration = True)
+                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
             except:
                 pass
     else:

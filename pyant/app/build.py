@@ -8,8 +8,9 @@ import re
 import shutil
 import tarfile
 import tempfile
-import xml.etree.ElementTree
 import zipfile
+
+from lxml import etree
 
 from pyant import check, command, git, maven, password
 from pyant.app import const
@@ -68,7 +69,7 @@ def package(version, xpath = None, type = None, expand_filename = None, cross_pl
 
     for file in glob.iglob(xpath, recursive = True):
         try:
-            tree = xml.etree.ElementTree.parse(file)
+            tree = etree.parse(file)
         except:
             print('error: parse xml file fail: %s' % os.path.abspath(file))
 

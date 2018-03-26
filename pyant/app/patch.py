@@ -6,9 +6,9 @@ import os.path
 import random
 import re
 import shutil
-import xml.etree.ElementTree
-import xml.dom.minidom
 import zipfile
+
+from lxml import etree
 
 from pyant import command, daemon, git, maven, password, smtp
 from pyant.app import bn, stn, umebn, const
@@ -432,7 +432,7 @@ class patch():
     #   info    : {}
     def load_xml(self, file):
         try:
-            tree = xml.etree.ElementTree.parse(file)
+            tree = etree.parse(file)
         except Exception as e:
             print(e)
 
@@ -589,56 +589,56 @@ class patch():
         return True
 
     def to_xml(self, info, file):
-        tree = xml.etree.ElementTree.ElementTree(xml.etree.ElementTree.fromstring("<patches version='2.0'/>"))
+        tree = etree.ElementTree(etree.XML("<patches version='2.0'/>"))
 
-        element = xml.etree.ElementTree.Element('patch')
+        element = etree.Element('patch')
         element.set('name', info['name'])
 
         tree.getroot().append(element)
 
         if info.get('delete'):
-            delete_element = xml.etree.ElementTree.Element('delete')
+            delete_element = etree.Element('delete')
             element.append(delete_element)
 
             for x in info['delete']:
-                e = xml.etree.ElementTree.Element('attr')
+                e = etree.Element('attr')
                 e.set('name', x)
 
                 delete_element.append(e)
 
         if info.get('source'):
-            source_element = xml.etree.ElementTree.Element('source')
+            source_element = etree.Element('source')
             element.append(source_element)
 
             for x in info['source']:
-                e = xml.etree.ElementTree.Element('attr')
+                e = etree.Element('attr')
                 e.set('name', x)
 
                 source_element.append(e)
 
         if info.get('compile'):
-            compile_element = xml.etree.ElementTree.Element('compile')
+            compile_element = etree.Element('compile')
             element.append(compile_element)
 
             for x in info['compile']:
-                e = xml.etree.ElementTree.Element('attr')
+                e = etree.Element('attr')
                 e.set('name', x)
                 e.set('clean', str(info['compile'][x]).lower())
 
                 compile_element.append(e)
 
         if info.get('deploy') or info.get('deploy_delete'):
-            deploy_element = xml.etree.ElementTree.Element('deploy')
+            deploy_element = etree.Element('deploy')
             element.append(deploy_element)
 
             if info.get('deploy'):
-                deploy_deploy_element = xml.etree.ElementTree.Element('deploy')
+                deploy_deploy_element = etree.Element('deploy')
                 deploy_element.append(deploy_deploy_element)
 
                 for x in info['deploy']:
                     name, *dest = x.split(':', 1)
 
-                    e = xml.etree.ElementTree.Element('attr')
+                    e = etree.Element('attr')
                     e.set('name', name)
                     e.text = ''.join(dest)
 
@@ -650,11 +650,11 @@ class patch():
                     deploy_deploy_element.append(e)
 
             if info.get('deploy_delete'):
-                deploy_delete_element = xml.etree.ElementTree.Element('delete')
+                deploy_delete_element = etree.Element('delete')
                 deploy_element.append(deploy_delete_element)
 
                 for x in info['deploy_delete']:
-                    e = xml.etree.ElementTree.Element('attr')
+                    e = etree.Element('attr')
                     e.set('name', x)
 
                     types = info['deploy_delete'][x]
@@ -665,11 +665,11 @@ class patch():
                     deploy_delete_element.append(e)
 
         if info.get('info'):
-            info_element = xml.etree.ElementTree.Element('info')
+            info_element = etree.Element('info')
             element.append(info_element)
 
             for x in info['info']:
-                e = xml.etree.ElementTree.Element('attr')
+                e = etree.Element('attr')
                 e.set('name', x)
 
                 if isinstance(info['info'][x], str):
@@ -685,8 +685,7 @@ class patch():
         os.makedirs(os.path.dirname(file), exist_ok = True)
 
         try:
-            with open(file, 'w', encoding = 'utf-8') as f:
-                f.write(xml.dom.minidom.parseString(xml.etree.ElementTree.tostring(tree.getroot())).toprettyxml(indent = '  '))
+            tree.write(file, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
 
             return True
         except Exception as e:
@@ -1298,7 +1297,7 @@ class installation():
                         path = _dir
 
                 if os.path.isdir(path):
-                    id_info[id] = path
+                    id_info[id] = os.path.abspath(path)
 
             info = {}
 
@@ -1338,8 +1337,74 @@ class bn_installation(installation):
 
         self.default_type = 'ems'
 
+    # ------------------------------------------------------
+
     def install_extend(self, version, type = None):
         return True
+
+    def ums_db_update_info(self, paths, filename = 'install/dbscript-patch/ums-db-update-info.xml'):
+        dbs = {}
+
+        for path in paths:
+            file = os.path.join(path, filename)
+
+            if os.path.isfile(file):
+                try:
+                    tree = etree.parse(file)
+                except Exception as e:
+                    print(e)
+
+                    return None
+
+                for e in tree.findall('/install-db/data-source'):
+                    data_source = e.get('key', '').strip()
+
+                    if data_source not in dbs:
+                        dbs[data_source] = {}
+
+                    for element in e.findall('//item'):
+                        filename = element.get('filename', '').strip().replace('\\', '/')
+                        rollback = element.get('rollback', '').strip().replace('\\', '/')
+
+                        if not filename or not rollback:
+                            print('%s: filename or rollback is empty' % file)
+
+                            return None
+
+                        dbname = filename.split('/')[1]
+
+                        if dbname not in dbs[data_source]:
+                            dbs[data_source][dbname] = {}
+
+                        dbs[data_source][dbname][filename] = element.attrib
+
+        lines = []
+        lines.append('<install-db>')
+
+        for data_source in dbs:
+            lines.append('  <data-source key="%s">' % data_source)
+
+            for lang in ('zh', 'en'):
+                lines.append('      <%s>' % lang)
+
+                for dbname in dbs[data_source]:
+                    lines.append('          <%s>' % dbname)
+                    lines.append('              <normal>')
+
+                    for filename in sorted(dbs[data_source][dbname].keys()):
+                        attrs = ['k="%s"' % v for k, v in dbs[data_source][dbname][filename].items()]
+                        lines.append('                  <item %s/>' % ' '.join(sorted(attrs)))
+
+                    lines.append('          </%s>' % dbname)
+                    lines.append('              </normal>')
+
+                lines.append('      </%s>' % lang)
+
+            lines.append('  </data-source>')
+
+        lines.append('</install-db>')
+
+        return '\n'.join(lines)
 
 class stn_installation(installation):
     def __init__(self, path):

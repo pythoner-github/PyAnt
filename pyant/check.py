@@ -2,33 +2,13 @@ import collections
 import glob
 import os.path
 import re
-import xml.etree.ElementTree
+
+from lxml import etree
 
 from pyant import git, smtp
 from pyant.builtin import os as builtin_os
 
-__all__ = ('check', 'xml_etree_with_encoding')
-
-def xml_etree_with_encoding(file, encoding = 'gb2312'):
-    tree = None
-
-    try:
-        string = None
-
-        with open(file, encoding = encoding) as f:
-            string = f.read()
-
-        if string:
-            string = string.strip()
-
-            m = re.search(r'encoding\s*=\s*(\'|")([\w-]+)(\'|")', string.splitlines()[0])
-
-            if encoding == m.group(2).strip().lower():
-                tree = xml.etree.ElementTree.ElementTree(xml.etree.ElementTree.fromstring(string))
-    except:
-        pass
-
-    return tree
+__all__ = ('check')
 
 class check:
     def __init__(self, xpath = None):
@@ -40,7 +20,6 @@ class check:
             self.xpath = ''
 
         self.notification = '<CHECK 通知>文件检查失败, 请尽快处理'
-        self.gb2312 = False
 
     def check(self, ignores = None):
         self.errors = None
@@ -131,19 +110,15 @@ class check:
                     continue
 
             try:
-                xml.etree.ElementTree.parse(file)
-            except:
-                if self.gb2312:
-                    if xml_etree_with_encoding(file, 'gb2312') is not None:
-                        continue
-
+                tree = etree.parse(file)
+            except Exception as e:
                 if not self.errors:
                     self.errors = collections.OrderedDict()
 
                 if 'xml' not in self.errors:
                     self.errors['xml'] = collections.OrderedDict()
 
-                self.errors['xml'][file] = None
+                self.errors['xml'][file] = str(e)
 
     def puts_errors(self):
         if self.errors:
@@ -151,10 +126,7 @@ class check:
                 if type in ('encoding'):
                     print('encoding errors: %s(文件编码必须为utf-8)' % type)
                 elif type in ('xml'):
-                    if self.gb2312:
-                        print('encoding errors: %s(XML编码必须为utf-8或gb2312)' % type)
-                    else:
-                        print('encoding errors: %s(XML编码必须为utf-8)' % type)
+                    print('xml errors: (XML解析错误)')
                 else:
                     print('encoding errors: %s' % type)
 
@@ -187,10 +159,7 @@ class check:
                     if type in ('encoding'):
                         message.append('<font color="red"><strong>encoding errors: %s(文件编码必须为utf-8)</strong></font>:' % type)
                     elif type in ('xml'):
-                        if self.gb2312:
-                            message.append('<font color="red"><strong>encoding errors: %s(XML编码必须为utf-8或gb2312)</strong></font>:' % type)
-                        else:
-                            message.append('<font color="red"><strong>encoding errors: %s(XML编码必须为utf-8)</strong></font>:' % type)
+                        message.append('<font color="red"><strong>xml errors: (XML解析错误)</strong></font>:')
                     else:
                         message.append('<font color="red"><strong>encoding errors: %s(文件编码必须为utf-8)</strong></font>:' % type)
 

@@ -4,7 +4,6 @@ import os.path
 import re
 import shutil
 import sys
-import xml.etree.ElementTree
 
 from pyant import check
 from pyant.app import bn, stn, umebn, sdno, patch, const

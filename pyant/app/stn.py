@@ -111,9 +111,7 @@ def dashboard_monitor(branch = None):
         return False
 
     path_info = collections.OrderedDict()
-
-    for module, url in REPOS.items():
-        path_info[os.path.basename(REPOS[module])] = module
+    path_info[os.path.basename(REPOS)] = 'stn'
 
     if os.environ.get('JOB_NAME'):
         job_home = os.path.dirname(os.environ['JOB_NAME'])
@@ -121,7 +119,7 @@ def dashboard_monitor(branch = None):
         job_home = 'stn/dashboard'
 
     for path, (authors, paths) in build.dashboard_monitor(path_info.keys(), expand_dashboard).items():
-        build.dashboard_jenkins_cli(os.path.join(job_home, 'stn_dashboard_%s' % path_info[path]), authors, paths)
+        build.dashboard_jenkins_cli(os.path.join(job_home, 'stn_dashboard'), authors, paths)
 
     return True
 

@@ -12,13 +12,7 @@ from pyant.builtin import os as builtin_os
 
 __all__ = ('update', 'compile_base', 'compile', 'package', 'dashboard', 'dashboard_monitor')
 
-REPOS = collections.OrderedDict([
-    ('u3_interface'     , builtin_os.join(const.SSH_GIT, 'U31R22_INTERFACE')),
-    ('sdn_interface'    , builtin_os.join(const.SSH_GIT, 'stn/sdn_interface')),
-    ('sdn_framework'    , builtin_os.join(const.SSH_GIT, 'stn/sdn_framework')),
-    ('sdn_application'  , builtin_os.join(const.SSH_GIT, 'stn/sdn_application')),
-    ('sdn_tunnel'       , builtin_os.join(const.SSH_GIT, 'stn/sdn_tunnel'))
-])
+REPOS = builtin_os.join(const.SSH_GIT, 'stn/sdn_tunnel')
 
 ARTIFACT_REPOS = {
     'snapshot'  : 'stn_contoller-snapshot-generic',
@@ -27,29 +21,24 @@ ARTIFACT_REPOS = {
 }
 
 def update(name, branch = None, *arg):
-    if name in REPOS.keys():
-        path = os.path.basename(REPOS[name])
+    path = os.path.basename(REPOS)
 
-        if os.path.isdir(path):
-            if os.path.isfile(os.path.join(path, '.git/index.lock')):
-                time.sleep(30)
+    if os.path.isdir(path):
+        if os.path.isfile(os.path.join(path, '.git/index.lock')):
+            time.sleep(30)
 
-                return True
-            else:
-                return git.pull(path, revert = True)
+            return True
         else:
-            return git.clone(REPOS[name], path, branch)
+            return git.pull(path, revert = True)
     else:
-        print('module name not found in %s' % tuple(REPOS.keys()))
-
-        return False
+        return git.clone(REPOS, path, branch)
 
 def compile_base(cmd = None):
-    path = os.path.basename(REPOS['sdn_interface'])
+    path = os.path.basename(REPOS)
 
     if os.path.isdir(path):
         with builtin_os.chdir(path) as chdir:
-            for home in ('pom/version', 'pom/testframework', 'pom'):
+            for home in ('pom/version', 'pom/bundle', 'pom'):
                 if os.path.isdir(home):
                     with builtin_os.chdir(home) as chdir:
                         mvn = maven.maven()
@@ -72,30 +61,22 @@ def compile(name, cmd = None, clean = False, retry_cmd = None, dirname = None, *
         if clean.lower().strip() == 'true':
             clean = True
 
-    if name in REPOS.keys():
-        if not dirname:
-            if name == 'u3_interface':
-                dirname = 'sdn/build'
-            else:
-                dirname = 'code/build'
+    if not dirname:
+        dirname = 'build'
 
-        path = os.path.join(os.path.basename(REPOS[name]), dirname)
+    path = os.path.join(os.path.basename(REPOS), dirname)
 
-        if os.path.isdir(path):
-            with builtin_os.chdir(path) as chdir:
-                mvn = maven.maven()
-                mvn.notification = '<STN_BUILD 通知>编译失败, 请尽快处理'
+    if os.path.isdir(path):
+        with builtin_os.chdir(path) as chdir:
+            mvn = maven.maven()
+            mvn.notification = '<STN_BUILD 通知>编译失败, 请尽快处理'
 
-                if clean:
-                    mvn.clean()
+            if clean:
+                mvn.clean()
 
-                return mvn.compile(cmd, retry_cmd)
-        else:
-            print('no such directory: %s' % os.path.normpath(path))
-
-            return False
+            return mvn.compile(cmd, retry_cmd)
     else:
-        print('module name not found in %s' % tuple(REPOS.keys()))
+        print('no such directory: %s' % os.path.normpath(path))
 
         return False
 
@@ -111,11 +92,11 @@ def package(version, *arg):
     else:
         return False
 
-def dashboard(name, paths, branch = None, *arg):
-    if not update(name, branch):
+def dashboard(paths, branch = None, *arg):
+    if not update(None, branch):
         return False
 
-    path = os.path.basename(REPOS[name])
+    path = os.path.basename(REPOS)
 
     if os.path.isdir(path):
         with builtin_os.chdir(path) as chdir:
@@ -126,13 +107,7 @@ def dashboard(name, paths, branch = None, *arg):
         return False
 
 def dashboard_monitor(branch = None):
-    status = True
-
-    for module in REPOS.keys():
-        if not update(module, branch):
-            status = False
-
-    if not status:
+    if not update(None, branch):
         return False
 
     path_info = collections.OrderedDict()

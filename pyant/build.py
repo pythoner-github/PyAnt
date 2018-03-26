@@ -82,7 +82,7 @@ def build(argv = None):
                     else:
                         branch = None
 
-                    if name in ('bn', 'stn'):
+                    if name in ('bn'):
                         status = True
 
                         for module in build.REPOS.keys():

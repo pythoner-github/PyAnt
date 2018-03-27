@@ -102,6 +102,8 @@ PATCH_TEMPLATE_HOME = os.path.abspath(os.path.join(PATCH_XML_HOME, '..', 'templa
 
 PATCH_NODE_INFO = {
     'stn/none'      : ['10.5.72.12',  '/build/build'],
+    'umebn/none'    : ['10.8.8.196',  '/build/build'],
+    'sdno/none'     : ['10.8.10.11',  '/build/build'],
     'bn/linux'      : ['10.5.72.101', '/build/build'],
     'bn/solaris'    : ['10.5.72.102', '/build/build'],
     'bn/windows'    : ['10.8.11.106', 'd:/build/build'],

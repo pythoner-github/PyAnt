@@ -11,7 +11,7 @@ import zipfile
 from lxml import etree
 
 from pyant import command, daemon, git, maven, password, smtp
-from pyant.app import bn, stn, umebn, const
+from pyant.app import bn, stn, umebn, sdno, const
 from pyant.builtin import os as builtin_os
 
 __all__ = ('auto', 'init', 'build', 'install')
@@ -32,7 +32,7 @@ def auto():
 
                     continue
 
-                m = re.search(r'^(bn|stn)_.*_(\d{8}.*)$', dir)
+                m = re.search(r'^(bn|stn|umebn|sdno)_.*_(\d{8}.*)$', dir)
 
                 if not m:
                     shutil.rmtree(dir, ignore_errors = True)
@@ -177,6 +177,8 @@ def init(name, path, branch):
         return stn_patch(path).init(branch)
     elif name == 'umebn':
         return umebn_patch(path).init(branch)
+    elif name == 'sdno':
+        return sdno_patch(path).init(branch)
     else:
         return True
 
@@ -187,6 +189,8 @@ def build(name, path):
         return stn_patch(path).build()
     elif name == 'umebn':
         return umebn_patch(path).build()
+    elif name == 'sdno':
+        return sdno_patch(path).build()
     else:
         return True
 
@@ -197,6 +201,8 @@ def install(name, path, version, type = None):
         return stn_install(path).install(version, None)
     elif name == 'umebn':
         return umebn_install(path).install(version, None)
+    elif name == 'sdno':
+        return sdno_install(path).install(version, None)
     else:
         return True
 
@@ -1200,6 +1206,16 @@ class umebn_patch(patch):
             'umebn' : umebn.REPOS
         }
 
+class sdno_patch(patch):
+    def __init__(self, path):
+        super().__init__(path)
+
+        self.default_type = 'sdno'
+        self.message_title = '<SDNO_PATCH 通知>'
+        self.modules = {
+            'sdno' : sdno.REPOS
+        }
+
     # ------------------------------------------------------
 
     def load_xml_extend(self, info, e):
@@ -1417,3 +1433,9 @@ class umebn_installation(installation):
         super().__init__(path)
 
         self.default_type = 'umebn'
+
+class sdno_installation(installation):
+    def __init__(self, path):
+        super().__init__(path)
+
+        self.default_type = 'sdno'

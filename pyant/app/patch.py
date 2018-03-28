@@ -953,6 +953,91 @@ class patch():
     def get_xml_zipfile(self, file):
         return None
 
+class stn_patch(patch):
+    def __init__(self, path):
+        super().__init__(path)
+
+        self.default_type = 'stn'
+        self.message_title = '<STN_PATCH 通知>'
+
+        for name, url in stn.REPOS.items():
+            self.modules[os.path.basename(url)] = url
+
+class umebn_patch(patch):
+    def __init__(self, path):
+        super().__init__(path)
+
+        self.default_type = 'umebn'
+        self.message_title = '<UMEBN_PATCH 通知>'
+        self.modules = {
+            'umebn' : umebn.REPOS
+        }
+
+class sdno_patch(patch):
+    def __init__(self, path):
+        super().__init__(path)
+
+        self.default_type = 'sdno'
+        self.message_title = '<SDNO_PATCH 通知>'
+        self.modules = {
+            'sdno' : sdno.REPOS
+        }
+
+    # ------------------------------------------------------
+
+    def load_xml_extend(self, info, e):
+        status = True
+
+        info['compile'] = collections.OrderedDict()
+        info['deploy'] = collections.OrderedDict()
+
+        if os.path.isdir(os.path.join(self.path, 'code', 'umebn')):
+            with builtin_os.chdir(os.path.join(self.path, 'code', 'umebn')) as chdir:
+                if info.get('source'):
+                    for dir in self.get_git_dirs(info['source']):
+                        info['compile'][os.path.join(dir, 'build')] = True
+                        info['deploy'][':'.join((os.path.join(dir, 'build/output'), ''))] = ['umebn']
+        else:
+            print('no such directory: %s' % os.path.normpath(os.path.join(self.path, 'code', 'umebn')))
+
+            status = False
+
+        return status
+
+    def build_update_source(self, path, sources):
+        status = True
+
+        with builtin_os.chdir(path) as chdir:
+            for dir in self.get_git_dirs(sources):
+                if not git.pull(dir, revert = True):
+                    status = False
+
+        return status
+
+    def get_git_dirs(self, paths):
+        dirs = []
+
+        for path in paths:
+            dir = self.get_git_home(path)
+
+            if dir:
+                if not dir in dirs:
+                    dirs.append(dir)
+
+        return dirs
+
+    def get_git_home(self, path):
+        if os.path.abspath(path) == os.getcwd() or path == '/':
+            return None
+
+        if os.path.isfile(path):
+            path = os.path.dirname(path)
+
+        if os.path.isdir(os.path.join(path, '.git')):
+            return path
+
+        return self.get_build_dir(os.path.dirname(path))
+
 class bn_patch(patch):
     def __init__(self, path):
         super().__init__(path)
@@ -1186,91 +1271,6 @@ class bn_patch(patch):
 
         return types
 
-class stn_patch(patch):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.default_type = 'stn'
-        self.message_title = '<STN_PATCH 通知>'
-
-        for name, url in stn.REPOS.items():
-            self.modules[os.path.basename(url)] = url
-
-class umebn_patch(patch):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.default_type = 'umebn'
-        self.message_title = '<UMEBN_PATCH 通知>'
-        self.modules = {
-            'umebn' : umebn.REPOS
-        }
-
-class sdno_patch(patch):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.default_type = 'sdno'
-        self.message_title = '<SDNO_PATCH 通知>'
-        self.modules = {
-            'sdno' : sdno.REPOS
-        }
-
-    # ------------------------------------------------------
-
-    def load_xml_extend(self, info, e):
-        status = True
-
-        info['compile'] = collections.OrderedDict()
-        info['deploy'] = collections.OrderedDict()
-
-        if os.path.isdir(os.path.join(self.path, 'code', 'umebn')):
-            with builtin_os.chdir(os.path.join(self.path, 'code', 'umebn')) as chdir:
-                if info.get('source'):
-                    for dir in self.get_git_dirs(info['source']):
-                        info['compile'][os.path.join(dir, 'build')] = True
-                        info['deploy'][':'.join((os.path.join(dir, 'build/output'), ''))] = ['umebn']
-        else:
-            print('no such directory: %s' % os.path.normpath(os.path.join(self.path, 'code', 'umebn')))
-
-            status = False
-
-        return status
-
-    def build_update_source(self, path, sources):
-        status = True
-
-        with builtin_os.chdir(path) as chdir:
-            for dir in self.get_git_dirs(sources):
-                if not git.pull(dir, revert = True):
-                    status = False
-
-        return status
-
-    def get_git_dirs(self, paths):
-        dirs = []
-
-        for path in paths:
-            dir = self.get_git_home(path)
-
-            if dir:
-                if not dir in dirs:
-                    dirs.append(dir)
-
-        return dirs
-
-    def get_git_home(self, path):
-        if os.path.abspath(path) == os.getcwd() or path == '/':
-            return None
-
-        if os.path.isfile(path):
-            path = os.path.dirname(path)
-
-        if os.path.isdir(os.path.join(path, '.git')):
-            return path
-
-        return self.get_build_dir(os.path.dirname(path))
-
 # ******************************************************** #
 #                    PATCH INSTALLATION                    #
 # ******************************************************** #
@@ -1347,6 +1347,24 @@ class installation():
     def install_extend(self, version, type = None):
         return True
 
+class stn_installation(installation):
+    def __init__(self, path):
+        super().__init__(path)
+
+        self.default_type = 'stn'
+
+class umebn_installation(installation):
+    def __init__(self, path):
+        super().__init__(path)
+
+        self.default_type = 'umebn'
+
+class sdno_installation(installation):
+    def __init__(self, path):
+        super().__init__(path)
+
+        self.default_type = 'sdno'
+
 class bn_installation(installation):
     def __init__(self, path):
         super().__init__(path)
@@ -1421,21 +1439,3 @@ class bn_installation(installation):
         lines.append('</install-db>')
 
         return '\n'.join(lines)
-
-class stn_installation(installation):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.default_type = 'stn'
-
-class umebn_installation(installation):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.default_type = 'umebn'
-
-class sdno_installation(installation):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.default_type = 'sdno'

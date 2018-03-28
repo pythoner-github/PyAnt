@@ -109,7 +109,7 @@ def auto():
 
                                             if not proxy.write(
                                                 builtin_os.join(build_home, 'xml', os.path.basename(file)),
-                                                etree.tostring(tree, encoding='utf-8', pretty_print=True, xml_declaration='utf-8').decode('utf-8')
+                                                etree.tostring(tree, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
                                             ):
                                                 continue
 

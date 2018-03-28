@@ -801,8 +801,8 @@ class umebn_build(build):
             artifact_repos
         )
 
-    def compile_base(self, cmd = None, file = None):
-        return super().compile_base(None, 'devops/parent/build/pom.xml')
+    def compile_base(self, cmd = None):
+        return super().compile_base(cmd, 'devops/parent/build/pom.xml')
 
     # ------------------------------------------------------
 
@@ -823,7 +823,7 @@ class sdno_build(build):
             artifact_repos
         )
 
-    def compile_base(self, cmd = None, file = None):
+    def compile_base(self, cmd = None):
         return True
 
     # ------------------------------------------------------
@@ -844,6 +844,12 @@ class bn_build(build):
             None,
             artifact_repos
         )
+
+    def update(self, module, branch = None):
+        pass
+
+    def compile(self, module, cmd = None, clean = False, retry_cmd = None, dirname = None, lang = None):
+        pass
 
     # ------------------------------------------------------
 

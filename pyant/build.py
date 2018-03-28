@@ -6,7 +6,7 @@ import shutil
 import sys
 
 from pyant import check
-from pyant.app import bn, stn, umebn, sdno, patch, const
+from pyant.app import patch, const
 from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
@@ -68,62 +68,63 @@ def build(argv = None):
 
             with builtin_os.chdir(home) as chdir:
                 if name == 'bn':
-                    build = bn
+                    build = app_build.bn_build()
                 elif name == 'stn':
-                    build = stn
+                    build = app_build.stn_build()
                 elif name == 'umebn':
-                    build = umebn
+                    build = app_build.umebn_build()
                 else:
-                    build = sdno
+                    build = app_build.sdno_build()
 
                 if command == 'updateall':
+                    branch = None
+
                     if arg:
                         branch = arg[0]
+
+                    if name in ('bn',):
+                        return build.update(None, branch)
                     else:
-                        branch = None
-
-                    if name in ('bn'):
-                        status = True
-
-                        for module in build.REPOS.keys():
-                            if not build.update(module, branch):
-                                status = False
-
-                        return status
-                    else:
-                        return build.update(None, branch);
+                        return build.update(branch)
                 elif command == 'update':
-                    return build.update(*arg)
+                    module, branch, *_ = expand_arg(arg, 2)
+
+                    if name in ('bn',):
+                        return build.update(module, branch)
+                    else:
+                        return build.update(branch)
                 elif command == 'compile_base':
-                    return build.compile_base(*arg)
-                elif command == 'compile':
+                    cmd = None
+
                     if arg:
-                        module_name = arg[0]
+                        cmd = arg[0]
+
+                    return build.compile_base(cmd)
+                elif command == 'compile':
+                    module, cmd, clean, retry_cmd, dirname, lang, *_ = expand_arg(arg, 6)
+
+                    id = build.metric_start(module)
+
+                    if name in ('bn',):
+                        status = build.compile(module, cmd, clean, retry_cmd, dirname, lang)
                     else:
-                        module_name = None
+                        status = build.compile(cmd, clean, retry_cmd, dirname)
 
-                    id = app_build.metric_start(name, module_name)
+                    build.metric_end(id, status)
 
-                    if build.compile(*arg):
-                        app_build.metric_end(id, True)
-
-                        return True
-                    else:
-                        app_build.metric_end(id, False)
-
-                        return False
+                    return status
                 elif command == 'package':
+                    branch, type, *_ = expand_arg(arg, 2)
+
                     if not version:
-                        if arg:
-                            branch = arg[0]
-                        else:
+                        if not branch:
                             branch = 'master'
 
                         version = '%s_%s' % (branch, datetime.datetime.now().strftime('%Y%m%d'))
 
-                    return build.package(version, *arg[1:])
+                    return build.package(version, type)
                 elif command == 'check':
-                    if name == 'bn':
+                    if name in ('bn',):
                         status = True
 
                         for _name in bn.REPOS.keys():
@@ -133,8 +134,7 @@ def build(argv = None):
                                 ignores = None
 
                             chk = check.check(os.path.basename(bn.REPOS[_name]))
-                            chk.notification = '<%s_CHECK 通知>文件检查失败, 请尽快处理' % name.upper()
-                            chk.gb2312 = True
+                            chk.notification = '<%s_CHECK 通知> 文件检查失败, 请尽快处理' % name.upper()
 
                             if not chk.check(ignores):
                                 status = False
@@ -142,30 +142,27 @@ def build(argv = None):
                         return status
                     else:
                         chk = check.check()
-                        chk.notification = '<%s_CHECK 通知>文件检查失败, 请尽快处理' % name.upper()
+                        chk.notification = '<%s_CHECK 通知> 文件检查失败, 请尽快处理' % name.upper()
 
                         return chk.check()
                 elif command == 'dashboard':
-                    if arg:
-                        module_name = arg[0]
-                    else:
-                        module_name = None
+                    module, paths, branch, *_ = expand_arg(arg, 3)
 
-                    id = app_build.metric_start(name, module_name, False)
+                    id = build.metric_start(module, False)
 
-                    if build.dashboard(*arg):
-                        app_build.metric_end(id, True)
+                    if build.dashboard(module, paths, branch):
+                        build.metric_end(id, True)
 
                         return True
                     else:
-                        app_build.metric_end(id, False)
+                        build.metric_end(id, False)
 
                         return False
                 elif command == 'dashboard_monitor':
+                    branch = None
+
                     if arg:
                         branch = arg[0]
-                    else:
-                        branch = None
 
                     return build.dashboard_monitor(branch)
                 elif command == 'patch_auto':
@@ -289,3 +286,14 @@ Usage:
         print(usage.strip())
 
         return False
+
+# ----------------------------------------------------------
+
+def expand_arg(arg, size):
+    dup = arg[:]
+
+    if len(arg) < size:
+        for i in range(size - len(arg)):
+            dup.append(None)
+
+    return dup

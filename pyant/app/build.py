@@ -51,10 +51,6 @@ class build():
             return False
 
     def compile(self, cmd = None, clean = False, retry_cmd = None, dirname = None):
-        if isinstance(clean, str):
-            if clean.lower().strip() == 'true':
-                clean = True
-
         if not dirname:
             dirname = 'build'
 
@@ -81,7 +77,7 @@ class build():
             else:
                 artifact = self.artifact_repos['alpha']
 
-            return self.artifactory(
+            return self.inner_artifactory(
                 self.package_home(version),
                 artifact,
                 os.path.join(self.artifact_repos['release'], self.name, 'current.tar.gz')
@@ -115,11 +111,16 @@ class build():
 
         return True
 
-    def kw_build(self, name, path):
+    def kw_build(self, path):
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:
                 if os.path.isfile('kwinject/kwinject.out'):
-                    project_name = '%s_%s' % (name, os.path.basename(os.getcwd()))
+                    basename = os.path.basename(os.getcwd())
+
+                    if self.name == basename:
+                        project_name = self.name
+                    else:
+                        project_name = '%s_%s' % (self.name, basename)
 
                     cmd = command.command()
 
@@ -180,23 +181,23 @@ class build():
 
             return False
 
-    def metric_start(self, module_name = None, night = True):
+    def metric_start(self, module = None, night = True):
         cmdline = None
 
-        if not module_name:
-            module_name = ''
+        if not module:
+            module = ''
 
         if os.environ.get('METRIC'):
-            id = metric_id(module_name)
+            id = metric_id(module)
 
             if id:
                 if night:
                     hour = datetime.datetime.now().hour
 
                     if 0 <= hour <= 8 or hour >= 22:
-                        cmdline = 'curl --data "action=buildstart&project=%s&buildtype=night&item=%s" %s' % (id, module_name, const.METRIC_HTTP)
+                        cmdline = 'curl --data "action=buildstart&project=%s&buildtype=night&item=%s" %s' % (id, module, const.METRIC_HTTP)
                 else:
-                    cmdline = 'curl --data "action=buildstart&project=%s&buildtype=CI&item=%s" %s' % (id, module_name, const.METRIC_HTTP)
+                    cmdline = 'curl --data "action=buildstart&project=%s&buildtype=CI&item=%s" %s' % (id, module, const.METRIC_HTTP)
 
         if cmdline:
             lines = []
@@ -441,23 +442,18 @@ class build():
         return True
 
     def inner_dashboard(self, paths, ignores = None):
-        if isinstance(paths, str):
-            paths = tuple(path.strip() for path in paths.split(','))
-        else:
-            paths = tuple(paths)
-
         filename = os.path.abspath(os.path.join('../errors', '%s.json' % os.path.basename(os.getcwd())))
 
         if os.path.isfile(filename):
             try:
                 with open(filename, encoding = 'utf8') as f:
-                    tmp_paths = []
+                    tmp = []
 
                     for path in json.load(f):
                         if path not in paths:
-                            tmp_paths.append(path)
+                            tmp.append(path)
 
-                    paths = tuple(tmp_paths) + paths
+                    paths = tmp + paths
             except Exception as e:
                 print(e)
 
@@ -622,20 +618,20 @@ class build():
 
         return changes
 
-    def artifactory(self, path, artifact_path, artifact_base_list = None, suffix = None):
+    def inner_artifactory(self, path, artifact_path, artifact_filenames = None, suffix = None):
+        if isinstance(artifact_filenames, str):
+            artifact_filenames = [artifact_filenames]
+
         if os.path.isdir(path):
             with builtin_os.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
-                if artifact_base_list:
+                if artifact_filenames:
                     # download
 
-                    if isinstance(artifact_base_list, str):
-                        artifact_base_list = (artifact_base_list,)
+                    for file in artifact_filenames:
+                        filename = builtin_os.join(const.ARTIFACT_HTTP, file)
 
-                    for file in artifact_base_list:
-                        artifact_file = builtin_os.join(const.ARTIFACT_HTTP, file)
-
-                        cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (const.ARTIFACT_APIKEY, artifact_file)
-                        display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (password.password(const.ARTIFACT_APIKEY), artifact_file)
+                        cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (const.ARTIFACT_APIKEY, filename)
+                        display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (password.password(const.ARTIFACT_APIKEY), filename)
 
                         cmd = command.command()
 
@@ -646,7 +642,7 @@ class build():
                             return False
 
                         try:
-                            with tarfile.open(os.path.basename(artifact_file)) as tar:
+                            with tarfile.open(os.path.basename(file)) as tar:
                                 tar.extractall('installation')
                         except Exception as e:
                             print(e)
@@ -685,10 +681,10 @@ class build():
 
                 # upload
 
-                artifact_file = builtin_os.join(const.ARTIFACT_HTTP, artifact_path, tarname)
+                file = builtin_os.join(const.ARTIFACT_HTTP, artifact_path, tarname)
 
-                cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (const.ARTIFACT_APIKEY, tarname, artifact_file)
-                display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (password.password(const.ARTIFACT_APIKEY), tarname, artifact_file)
+                cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (const.ARTIFACT_APIKEY, tarname, file)
+                display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (password.password(const.ARTIFACT_APIKEY), tarname, file)
 
                 cmd = command.command()
 
@@ -839,17 +835,162 @@ class bn_build(build):
             'release'   : 'U31R22-release-generic'
         }
 
+        repos = collections.OrderedDict([
+            ('interface', builtin_os.join(const.SSH_GIT, 'U31R22_INTERFACE')),
+            ('platform' , builtin_os.join(const.SSH_GIT, 'U31R22_PLATFORM')),
+            ('necommon' , builtin_os.join(const.SSH_GIT, 'U31R22_NECOMMON')),
+            ('e2e'      , builtin_os.join(const.SSH_GIT, 'U31R22_E2E')),
+            ('uca'      , builtin_os.join(const.SSH_GIT, 'U31R22_UCA')),
+            ('xmlfile'  , builtin_os.join(const.SSH_GIT, 'U31R22_NBI_XMLFILE')),
+            ('nbi'      , builtin_os.join(const.SSH_GIT, 'U31R22_NBI')),
+            ('sdh'      , builtin_os.join(const.SSH_GIT, 'U31R22_SDH')),
+            ('wdm'      , builtin_os.join(const.SSH_GIT, 'U31R22_WDM')),
+            ('ptn'      , builtin_os.join(const.SSH_GIT, 'U31R22_PTN')),
+            ('ptn2'     , builtin_os.join(const.SSH_GIT, 'U31R22_PTN2')),
+            ('ip'       , builtin_os.join(const.SSH_GIT, 'U31R22_IP'))
+        ])
+
         super().__init__(
             'bn',
-            None,
+            repos,
             artifact_repos
         )
 
+        self.repos_devtools = const.SSH_GIT
+
     def update(self, module, branch = None):
-        pass
+        if module:
+            if module in self.repos:
+                path = os.path.basename(self.repos[module])
+
+                if os.path.isdir(path):
+                    if os.path.isfile(os.path.join(path, '.git/index.lock')):
+                        time.sleep(30)
+
+                        return True
+                    else:
+                        return git.pull(path, revert = True)
+                else:
+                    return git.clone(self.repos[module], path, branch)
+            elif module in ('devtools', ):
+                return update_devtools(branch)
+            else:
+                print('module name not found in %s' % tuple(self.repos.keys()))
+
+                return False
+        else:
+            status = True
+
+            for module in self.repos:
+                if not self.update(module, branch):
+                    status = False
+
+            if not self.update_devtools(branch):
+                status = False
+
+            return status
 
     def compile(self, module, cmd = None, clean = False, retry_cmd = None, dirname = None, lang = None):
-        pass
+        if module:
+            if module in list(self.repos.keys()) + ['wdm1', 'wdm2', 'wdm3']:
+                environ(lang)
+
+                if lang in ('cpp', ):
+                    if not dirname:
+                        dirname = 'code_c/build'
+                else:
+                    if not dirname:
+                        dirname = 'code/build'
+
+                if module in ('wdm1', 'wdm2', 'wdm3'):
+                    self.path = os.path.basename(self.repos['wdm'])
+                else:
+                    self.path = os.path.basename(self.repos[module])
+
+                return super().compile(cmd, clean, retry_cmd, dirname)
+            else:
+                print('module name not found in %s' % tuple(self.repos.keys()))
+
+                return False
+        else:
+            status = True
+
+            for module in self.repos:
+                if not self.compile(module, cmd, clean, retry_cmd, dirname, lang):
+                    status = False
+
+            return status
+
+    def package(self, version, type = None):
+        if not type:
+            type = 'ems'
+
+        type = type.strip().lower()
+
+        if self.inner_package(version, None, type, self.expand_filename, False):
+            if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
+                artifact = self.artifact_repos['snapshot']
+            else:
+                artifact = self.artifact_repos['alpha']
+
+            suffix = '-%s' % builtin_os.osname()
+
+            if type not in ('ems',):
+                suffix += '(%s)' % type
+
+            if type in ('lct',):
+                filenames = (
+                    os.path.join(ARTIFACT_REPOS['release'], 'bn/LCT/current_en.tar.gz'),
+                    os.path.join(ARTIFACT_REPOS['release'], 'bn/LCT/current_zh.tar.gz')
+                )
+            else:
+                filenames = ((
+                    os.path.join(ARTIFACT_REPOS['release'], 'bn/%s/current.tar.gz' % type.upper()),
+                    os.path.join(ARTIFACT_REPOS['release'], 'bn/%s/extend.tar.gz' % type.upper())
+                ),)
+
+            for filename in filenames:
+                if not self.inner_artifactory(
+                    self.package_home(version),
+                    os.path.join(artifact, version.replace(' ', '')),
+                    filename,
+                    suffix
+                ):
+                    return False
+
+            return True
+
+        return False
+
+    def dashboard(self, module, paths, branch = None):
+        if not os.environ.get('NOT_DASHBOARD_DEVTOOLS'):
+            if not self.update('devtools', branch):
+                return False
+
+        self.environ('cpp')
+
+        self.path = module
+
+        return super().dashboard(paths, branch)
+
+    def dashboard_monitor(self, branch = None):
+        if not self.update(None, branch):
+            return False
+
+        path_info = collections.OrderedDict()
+
+        for module in self.repos:
+            path_info[os.path.basename(self.repos[module])] = module
+
+        if os.environ.get('JOB_NAME'):
+            job_home = os.path.dirname(os.environ['JOB_NAME'])
+        else:
+            job_home = os.path.join(self.path, 'dashboard')
+
+        for path, (authors, paths) in self.inner_dashboard_monitor(path_info.keys(), self.expand_dashboard).items():
+            self.dashboard_jenkins_cli(os.path.join(job_home, '%s_dashboard' % self.name), authors, paths)
+
+        return True
 
     # ------------------------------------------------------
 
@@ -866,3 +1007,151 @@ class bn_build(build):
             return const.METRIC_ID_BN_OTN
         else:
             return None
+
+    def update_devtools(self, branch = None):
+        if builtin_os.osname() == 'linux':
+            url = builtin_os.join(self.repos_devtools, 'U31R22_DEVTOOLS_LINUX')
+        elif builtin_os.osname() == 'solaris':
+            url = builtin_os.join(self.repos_devtools, 'U31R22_DEVTOOLS_SOLARIS')
+        elif builtin_os.osname() == 'windows-x64':
+            url = builtin_os.join(self.repos_devtools, 'U31R22_DEVTOOLS_WINDOWS-x64')
+        else:
+            url = builtin_os.join(self.repos_devtools, 'U31R22_DEVTOOLS_WINDOWS')
+
+        path = 'DEVTOOLS'
+
+        if os.path.isdir(path):
+            if os.path.isfile(os.path.join(path, '.git/index.lock')):
+                time.sleep(30)
+
+                return True
+            else:
+                return git.pull(path, revert = True)
+        else:
+            return git.clone(url, path, branch)
+
+    def environ(self, lang = None):
+        if os.environ.get('UEP_VERSION'):
+            if not os.environ.get('POM_UEP_VERSION'):
+                os.environ['POM_UEP_VERSION'] = os.environ['UEP_VERSION'].upper()
+
+                print('export POM_UEP_VERSION=%s' % os.environ['POM_UEP_VERSION'])
+
+        if not os.environ.get('DEVTOOLS_ROOT'):
+            if os.path.isdir('DEVTOOLS'):
+                os.environ['DEVTOOLS_ROOT'] = builtin_os.abspath('DEVTOOLS')
+
+        if lang == 'cpp':
+            if os.environ.get('DEVTOOLS_ROOT'):
+                if os.path.isdir(os.path.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin')):
+                    os.environ['PATH'] = ';'.join((builtin_os.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin'), os.environ['PATH']))
+
+            if not os.environ.get('INTERFACE_OUTPUT_HOME'):
+                path = os.path.basename(REPOS['interface'])
+
+                if os.path.isdir(path):
+                    os.environ['INTERFACE_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('PLATFORM_OUTPUT_HOME'):
+                path = os.path.basename(REPOS['platform'])
+
+                if os.path.isdir(path):
+                    os.environ['PLATFORM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('NECOMMON_OUTPUT_HOME'):
+                path = os.path.basename(REPOS['necommon'])
+
+                if os.path.isdir(path):
+                    os.environ['NECOMMON_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('E2E_OUTPUT_HOME'):
+                path = os.path.basename(REPOS['e2e'])
+
+                if os.path.isdir(path):
+                    os.environ['E2E_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('UCA_OUTPUT_HOME'):
+                path = os.path.basename(REPOS['uca'])
+
+                if os.path.isdir(path):
+                    os.environ['UCA_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('NAF_OUTPUT_HOME'):
+                path = os.path.basename(REPOS['nbi'])
+
+                if os.path.isdir(path):
+                    os.environ['NAF_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('SDH_OUTPUT_HOME'):
+                path = os.path.basename(REPOS['sdh'])
+
+                if os.path.isdir(path):
+                    os.environ['SDH_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('WDM_OUTPUT_HOME'):
+                path = os.path.basename(REPOS['wdm'])
+
+                if os.path.isdir(path):
+                    os.environ['WDM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+
+    def expand_filename(self, version, dirname, filename, type):
+        dst = filename
+        name = os.path.join(dirname, filename)
+
+        dst = dst.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
+
+        if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml', 'u3backup.xml', 'u3backupme.xml', 'dbtool-config.xml'):
+            try:
+                tree = etree.parse(name)
+
+                if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml'):
+                    if version:
+                        for e in tree.findall('info'):
+                            e.set('version', version)
+                            e.set('display-version', version)
+                elif os.path.basename(name) in ('u3backup.xml', 'u3backupme.xml'):
+                    if version:
+                        for e in tree.findall('version'):
+                            e.text = version
+                elif os.path.basename(name) in ('dbtool-config.xml'):
+                    for e in tree.findall('ems_type'):
+                        e.text = type
+                else:
+                    pass
+
+                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
+            except:
+                pass
+
+        return (filename, dst)
+
+    def expand_dashboard(self, path, file):
+        file = builtin_os.normpath(file)
+
+        if path in ('U31R22_INTERFACE'):
+            if file.startswith('code/asn/'):
+                return ('code/finterface', 'code_c/finterface')
+            elif file.startswith('code_c/asn/sdh-wdm/qx-interface/asn/'):
+                return 'code_c/qxinterface/qxinterface'
+            elif file.startswith('code_c/asn/sdh-wdm/qx-interface/asn5800/'):
+                return 'code_c/qxinterface/qx5800'
+            elif file.startswith('code_c/asn/sdh-wdm/qx-interface/asnwdm721/'):
+                return 'code_c/qxinterface/qxwdm721'
+            elif file.startswith('code_c/asn/otntlvqx/'):
+                return 'code_c/qxinterface/qxotntlv'
+            else:
+                return file
+        elif path in ('U31R22_NBI'):
+            if file.startswith('code_c/adapters/xtncorba/corbaidl/'):
+                return ('code_c/adapters/xtncorba/corbaidl/corbaidl', 'code_c/adapters/xtncorba/corbaidl/corbaidl2')
+            elif file.startswith('code_c/adapters/xtntmfcorba/corbaidl/'):
+                return ('adapters/xtntmfcorba/corbaidl/corbaidl', 'code_c/adapters/xtntmfcorba/corbaidl/corbaidl2')
+            else:
+                return file
+        else:
+            if re.search(r'^code_c\/database\/.*\/xml\/.*\.xml$', file):
+                if os.path.isfile('code_c/database/dbscript/pom.xml'):
+                    if os.path.isfile(os.path.join(os.path.dirname(file), '../pom.xml')):
+                        return ('code_c/database/dbscript', file)
+
+            return file

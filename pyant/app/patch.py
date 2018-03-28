@@ -11,7 +11,8 @@ import zipfile
 from lxml import etree
 
 from pyant import command, daemon, git, maven, password, smtp
-from pyant.app import bn, stn, umebn, sdno, const
+from pyant.app import const
+from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
 __all__ = ('auto', 'init', 'build', 'install')

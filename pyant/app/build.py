@@ -17,6 +17,8 @@ from pyant import check, command, git, maven, password
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
+__all__ = ('stn_build', 'umebn_build', 'sdno_build', 'bn_build')
+
 class build():
     def __init__(self, name, repos, artifact_repos):
         self.name = name

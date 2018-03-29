@@ -15,7 +15,11 @@ from pyant.app import const
 from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
-__all__ = ('auto', 'init', 'build', 'install')
+__all__ = (
+    'auto',
+    'stn_patch', 'umebn_patch', 'sdno_patch', 'bn_patch',
+    'stn_installation', 'umebn_installation', 'sdno_installation', 'bn_installation'
+)
 
 def auto():
     status = True
@@ -170,42 +174,6 @@ def auto():
                 print(line)
 
     return status
-
-def init(name, path, branch):
-    if name == 'bn':
-        return bn_patch(path).init(branch)
-    elif name == 'stn':
-        return stn_patch(path).init(branch)
-    elif name == 'umebn':
-        return umebn_patch(path).init(branch)
-    elif name == 'sdno':
-        return sdno_patch(path).init(branch)
-    else:
-        return True
-
-def build(name, path):
-    if name == 'bn':
-        return bn_patch(path).build()
-    elif name == 'stn':
-        return stn_patch(path).build()
-    elif name == 'umebn':
-        return umebn_patch(path).build()
-    elif name == 'sdno':
-        return sdno_patch(path).build()
-    else:
-        return True
-
-def install(name, path, version, type = None):
-    if name == 'bn':
-        return bn_install(path).install(version, type)
-    elif name == 'stn':
-        return stn_install(path).install(version, None)
-    elif name == 'umebn':
-        return umebn_install(path).install(version, None)
-    elif name == 'sdno':
-        return sdno_install(path).install(version, None)
-    else:
-        return True
 
 # ******************************************************** #
 #                          PATCH                           #
@@ -686,7 +654,7 @@ class patch():
 
                 info_element.append(e)
 
-        if not self.to_xml_extend(self, info, element):
+        if not self.to_xml_extend(info, element):
             return False
 
         os.makedirs(os.path.dirname(file), exist_ok = True)
@@ -960,9 +928,9 @@ class stn_patch(patch):
 
         self.default_type = 'stn'
         self.message_title = '<STN_PATCH 通知>'
-
-        for name, url in stn.REPOS.items():
-            self.modules[os.path.basename(url)] = url
+        self.modules = {
+            'stn' : app_build.stn_build().repos
+        }
 
 class umebn_patch(patch):
     def __init__(self, path):
@@ -971,7 +939,7 @@ class umebn_patch(patch):
         self.default_type = 'umebn'
         self.message_title = '<UMEBN_PATCH 通知>'
         self.modules = {
-            'umebn' : umebn.REPOS
+            'umebn' : app_build.umebn_build().repos
         }
 
 class sdno_patch(patch):
@@ -981,7 +949,7 @@ class sdno_patch(patch):
         self.default_type = 'sdno'
         self.message_title = '<SDNO_PATCH 通知>'
         self.modules = {
-            'sdno' : sdno.REPOS
+            'sdno' : app_build.sdno_build().repos
         }
 
     # ------------------------------------------------------
@@ -1046,7 +1014,7 @@ class bn_patch(patch):
         self.default_type = 'ems'
         self.message_title = '<BN_PATCH 通知>'
 
-        for name, url in bn.REPOS.items():
+        for name, url in app_build.bn_build().repos.items():
             self.modules[os.path.basename(url)] = url
 
     # ------------------------------------------------------
@@ -1178,10 +1146,10 @@ class bn_patch(patch):
         return status
 
     def to_xml_extend(self, info, e):
-        if info['os']:
+        if info.get('os'):
             e.set('os', ', '.join(info['os']))
 
-        if info['script']:
+        if info.get('script'):
             e.set('script', ', '.join(info['script']))
 
         return True

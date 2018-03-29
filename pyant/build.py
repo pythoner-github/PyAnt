@@ -11,6 +11,7 @@ from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
 __build_name__ = ('bn', 'stn', 'umebn', 'sdno')
+__all__ = ('build',)
 
 usage = '''
 Usage:
@@ -30,7 +31,7 @@ Usage:
         patch_auto          arg:
         patch               arg: path
         patch_init          arg: path, branch
-        patch_install       arg: path
+        patch_install       arg: path, type
 '''
 
 def build(argv = None):
@@ -68,12 +69,20 @@ def build(argv = None):
 
             if name == 'bn':
                 build = app_build.bn_build()
+                app_patch = patch.bn_patch
+                app_installation = patch.bn_installation
             elif name == 'stn':
                 build = app_build.stn_build()
+                app_patch = patch.stn_patch
+                app_installation = patch.stn_installation
             elif name == 'umebn':
                 build = app_build.umebn_build()
+                app_patch = patch.umebn_patch
+                app_installation = patch.umebn_installation
             else:
                 build = app_build.sdno_build()
+                app_patch = patch.sdno_patch
+                app_installation = patch.sdno_installation
 
             if command == 'updateall':
                 branch = arg[0]
@@ -235,15 +244,18 @@ def build(argv = None):
             elif command == 'patch':
                 path = arg[0]
 
-                return patch.build(name, path)
+                return app_patch(path).build()
             elif command == 'patch_init':
                 path, branch, *_ = arg
 
-                return patch.init(name, path, branch)
+                return app_patch(path).init(branch)
             elif command == 'patch_install':
-                path = arg[0]
+                path, type, *_ = arg
 
-                return patch.install(name, path, version)
+                if name in ('bn',):
+                    return app_installation(path).install(version, type)
+                else:
+                    return app_installation(path).install(version)
             else:
                 print(usage.strip())
 

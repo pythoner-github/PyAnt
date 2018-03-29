@@ -26,6 +26,7 @@ class build():
         self.artifact_repos = artifact_repos
 
         self.path = self.name
+        self.type = 'none'
 
     def update(self, branch = None):
         if os.path.isdir(self.path):
@@ -264,7 +265,7 @@ class build():
             xpath = '*/installdisk/installdisk.xml'
 
         if not type:
-            type = 'none'
+            type = self.type
 
         zipfile_home = self.package_home(version)
 
@@ -780,6 +781,8 @@ class stn_build(build):
             artifact_repos
         )
 
+        self.type = 'stn'
+
     # ------------------------------------------------------
 
     def metric_id(self, module_name = None):
@@ -798,6 +801,8 @@ class umebn_build(build):
             builtin_os.join(const.SSH_GIT, 'umebn'),
             artifact_repos
         )
+
+        self.type = 'umebn'
 
     def compile_base(self, cmd = None):
         return super().compile_base(cmd, 'devops/parent/build/pom.xml')
@@ -820,6 +825,8 @@ class sdno_build(build):
             builtin_os.join(const.SSH_GIT, 'sdno'),
             artifact_repos
         )
+
+        self.type = 'sdno'
 
     def compile_base(self, cmd = None):
         return True
@@ -857,6 +864,8 @@ class bn_build(build):
             repos,
             artifact_repos
         )
+
+        self.type = 'ems'
 
         self.repos_devtools = const.SSH_GIT
 

@@ -153,10 +153,12 @@ def auto():
         print('===== 启动补丁制作 =====')
 
         for dir, name in auto_info:
-            if dir in ('stn/none'):
-                jobname = 'stn/patch/stn_patch_%s' % name
+            dir_paths = dir.split('/')
+
+            if dir_paths[0] in ('bn',):
+                jobname = 'bn/patch/bn_patch_%s_%s' % (name, dir_paths[1])
             else:
-                jobname = 'bn/patch/bn_patch_%s_%s' % (name, dir.split('/')[-1])
+                jobname = '%s/patch/%s_patch_%s' % (dir_paths[0], dir_paths[0], name)
 
             cmdline = 'java -jar "%s" -s %s build --username %s --password %s "%s"' % (
                 const.JENKINS_CLI, const.JENKINS_URL, const.JENKINS_USERNAME, const.JENKINS_PASSWORD,

@@ -207,8 +207,8 @@ class patch():
         else:
             self.output = self.path
 
-        self.default_type = 'none'
-        self.message_title = '<PATCH 通知>'
+        self.type = 'none'
+        self.notification = '<PATCH 通知>'
         self.modules = {}
 
     def init(self, branch):
@@ -257,7 +257,7 @@ class patch():
                         to_addrs, cc_addrs = self.get_addrs_from_file(file)
 
                         message.append((os.path.basename(file), '解析XML文件失败', False))
-                        self.sendmail('%s 解析XML文件失败, 请尽快处理' % self.message_title, to_addrs, cc_addrs, None, file)
+                        self.sendmail('%s 解析XML文件失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
 
                         os.remove(file)
 
@@ -368,23 +368,23 @@ class patch():
                             if cur_status:
                                 if len(glob.glob(os.path.join(output, '*'), recursive = True)) == 0:
                                     message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但没有输出文件(补丁号: %s)' % id, True))
-                                    self.sendmail('%s 补丁制作成功, 但没有输出文件(补丁号: %s)'  % (self.message_title, id), to_addrs, cc_addrs, None, file)
+                                    self.sendmail('%s 补丁制作成功, 但没有输出文件(补丁号: %s)'  % (self.notification, id), to_addrs, cc_addrs, None, file)
                                 else:
                                     message.append(('%s(%s)' % (filename, index), '补丁制作成功(补丁号: %s)' % id, True))
-                                    self.sendmail('%s 补丁制作成功, 请验证(补丁号: %s)' % (self.message_title, id), to_addrs, cc_addrs, None, file)
+                                    self.sendmail('%s 补丁制作成功, 请验证(补丁号: %s)' % (self.notification, id), to_addrs, cc_addrs, None, file)
 
                                 self.to_xml(info_list[index], os.path.join(output, self.get_xml_filename(info_list[index])))
                             else:
                                 message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但输出补丁失败', True))
-                                self.sendmail('%s 补丁制作成功, 但输出补丁失败' % self.message_title, to_addrs, cc_addrs, None, file)
+                                self.sendmail('%s 补丁制作成功, 但输出补丁失败' % self.notification, to_addrs, cc_addrs, None, file)
                     else:
                         for filename, index, _status in current:
                             if _status:
                                 message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但关联补丁制作失败', True))
-                                self.sendmail('%s 补丁制作成功, 但关联补丁制作失败, 请尽快处理' % self.message_title, to_addrs, cc_addrs, None, file)
+                                self.sendmail('%s 补丁制作成功, 但关联补丁制作失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
                             else:
                                 message.append(('%s(%s)' % (filename, index), '补丁制作失败', False))
-                                self.sendmail('%s 补丁制作失败, 请尽快处理' % self.message_title, to_addrs, cc_addrs, None, file)
+                                self.sendmail('%s 补丁制作失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
 
                     os.remove(file)
                     shutil.rmtree(tempdir, ignore_errors = True)
@@ -621,7 +621,7 @@ class patch():
 
                     types = info['deploy'][x]
 
-                    if types != [self.default_type]:
+                    if types != [self.type]:
                         e.set('type', ', '.join(types))
 
                     deploy_deploy_element.append(e)
@@ -636,7 +636,7 @@ class patch():
 
                     types = info['deploy_delete'][x]
 
-                    if types != [self.default_type]:
+                    if types != [self.type]:
                         e.set('type', ', '.join(types))
 
                     deploy_delete_element.append(e)
@@ -739,7 +739,7 @@ class patch():
                 if os.path.isdir(path):
                     with builtin_os.chdir(path) as _chdir:
                         mvn = maven.maven()
-                        mvn.notification = '%s 编译失败, 请尽快处理' % self.message_title
+                        mvn.notification = '%s 编译失败, 请尽快处理' % self.notification
 
                         if clean:
                             mvn.clean()
@@ -928,8 +928,8 @@ class stn_patch(patch):
     def __init__(self, path):
         super().__init__(path)
 
-        self.default_type = 'stn'
-        self.message_title = '<STN_PATCH 通知>'
+        self.type = 'stn'
+        self.notification = '<STN_PATCH 通知>'
         self.modules = {
             'stn' : app_build.stn_build().repos
         }
@@ -938,8 +938,8 @@ class umebn_patch(patch):
     def __init__(self, path):
         super().__init__(path)
 
-        self.default_type = 'umebn'
-        self.message_title = '<UMEBN_PATCH 通知>'
+        self.type = 'umebn'
+        self.notification = '<UMEBN_PATCH 通知>'
         self.modules = {
             'umebn' : app_build.umebn_build().repos
         }
@@ -948,8 +948,8 @@ class sdno_patch(patch):
     def __init__(self, path):
         super().__init__(path)
 
-        self.default_type = 'sdno'
-        self.message_title = '<SDNO_PATCH 通知>'
+        self.type = 'sdno'
+        self.notification = '<SDNO_PATCH 通知>'
         self.modules = {
             'sdno' : app_build.sdno_build().repos
         }
@@ -1013,8 +1013,8 @@ class bn_patch(patch):
     def __init__(self, path):
         super().__init__(path)
 
-        self.default_type = 'ems'
-        self.message_title = '<BN_PATCH 通知>'
+        self.type = 'ems'
+        self.notification = '<BN_PATCH 通知>'
 
         for name, url in app_build.bn_build().repos.items():
             self.modules[os.path.basename(url)] = url
@@ -1225,7 +1225,7 @@ class bn_patch(patch):
         types = []
 
         if not type:
-            type = self.default_type
+            type = self.type
 
         for x in type.split(','):
             x = x.strip()
@@ -1257,7 +1257,7 @@ class installation():
         else:
             self.output = self.path
 
-        self.default_type = 'none'
+        self.type = 'none'
 
     def install(self, version, type = None):
         if not os.path.isdir(self.output):
@@ -1266,7 +1266,7 @@ class installation():
             return False
 
         if type is None:
-            type = self.default_type
+            type = self.type
 
         with builtin_os.chdir(self.output) as chdir:
             id_info = {}
@@ -1322,25 +1322,25 @@ class stn_installation(installation):
     def __init__(self, path):
         super().__init__(path)
 
-        self.default_type = 'stn'
+        self.type = 'stn'
 
 class umebn_installation(installation):
     def __init__(self, path):
         super().__init__(path)
 
-        self.default_type = 'umebn'
+        self.type = 'umebn'
 
 class sdno_installation(installation):
     def __init__(self, path):
         super().__init__(path)
 
-        self.default_type = 'sdno'
+        self.type = 'sdno'
 
 class bn_installation(installation):
     def __init__(self, path):
         super().__init__(path)
 
-        self.default_type = 'ems'
+        self.type = 'ems'
 
     # ------------------------------------------------------
 

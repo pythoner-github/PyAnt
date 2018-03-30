@@ -47,15 +47,15 @@ def auto():
                 module = m.group(1)
                 name = m.group(2)
 
-                if module in ('stn'):
-                    deploy_homes = [os.path.join(const.PATCH_TEMPLATE_HOME, module, 'none', name)]
-                else:
+                if module in ('bn',):
                     deploy_homes = [
                         os.path.join(const.PATCH_TEMPLATE_HOME, module, 'linux', name),
                         os.path.join(const.PATCH_TEMPLATE_HOME, module, 'solaris', name),
                         os.path.join(const.PATCH_TEMPLATE_HOME, module, 'windows', name),
                         os.path.join(const.PATCH_TEMPLATE_HOME, module, 'windows_x86', name)
                     ]
+                else:
+                    deploy_homes = [os.path.join(const.PATCH_TEMPLATE_HOME, module, 'none', name)]
 
                 with builtin_os.chdir(dir) as _chdir:
                     for file in glob.iglob('**/*.xml', recursive = True):
@@ -146,7 +146,14 @@ def auto():
 
                                 status = False
                                 continue
+
+                    if len(glob.glob(os.path.join(dir, '**/*.xml'), recursive = True)) == 0:
+                        shutil.rmtree(dir, ignore_errors = True)
                 else:
+                    shutil.rmtree(dir, ignore_errors = True)
+
+            for dir in glob.iglob('*', recursive = True):
+                if len(glob.glob(os.path.join(dir, '**/*.xml'), recursive = True)) == 0:
                     shutil.rmtree(dir, ignore_errors = True)
 
     if auto_info:
@@ -156,7 +163,7 @@ def auto():
             dir_paths = dir.split('/')
 
             if dir_paths[0] in ('bn',):
-                jobname = 'bn/patch/bn_patch_%s_%s' % (name, dir_paths[1])
+                jobname = '%s/patch/%s_patch_%s_%s' % (dir_paths[0], dir_paths[0], name, dir_paths[1])
             else:
                 jobname = '%s/patch/%s_patch_%s' % (dir_paths[0], dir_paths[0], name)
 

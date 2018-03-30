@@ -37,7 +37,7 @@ def auto():
 
                     continue
 
-                m = re.search(r'^(stn|umebn|sdno|bn)_.*_\((\d{8}.*)\)$', dir)
+                m = re.search(r'^(stn|umebn|sdno|bn)_.*\((\d{8}.*)\)$', dir)
 
                 if not m:
                     shutil.rmtree(dir, ignore_errors = True)

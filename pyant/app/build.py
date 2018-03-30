@@ -191,7 +191,7 @@ class build():
             module = ''
 
         if os.environ.get('METRIC'):
-            id = metric_id(module)
+            id = self.metric_id(module)
 
             if id:
                 if night:

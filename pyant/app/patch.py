@@ -863,21 +863,21 @@ class patch():
         for path in paths:
             dir = self.get_git_home(path)
 
-            if dir:
+            if dir is not None:
                 if not dir in dirs:
                     dirs.append(dir)
 
         return dirs
 
     def get_git_home(self, path):
-        if os.path.abspath(path) == os.getcwd() or path == '/':
-            return None
-
         if os.path.isfile(path):
             path = os.path.dirname(path)
 
         if os.path.isdir(os.path.join(path, '.git')):
             return path
+
+        if os.path.abspath(path) == os.getcwd() or path == '/':
+            return None
 
         return self.get_git_home(os.path.dirname(path))
 

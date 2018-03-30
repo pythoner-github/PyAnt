@@ -904,7 +904,7 @@ class bn_build(build):
     def compile(self, module, cmd = None, clean = False, retry_cmd = None, dirname = None, lang = None):
         if module:
             if module in list(self.repos.keys()) + ['wdm1', 'wdm2', 'wdm3']:
-                environ(lang)
+                self.environ(lang)
 
                 if lang in ('cpp', ):
                     if not dirname:
@@ -951,13 +951,13 @@ class bn_build(build):
 
             if type in ('lct',):
                 filenames = (
-                    os.path.join(ARTIFACT_REPOS['release'], 'bn/LCT/current_en.tar.gz'),
-                    os.path.join(ARTIFACT_REPOS['release'], 'bn/LCT/current_zh.tar.gz')
+                    os.path.join(self.artifact_repos['release'], 'bn/LCT/current_en.tar.gz'),
+                    os.path.join(self.artifact_repos['release'], 'bn/LCT/current_zh.tar.gz')
                 )
             else:
                 filenames = ((
-                    os.path.join(ARTIFACT_REPOS['release'], 'bn/%s/current.tar.gz' % type.upper()),
-                    os.path.join(ARTIFACT_REPOS['release'], 'bn/%s/extend.tar.gz' % type.upper())
+                    os.path.join(self.artifact_repos['release'], 'bn/%s/current.tar.gz' % type.upper()),
+                    os.path.join(self.artifact_repos['release'], 'bn/%s/extend.tar.gz' % type.upper())
                 ),)
 
             for filename in filenames:
@@ -1058,49 +1058,49 @@ class bn_build(build):
                     os.environ['PATH'] = ';'.join((builtin_os.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin'), os.environ['PATH']))
 
             if not os.environ.get('INTERFACE_OUTPUT_HOME'):
-                path = os.path.basename(REPOS['interface'])
+                path = os.path.basename(self.repos['interface'])
 
                 if os.path.isdir(path):
                     os.environ['INTERFACE_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('PLATFORM_OUTPUT_HOME'):
-                path = os.path.basename(REPOS['platform'])
+                path = os.path.basename(self.repos['platform'])
 
                 if os.path.isdir(path):
                     os.environ['PLATFORM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('NECOMMON_OUTPUT_HOME'):
-                path = os.path.basename(REPOS['necommon'])
+                path = os.path.basename(self.repos['necommon'])
 
                 if os.path.isdir(path):
                     os.environ['NECOMMON_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('E2E_OUTPUT_HOME'):
-                path = os.path.basename(REPOS['e2e'])
+                path = os.path.basename(self.repos['e2e'])
 
                 if os.path.isdir(path):
                     os.environ['E2E_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('UCA_OUTPUT_HOME'):
-                path = os.path.basename(REPOS['uca'])
+                path = os.path.basename(self.repos['uca'])
 
                 if os.path.isdir(path):
                     os.environ['UCA_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('NAF_OUTPUT_HOME'):
-                path = os.path.basename(REPOS['nbi'])
+                path = os.path.basename(self.repos['nbi'])
 
                 if os.path.isdir(path):
                     os.environ['NAF_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('SDH_OUTPUT_HOME'):
-                path = os.path.basename(REPOS['sdh'])
+                path = os.path.basename(self.repos['sdh'])
 
                 if os.path.isdir(path):
                     os.environ['SDH_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('WDM_OUTPUT_HOME'):
-                path = os.path.basename(REPOS['wdm'])
+                path = os.path.basename(self.repos['wdm'])
 
                 if os.path.isdir(path):
                     os.environ['WDM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')

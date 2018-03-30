@@ -35,9 +35,12 @@ def gettempdir():
         return tempfile.gettempdir()
 
 class chdir:
-    def __init__(self, path):
+    def __init__(self, path, create = False):
         self.path = os.path.abspath(path)
         self.cwd = os.getcwd()
+
+        if create:
+            os.makedirs(self.path, exist_ok = True)
 
         os.chdir(self.path)
 

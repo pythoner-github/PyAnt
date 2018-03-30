@@ -354,7 +354,7 @@ class patch():
                             output = os.path.join(self.output, 'patch', id)
                             cur_status = True
 
-                            with builtin_os.chdir(os.path.join(tempdir, str(index))) as _chdir:
+                            with builtin_os.chdir(os.path.join(tempdir, str(index)), True) as _chdir:
                                 for filename in glob.iglob('**/*', recursive = True):
                                     if os.path.isfile(filename):
                                         try:
@@ -697,7 +697,7 @@ class patch():
         if not os.path.isdir(os.path.join('code', name)):
             return False
 
-        if not build_update_source(os.path.join('code', name), sources):
+        if not self.build_update_source(os.path.join('code', name), sources):
             return False
 
         with builtin_os.chdir('code') as chdir:

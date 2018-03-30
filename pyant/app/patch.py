@@ -214,6 +214,7 @@ class patch():
         else:
             self.output = self.path
 
+        self.name = 'none'
         self.type = 'none'
         self.notification = '<PATCH 通知>'
         self.modules = {}
@@ -570,7 +571,25 @@ class patch():
             return None
 
     def load_xml_extend(self, info, e):
-        return True
+        status = True
+
+        info['compile'] = collections.OrderedDict()
+        info['deploy'] = collections.OrderedDict()
+
+        dirname = os.path.join(self.path, 'code', self.name)
+
+        if os.path.isdir(dirname):
+            with builtin_os.chdir(dirname) as chdir:
+                if info.get('source'):
+                    for dir in self.get_git_dirs(info['source']):
+                        info['compile'][os.path.join(dir, 'build')] = True
+                        info['deploy'][':'.join((os.path.join(dir, 'build/output'), ''))] = [self.type]
+        else:
+            print('no such directory: %s' % os.path.normpath(dirname))
+
+            status = False
+
+        return status
 
     def to_xml(self, info, file):
         tree = etree.ElementTree(etree.XML("<patches version='2.0'/>"))
@@ -945,42 +964,14 @@ class umebn_patch(patch):
     def __init__(self, path):
         super().__init__(path)
 
+        self.name = 'umebn'
         self.type = 'umebn'
         self.notification = '<UMEBN_PATCH 通知>'
         self.modules = {
             'umebn' : app_build.umebn_build().repos
         }
 
-class sdno_patch(patch):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.type = 'sdno'
-        self.notification = '<SDNO_PATCH 通知>'
-        self.modules = {
-            'sdno' : app_build.sdno_build().repos
-        }
-
     # ------------------------------------------------------
-
-    def load_xml_extend(self, info, e):
-        status = True
-
-        info['compile'] = collections.OrderedDict()
-        info['deploy'] = collections.OrderedDict()
-
-        if os.path.isdir(os.path.join(self.path, 'code', 'umebn')):
-            with builtin_os.chdir(os.path.join(self.path, 'code', 'umebn')) as chdir:
-                if info.get('source'):
-                    for dir in self.get_git_dirs(info['source']):
-                        info['compile'][os.path.join(dir, 'build')] = True
-                        info['deploy'][':'.join((os.path.join(dir, 'build/output'), ''))] = ['umebn']
-        else:
-            print('no such directory: %s' % os.path.normpath(os.path.join(self.path, 'code', 'umebn')))
-
-            status = False
-
-        return status
 
     def build_update_source(self, path, sources):
         status = True
@@ -1016,10 +1007,22 @@ class sdno_patch(patch):
 
         return self.get_build_dir(os.path.dirname(path))
 
+class sdno_patch(umebn_patch):
+    def __init__(self, path):
+        super().__init__(path)
+
+        self.name = 'sdno'
+        self.type = 'sdno'
+        self.notification = '<SDNO_PATCH 通知>'
+        self.modules = {
+            'sdno' : app_build.sdno_build().repos
+        }
+
 class bn_patch(patch):
     def __init__(self, path):
         super().__init__(path)
 
+        self.name = 'bn'
         self.type = 'ems'
         self.notification = '<BN_PATCH 通知>'
 

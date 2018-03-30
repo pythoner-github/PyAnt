@@ -857,6 +857,30 @@ class patch():
 
         smtp.sendmail(notification, to_addrs, cc_addrs, '<br>\n'.join(lines))
 
+    def get_git_dirs(self, paths):
+        dirs = []
+
+        for path in paths:
+            dir = self.get_git_home(path)
+
+            if dir:
+                if not dir in dirs:
+                    dirs.append(dir)
+
+        return dirs
+
+    def get_git_home(self, path):
+        if os.path.abspath(path) == os.getcwd() or path == '/':
+            return None
+
+        if os.path.isfile(path):
+            path = os.path.dirname(path)
+
+        if os.path.isdir(os.path.join(path, '.git')):
+            return path
+
+        return self.get_git_home(os.path.dirname(path))
+
     def get_addrs(self, info):
         to_addrs = '%s@zte.com.cn' % info['info']['提交人员'].replace('\\', '/').split('/', 1)[-1]
 
@@ -954,6 +978,7 @@ class stn_patch(patch):
     def __init__(self, path):
         super().__init__(path)
 
+        self.name = 'stn'
         self.type = 'stn'
         self.notification = '<STN_PATCH 通知>'
         self.modules = {
@@ -982,30 +1007,6 @@ class umebn_patch(patch):
                     status = False
 
         return status
-
-    def get_git_dirs(self, paths):
-        dirs = []
-
-        for path in paths:
-            dir = self.get_git_home(path)
-
-            if dir:
-                if not dir in dirs:
-                    dirs.append(dir)
-
-        return dirs
-
-    def get_git_home(self, path):
-        if os.path.abspath(path) == os.getcwd() or path == '/':
-            return None
-
-        if os.path.isfile(path):
-            path = os.path.dirname(path)
-
-        if os.path.isdir(os.path.join(path, '.git')):
-            return path
-
-        return self.get_build_dir(os.path.dirname(path))
 
 class sdno_patch(umebn_patch):
     def __init__(self, path):

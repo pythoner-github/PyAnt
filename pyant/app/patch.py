@@ -440,7 +440,7 @@ class patch():
                 'name'      : e.get('name', '').strip(),
                 'delete'    : [],
                 'source'    : [],
-                'info'      : {
+                'info'      : collections.OrderedDict({
                     '提交人员'  : None,
                     '变更版本'  : None,
                     '变更类型'  : None,
@@ -454,7 +454,7 @@ class patch():
                     '变更来源'  : None,
                     '开发经理'  : None,
                     '抄送人员'  : None
-                }
+                })
             }
 
             if info['name']:

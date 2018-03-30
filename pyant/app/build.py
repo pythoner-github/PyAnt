@@ -884,7 +884,7 @@ class bn_build(build):
                 else:
                     return git.clone(self.repos[module], path, branch)
             elif module in ('devtools', ):
-                return update_devtools(branch)
+                return self.update_devtools(branch)
             else:
                 print('module name not found in %s' % tuple(self.repos.keys()))
 

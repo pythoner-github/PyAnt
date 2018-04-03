@@ -621,7 +621,7 @@ class build():
 
         return changes
 
-    def inner_artifactory(self, path, artifact_path, artifact_filenames = None, suffix = None):
+    def inner_artifactory(self, path, artifact_path, artifact_filenames = None, suffix = None, targz = True):
         if isinstance(artifact_filenames, str):
             artifact_filenames = [artifact_filenames]
 
@@ -669,25 +669,40 @@ class build():
 
                         return False
 
-                if suffix:
-                    tarname = '%s%s.tar.gz' % (os.path.basename(path), suffix)
+                if targz:
+                    if suffix:
+                        zipname = '%s%s.tar.gz' % (os.path.basename(path), suffix)
+                    else:
+                        zipname = '%s.tar.gz' % os.path.basename(path)
+
+                    try:
+                        with tarfile.open(zipname, 'w:gz') as tar:
+                            tar.add('installation')
+                    except Exception as e:
+                        print(e)
+
+                        return False
                 else:
-                    tarname = '%s.tar.gz' % os.path.basename(path)
+                    if suffix:
+                        zipname = '%s%s.zip' % (os.path.basename(path), suffix)
+                    else:
+                        zipname = '%s.zip' % os.path.basename(path)
 
-                try:
-                    with tarfile.open(tarname, 'w:gz') as tar:
-                        tar.add('installation')
-                except Exception as e:
-                    print(e)
+                    try:
+                        with zipfile.ZipFile(zipname, 'w') as zip:
+                            for file in glob.iglob('installation/**/*', recursive = True):
+                                zip.write(file)
+                    except Exception as e:
+                        print(e)
 
-                    return False
+                        return False
 
                 # upload
 
-                file = builtin_os.join(const.ARTIFACT_HTTP, artifact_path, tarname)
+                file = builtin_os.join(const.ARTIFACT_HTTP, artifact_path, zipname)
 
-                cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (const.ARTIFACT_APIKEY, tarname, file)
-                display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (password.password(const.ARTIFACT_APIKEY), tarname, file)
+                cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (const.ARTIFACT_APIKEY, zipname, file)
+                display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (password.password(const.ARTIFACT_APIKEY), zipname, file)
 
                 cmd = command.command()
 
@@ -1007,6 +1022,9 @@ class bn_build(build):
         return True
 
     # ------------------------------------------------------
+
+    def inner_artifactory(self, path, artifact_path, artifact_filenames = None, suffix = None):
+        return super().inner_artifactory(path, artifact_path, artifact_filenames, suffix, False)
 
     def metric_id(self, module_name = None):
         if module_name in ('interface', 'platform', 'necommon', 'uca', 'sdh', 'ptn'):

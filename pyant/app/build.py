@@ -901,6 +901,9 @@ class bn_build(build):
 
             return status
 
+    def compile_base(self, cmd = None):
+        return super().compile_base(cmd, 'U31R22_PLATFORM/pom/pom.xml')
+
     def compile(self, module, cmd = None, clean = False, retry_cmd = None, dirname = None, lang = None):
         if module:
             if module in list(self.repos.keys()) + ['wdm1', 'wdm2', 'wdm3']:

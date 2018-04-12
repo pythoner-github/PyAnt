@@ -31,7 +31,7 @@ class maven:
 
         cmd = command.command()
 
-        for line in cmd.command('mvn clean -fn -U -T 5'):
+        for line in cmd.command('mvn clean -fn -U'):
             status = self.validate(status, line)
 
             if not self.ignore(line):

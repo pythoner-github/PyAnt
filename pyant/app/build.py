@@ -1017,7 +1017,7 @@ class bn_build(build):
             job_home = os.path.join(self.path, 'dashboard')
 
         for path, (authors, paths) in self.inner_dashboard_monitor(path_info.keys(), self.expand_dashboard).items():
-            self.dashboard_jenkins_cli(os.path.join(job_home, '%s_dashboard' % self.name), authors, paths)
+            self.dashboard_jenkins_cli(os.path.join(job_home, '%s_dashboard_%s' % (self.name, path_info[path])), authors, paths)
 
         return True
 

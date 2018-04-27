@@ -901,7 +901,7 @@ class bn_build(build):
             elif module in ('devtools', ):
                 return self.update_devtools(branch)
             else:
-                print('module name not found in %s' % tuple(self.repos.keys()))
+                print('module name not found in %s' % str(tuple(self.repos.keys())))
 
                 return False
         else:
@@ -938,7 +938,7 @@ class bn_build(build):
 
                 return super().compile(cmd, clean, retry_cmd, dirname)
             else:
-                print('module name not found in %s' % tuple(self.repos.keys()))
+                print('module name not found in %s' % str(tuple(self.repos.keys())))
 
                 return False
         else:
@@ -992,6 +992,9 @@ class bn_build(build):
         return False
 
     def dashboard(self, module, paths, branch = None):
+        if not self.update(module, branch):
+            return False
+
         if not os.environ.get('NOT_DASHBOARD_DEVTOOLS'):
             if not self.update('devtools', branch):
                 return False
@@ -1000,7 +1003,13 @@ class bn_build(build):
 
         self.path = module
 
-        return super().dashboard(paths, branch)
+        if os.path.isdir(self.path):
+            with builtin_os.chdir(self.path) as chdir:
+                return self.inner_dashboard(paths)
+        else:
+            print('no such directory: %s' % os.path.normpath(self.path))
+
+            return False
 
     def dashboard_monitor(self, branch = None):
         if not self.update(None, branch):

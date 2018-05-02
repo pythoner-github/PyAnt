@@ -1001,7 +1001,7 @@ class bn_build(build):
 
         self.environ('cpp')
 
-        self.path = module
+        self.path = os.path.basename(self.repos[module])
 
         if os.path.isdir(self.path):
             with builtin_os.chdir(self.path) as chdir:

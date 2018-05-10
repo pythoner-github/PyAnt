@@ -871,7 +871,8 @@ class bn_build(build):
             ('wdm'      , builtin_os.join(const.SSH_GIT, 'U31R22_WDM')),
             ('ptn'      , builtin_os.join(const.SSH_GIT, 'U31R22_PTN')),
             ('ptn2'     , builtin_os.join(const.SSH_GIT, 'U31R22_PTN2')),
-            ('ip'       , builtin_os.join(const.SSH_GIT, 'U31R22_IP'))
+            ('ip'       , builtin_os.join(const.SSH_GIT, 'U31R22_IP')),
+            ('inventory', builtin_os.join(const.SSH_GIT, 'U31R22_Inventory'))
         ])
 
         super().__init__(
@@ -1042,7 +1043,7 @@ class bn_build(build):
             return const.METRIC_ID_BN_IPN
         elif module_name in ('e2e'):
             return const.METRIC_ID_BN_E2E
-        elif module_name in ('xmlfile', 'nbi'):
+        elif module_name in ('xmlfile', 'nbi', 'inventory'):
             return const.METRIC_ID_BN_NBI
         elif module_name in ('wdm'):
             return const.METRIC_ID_BN_OTN

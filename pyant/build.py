@@ -56,18 +56,25 @@ def build(argv = None):
         with builtin_os.chdir(home) as chdir:
             version = None
 
+            POM_VERSION = '%s_POM_VERSION' % name.upper()
+
             if os.environ.get('VERSION'):
                 os.environ['VERSION'] = os.environ['VERSION'].strip()
 
                 if os.environ['VERSION']:
-                    if not os.environ.get('POM_VERSION'):
-                        os.environ['POM_VERSION'] = os.environ['VERSION'].upper().replace('_${date}', '').replace(' ', '')
+                    if not os.environ.get(POM_VERSION):
+                        os.environ[POM_VERSION] = os.environ['VERSION'].upper().replace('_${date}', '').replace(' ', '')
 
-                        print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
+                        print('export %s=%s' % (POM_VERSION, os.environ[POM_VERSION]))
 
                     version = os.environ['VERSION'].replace('_${date}', datetime.datetime.now().strftime('%Y%m%d'))
 
             if name == 'bn':
+                if os.environ.get(POM_VERSION):
+                    os.environ['POM_VERSION'] = os.environ[POM_VERSION]
+
+                    print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
+
                 build = app_build.bn_build()
                 app_patch = patch.bn_patch
                 app_installation = patch.bn_installation

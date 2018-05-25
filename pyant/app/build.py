@@ -1142,7 +1142,7 @@ class bn_build(build):
 
         dst = dst.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
 
-        if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml', 'u3backup.xml', 'u3backupme.xml', 'dbtool-config.xml'):
+        if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml', 'u3backup.xml', 'u3backupme.xml', 'dbtool-config.xml', 'package-update-info.xml'):
             try:
                 tree = etree.parse(name)
 
@@ -1158,6 +1158,8 @@ class bn_build(build):
                 elif os.path.basename(name) in ('dbtool-config.xml'):
                     for e in tree.findall('ems_type'):
                         e.text = type
+                elif os.path.basename(name) in ('package-update-info.xml'):
+                    tree.getroot().attrib['package-name'] = tree.getroot().attrib['package-name'].replace(' -B', '-B').replace(' ', '_')
                 else:
                     pass
 

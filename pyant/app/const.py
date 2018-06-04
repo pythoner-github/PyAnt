@@ -115,4 +115,4 @@ PATCH_NODE_INFO = {
 if os.environ.get('KLOCWORK_HTTP'):
     KLOCWORK_HTTP = os.environ['KLOCWORK_HTTP']
 else:
-    KLOCWORK_HTTP = 'http://10.8.8.56:8080'
+    KLOCWORK_HTTP = 'http://10.8.10.15:8080'

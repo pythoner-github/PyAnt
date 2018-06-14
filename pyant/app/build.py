@@ -306,7 +306,7 @@ class build():
                                     element_name = element.get('name')
 
                                     if element_name:
-                                        element_name = element_name.strip()
+                                        element_name = os.path.normpath(element_name.strip())
 
                                         if dirname not in hash[name]:
                                             hash[name][dirname] = collections.OrderedDict()
@@ -336,7 +336,7 @@ class build():
                                     element_name = element.get('name')
 
                                     if element_name:
-                                        element_name = element_name.strip()
+                                        element_name = os.path.normpath(element_name.strip())
 
                                         if dirname in hash[name]:
                                             if dest in hash[name][dirname]:

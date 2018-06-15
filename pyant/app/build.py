@@ -1149,7 +1149,7 @@ class bn_build(build):
                     for e in tree.findall('ems_type'):
                         e.text = type
                 elif os.path.basename(name) in ('package-update-info.xml'):
-                    tree.getroot().attrib['package-name'] = tree.getroot().attrib['package-name'].replace(' -B', '-B').replace(' ', '_')
+                    tree.getroot().set('package-name', tree.getroot().get('package-name').replace(' -B', '-B').replace(' ', '_'))
                 else:
                     pass
 
@@ -1165,7 +1165,7 @@ class bn_build(build):
                 tree = etree.parse(name)
 
                 for e in tree.findall('commandCode'):
-                    cmdcode = e.attrib['cmdCode']
+                    cmdcode = e.get('cmdCode')
 
                     if cmdcode == '88224':
                         for element in e.getchildren():
@@ -1292,7 +1292,7 @@ class bn_build(build):
                 tree = etree.parse(name)
 
                 for e in tree.findall('commandCode'):
-                    cmdcode = e.attrib['cmdCode']
+                    cmdcode = e.get('cmdCode')
 
                     if cmdcode == '80724':
                         for element in e.getchildren():

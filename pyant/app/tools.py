@@ -65,8 +65,8 @@ def bn_cut_upgrade_installation(installation_home):
             for file in zipfiles:
                 with builtin_os.tmpdir(tempfile.mkdtemp()) as tmpdir:
                     try:
-                        with zipfile.ZipFile(os.path.join(chdir.path(), file), 'r') as zip:
-                            zip.extractall(tmpdir)
+                        with zipfile.ZipFile(os.path.join(chdir.path, file), 'r') as zip:
+                            zip.extractall(tmpdir.path)
                     except Exception as e:
                         print(e)
 
@@ -78,29 +78,33 @@ def bn_cut_upgrade_installation(installation_home):
                                 tree = etree.parse('conf/internalconfig.xml')
 
                                 for e in tree.findall('config'):
-                                    key = e.attrib['key']
+                                    key = e.get('key')
 
                                     if key == 'usf.components.ftpserver.session.max':
                                         for element in e.findall('processes/process/network'):
-                                            if element.attrib['scale'] == 'uep1':
+                                            if element.get('scale') == 'uep1':
                                                 element.text = '110'
                                     elif key == 'usf.components.ftpserver.dataport':
                                         for element in e.findall('processes/process/network'):
-                                            if element.attrib['scale'] == 'uep1':
+                                            if element.get('scale') == 'uep1':
                                                 element.text = '20870-20979'
                                     else:
                                         pass
 
                                 tree.write('conf/internalconfig.xml', encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
-                            except:
+                            except Exception as e:
+                                print(e)
+
                                 pass
                     else:
+                        delete_files = []
+
                         for filename in glob.iglob('**/*', recursive = True):
                             if re.search(r'^ums-server\/works\/.*\/deploy-.*(fm|pm|hmf|e2e).*\.xml$', filename):
                                 delete_files.append(filename)
                             elif os.path.basename(filename) in ('deploy-uep-main-main.xml', 'deploy-uep-mmlndf-mmlndf.xml', 'deploy-uep-umdproc-umdproc.xml', 'deploy-uep-web-web.xml'):
                                 delete_files.append(filename)
-                            elif filename in uep_deletes:
+                            elif filename.replace('\\', '/') in uep_deletes:
                                 delete_files.append(filename)
                             else:
                                 pass
@@ -111,7 +115,7 @@ def bn_cut_upgrade_installation(installation_home):
                                     os.remove(filename)
 
                     try:
-                        with zipfile.ZipFile(os.path.join(chdir.path(), file), 'w') as zip:
+                        with zipfile.ZipFile(os.path.join(chdir.path, file), 'w') as zip:
                             for filename in glob.iglob('**/*', recursive = True):
                                 zip.write(filename)
                     except Exception as e:

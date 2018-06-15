@@ -120,6 +120,9 @@ def bn_cut_upgrade_installation(installation_home):
                         with zipfile.ZipFile(os.path.join(chdir.path, file), 'w') as zip:
                             for filename in glob.iglob('**/*', recursive = True):
                                 zip.write(filename)
+
+                            for filename in glob.iglob('**/.*', recursive = True):
+                                zip.write(filename)
                     except Exception as e:
                         print(e)
 

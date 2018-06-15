@@ -1153,7 +1153,7 @@ class bn_build(build):
                 else:
                     pass
 
-                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
+                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration=True)
             except:
                 pass
 
@@ -1284,7 +1284,7 @@ class bn_build(build):
                         pass
 
                 name = os.path.join(tmpdir, builtin_os.tmpfilename())
-                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
+                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration=True)
             except:
                 pass
         elif re.search(r'ums-server\/procs\/ppus\/bn\.ppu\/(bn-mstp|bn-wdm)\.pmu\/.*\/ican-adaptercmdcode-config.*\.xml$', name):
@@ -1316,7 +1316,7 @@ class bn_build(build):
                         pass
 
                 name = os.path.join(tmpdir, builtin_os.tmpfilename())
-                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
+                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration=True)
             except:
                 pass
         else:

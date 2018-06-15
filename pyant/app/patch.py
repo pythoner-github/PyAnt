@@ -688,7 +688,7 @@ class patch():
         os.makedirs(os.path.dirname(file), exist_ok = True)
 
         try:
-            tree.write(file, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
+            tree.write(file, encoding='utf-8', pretty_print=True, xml_declaration=True)
 
             return True
         except Exception as e:
@@ -1392,7 +1392,7 @@ class bn_installation(installation):
                         if dbname not in dbs[data_source]:
                             dbs[data_source][dbname] = {}
 
-                        dbs[data_source][dbname][filename] = element.attrib
+                        dbs[data_source][dbname][filename] = element.items()
 
         lines = []
         lines.append('<install-db>')

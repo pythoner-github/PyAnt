@@ -786,7 +786,7 @@ class maven:
                 element.text = builtin_os.join('..', path)
                 e.append(element)
 
-            tree.write('pom.xml', encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
+            tree.write('pom.xml', encoding='utf-8', pretty_print=True, xml_declaration=True)
         except:
             pass
 

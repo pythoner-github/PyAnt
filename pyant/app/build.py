@@ -74,19 +74,12 @@ class build():
             return False
 
     def package(self, version, type = None):
-        if self.inner_package(version, None, type, self.expand_filename):
-            if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
-                artifact = self.artifact_repos['snapshot']
-            else:
-                artifact = self.artifact_repos['alpha']
+        if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
+            artifact = self.artifact_repos['snapshot']
+        else:
+            artifact = self.artifact_repos['alpha']
 
-            return self.inner_artifactory(
-                self.package_home(version),
-                artifact,
-                os.path.join(self.artifact_repos['release'], self.name, 'current.tar.gz')
-            )
-
-        return False
+        return True
 
     def dashboard(self, paths, branch = None):
         if not self.update(branch):
@@ -230,219 +223,6 @@ class build():
                 print(line)
 
     # ------------------------------------------------------
-
-    # installdisk.xml
-    #
-    #    <install>
-    #      <type>
-    #        <packages>
-    #          <package name = '...' dirname = '...' dest = '...'>
-    #            <file name='...'/>
-    #            <ignore name='...'/>
-    #          </package>
-    #
-    #          <package name = '...' dirname = '...' dest = '...'>
-    #            <file name='...'/>
-    #            <ignore name='...'/>
-    #          </package>
-    #        </packages>
-    #
-    #        <copies>
-    #          <copy name = '...' dirname = '...' dest = '...'>
-    #            <file name='...'/>
-    #            <ignore name='...'/>
-    #          </copy>
-    #
-    #          <copy name = '...' dirname = '...' dest = '...'>
-    #            <file name='...'/>
-    #            <ignore name='...'/>
-    #          </copy>
-    #        </copies>
-    #      </type>
-    #    </install>
-    def inner_package(self, version, xpath = None, type = None, expand_filename = None, cross_platform = True):
-        if not xpath:
-            xpath = '*/installdisk/installdisk.xml'
-
-        if not type:
-            type = self.type
-
-        zipfile_home = self.package_home(version)
-
-        shutil.rmtree(zipfile_home, ignore_errors = True)
-        os.makedirs(zipfile_home, exist_ok = True)
-
-        packages = {}
-        copies = {}
-
-        for file in glob.iglob(xpath, recursive = True):
-            try:
-                tree = etree.parse(file)
-            except:
-                print('error: parse xml file fail: %s' % os.path.abspath(file))
-
-                return False
-
-            for hash, _xpath in ((packages, 'packages/package'), (copies, 'copies/copy')):
-                for e in tree.findall(builtin_os.join(type, _xpath)):
-                    name = e.get('name')
-                    dirname = e.get('dirname')
-                    dest = e.get('dest')
-
-                    if dest in (None, '.'):
-                        dest = ''
-
-                    if name and dirname:
-                        name = builtin_os.normpath(name.strip())
-                        dirname = builtin_os.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
-                        dest = builtin_os.normpath(dest.strip())
-
-                        if os.path.isdir(dirname):
-                            if name not in hash:
-                                hash[name] = collections.OrderedDict()
-
-                            with builtin_os.chdir(dirname) as chdir:
-                                for element in e.findall('file'):
-                                    element_name = element.get('name')
-
-                                    if element_name:
-                                        element_name = os.path.normpath(element_name.strip())
-
-                                        if dirname not in hash[name]:
-                                            hash[name][dirname] = collections.OrderedDict()
-
-                                        if dest not in hash[name][dirname]:
-                                            hash[name][dirname][dest] = []
-
-                                        found = False
-
-                                        for path in glob.iglob(element_name, recursive = True):
-                                            found = True
-
-                                            if os.path.isfile(path):
-                                                hash[name][dirname][dest].append(path)
-                                            elif os.path.isdir(path):
-                                                for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
-                                                    if os.path.isfile(filename):
-                                                        if filename not in hash[name][dirname][dest]:
-                                                            hash[name][dirname][dest].append(filename)
-                                            else:
-                                                pass
-
-                                        if not found:
-                                            print('no such file or directory: %s' % os.path.abspath(element_name))
-
-                                for element in e.findall('ignore'):
-                                    element_name = element.get('name')
-
-                                    if element_name:
-                                        element_name = os.path.normpath(element_name.strip())
-
-                                        if dirname in hash[name]:
-                                            if dest in hash[name][dirname]:
-                                                found = False
-
-                                                for path in glob.iglob(element_name, recursive = True):
-                                                    found = True
-
-                                                    if os.path.isfile(path):
-                                                        if path in hash[name][dirname][dest]:
-                                                            hash[name][dirname][dest].remove(path)
-                                                    elif os.path.isdir(path):
-                                                        for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
-                                                            if os.path.isfile(filename):
-                                                                if filename in hash[name][dirname][dest]:
-                                                                    hash[name][dirname][dest].remove(filename)
-                                                    else:
-                                                        pass
-
-                                                if not found:
-                                                    print('no such file or directory: %s' % os.path.abspath(element_name))
-                        else:
-                            print('no such directory: %s' % dirname)
-
-        for name, dirname_info in packages.items():
-            try:
-                zipname = os.path.join(zipfile_home, '%s_%s.zip' % (name, version.replace(' ', '')))
-
-                if not os.path.isdir(os.path.dirname(zipname)):
-                    os.makedirs(os.path.dirname(zipname), exist_ok = True)
-
-                with zipfile.ZipFile(zipname, 'w') as zip:
-                    for line in ('$ zipfile: %s' % zip.filename, '  in (' + os.getcwd() + ')'):
-                        print(line)
-
-                    for dirname, dest_info in dirname_info.items():
-                        for dest, filename_list in dest_info.items():
-                            for filename in filename_list:
-                                if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib', '.manifest'):
-                                    continue
-
-                                if not cross_platform:
-                                    if builtin_os.osname() in ('windows', 'windows-x64'):
-                                        if os.path.splitext(filename)[-1] in ('.so', '.sh'):
-                                            if os.path.splitext(filename)[-1] in ('.so'):
-                                                if 'ruby/' not in builtin_os.normpath(filename):
-                                                    continue
-                                            else:
-                                                continue
-                                    else:
-                                        if os.path.splitext(filename)[-1] in ('.exe', '.dll', '.bat'):
-                                            continue
-
-                                if os.path.isfile(os.path.join(dirname, filename)):
-                                    arcname = None
-
-                                    if expand_filename:
-                                        filename, arcname = expand_filename(version, dirname, filename, type)
-
-                                    zip.write(os.path.join(dirname, filename), builtin_os.normpath(os.path.join(dest, arcname)))
-            except Exception as e:
-                print(e)
-
-                return False
-
-        for name, dirname_info in copies.items():
-            try:
-                for line in ('$ copy: %s' % name, '  in (' + os.getcwd() + ')'):
-                    print(line)
-
-                for dirname, dest_info in dirname_info.items():
-                    for dest, filename_list in dest_info.items():
-                        for filename in filename_list:
-                            if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib'):
-                                continue
-
-                            if not cross_platform:
-                                if builtin_os.osname() in ('windows', 'windows-x64'):
-                                    if os.path.splitext(filename)[-1] in ('.so', '.sh'):
-                                        if os.path.splitext(filename)[-1] in ('.so'):
-                                            if 'ruby/' not in builtin_os.normpath(filename):
-                                                continue
-                                        else:
-                                            continue
-                                else:
-                                    if os.path.splitext(filename)[-1] in ('.dll', '.bat'):
-                                        continue
-
-                            if os.path.isfile(os.path.join(dirname, filename)):
-                                dst = filename
-
-                                if expand_filename:
-                                    filename, dst = expand_filename(version, dirname, filename, type)
-
-                                dst = os.path.join(zipfile_home, name, dest, dst)
-
-                                if not os.path.isdir(os.path.dirname(dst)):
-                                    os.makedirs(os.path.dirname(dst), exist_ok = True)
-
-                                shutil.copyfile(os.path.join(dirname, filename), dst)
-            except Exception as e:
-                print(e)
-
-                return False
-
-        return True
 
     def inner_dashboard(self, paths, ignores = None):
         filename = os.path.abspath(os.path.join('../errors', '%s.json' % os.path.basename(os.getcwd())))
@@ -730,27 +510,8 @@ class build():
         for line in cmd.command(cmdline, display_cmd = display_cmd):
             print(line)
 
-    def package_home(self, version):
-        return os.path.normpath(os.path.abspath(os.path.join('../zipfile', version.replace(' ', ''))))
-
-    def expand_filename(self, version, dirname, filename, type):
-        dst = filename
-        name = os.path.join(dirname, filename)
-
-        if os.path.basename(name) in ('ppuinfo.xml', 'pmuinfo.xml'):
-            if version:
-                try:
-                    tree = etree.parse(name)
-
-                    for e in tree.findall('info'):
-                        e.set('version', version)
-                        e.set('display-version', version)
-
-                    tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
-                except:
-                    pass
-
-        return (filename, dst)
+    def package_home(self, version, type):
+        return os.path.normpath(os.path.abspath(os.path.join('../zipfile', version.replace(' ', ''), type)))
 
     def expand_dashboard(self, path, file):
         return file
@@ -981,7 +742,7 @@ class bn_build(build):
 
             for filename in filenames:
                 if not self.inner_artifactory(
-                    self.package_home(version),
+                    self.package_home(version, type),
                     os.path.join(artifact, version.replace(' ', '')),
                     filename,
                     suffix
@@ -1032,6 +793,235 @@ class bn_build(build):
         return True
 
     # ------------------------------------------------------
+
+    # installdisk.xml
+    #
+    #    <install>
+    #      <type>
+    #        <packages>
+    #          <package name = '...' dirname = '...' dest = '...'>
+    #            <file name='...'/>
+    #            <ignore name='...'/>
+    #          </package>
+    #
+    #          <package name = '...' dirname = '...' dest = '...'>
+    #            <file name='...'/>
+    #            <ignore name='...'/>
+    #          </package>
+    #        </packages>
+    #
+    #        <copies>
+    #          <copy name = '...' dirname = '...' dest = '...'>
+    #            <file name='...'/>
+    #            <ignore name='...'/>
+    #          </copy>
+    #
+    #          <copy name = '...' dirname = '...' dest = '...'>
+    #            <file name='...'/>
+    #            <ignore name='...'/>
+    #          </copy>
+    #        </copies>
+    #      </type>
+    #    </install>
+    def inner_package(self, version, xpath = None, type = None, expand_filename = None, cross_platform = True):
+        if not xpath:
+            xpath = '*/installdisk/installdisk.xml'
+
+        if not type:
+            type = self.type
+
+        zipfile_home = self.package_home(version, type)
+        tmpdir = tempfile.mkdtemp()
+
+        shutil.rmtree(zipfile_home, ignore_errors = True)
+        os.makedirs(zipfile_home, exist_ok = True)
+
+        packages = {}
+        copies = {}
+
+        for file in glob.iglob(xpath, recursive = True):
+            try:
+                tree = etree.parse(file)
+            except:
+                print('error: parse xml file fail: %s' % os.path.abspath(file))
+
+                return False
+
+            for hash, _xpath in ((packages, 'packages/package'), (copies, 'copies/copy')):
+                for e in tree.findall(builtin_os.join(type, _xpath)):
+                    name = e.get('name')
+                    dirname = e.get('dirname')
+                    dest = e.get('dest')
+
+                    if dest in (None, '.'):
+                        dest = ''
+
+                    if name and dirname:
+                        name = builtin_os.normpath(name.strip())
+                        dirname = builtin_os.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
+                        dest = builtin_os.normpath(dest.strip())
+
+                        if os.path.isdir(dirname):
+                            if name not in hash:
+                                hash[name] = collections.OrderedDict()
+
+                            with builtin_os.chdir(dirname) as chdir:
+                                for element in e.findall('file'):
+                                    element_name = element.get('name')
+
+                                    if element_name:
+                                        element_name = os.path.normpath(element_name.strip())
+
+                                        if dirname not in hash[name]:
+                                            hash[name][dirname] = collections.OrderedDict()
+
+                                        if dest not in hash[name][dirname]:
+                                            hash[name][dirname][dest] = []
+
+                                        found = False
+
+                                        for path in glob.iglob(element_name, recursive = True):
+                                            found = True
+
+                                            if os.path.isfile(path):
+                                                hash[name][dirname][dest].append(path)
+                                            elif os.path.isdir(path):
+                                                for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
+                                                    if os.path.isfile(filename):
+                                                        if filename not in hash[name][dirname][dest]:
+                                                            hash[name][dirname][dest].append(filename)
+                                            else:
+                                                pass
+
+                                        if not found:
+                                            print('no such file or directory: %s' % os.path.abspath(element_name))
+
+                                for element in e.findall('ignore'):
+                                    element_name = element.get('name')
+
+                                    if element_name:
+                                        element_name = os.path.normpath(element_name.strip())
+
+                                        if dirname in hash[name]:
+                                            if dest in hash[name][dirname]:
+                                                found = False
+
+                                                for path in glob.iglob(element_name, recursive = True):
+                                                    found = True
+
+                                                    if os.path.isfile(path):
+                                                        if path in hash[name][dirname][dest]:
+                                                            hash[name][dirname][dest].remove(path)
+                                                    elif os.path.isdir(path):
+                                                        for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
+                                                            if os.path.isfile(filename):
+                                                                if filename in hash[name][dirname][dest]:
+                                                                    hash[name][dirname][dest].remove(filename)
+                                                    else:
+                                                        pass
+
+                                                if not found:
+                                                    print('no such file or directory: %s' % os.path.abspath(element_name))
+                        else:
+                            print('no such directory: %s' % dirname)
+
+        for name, dirname_info in packages.items():
+            zipinfo = collections.OrderedDict()
+
+            for dirname, dest_info in dirname_info.items():
+                for dest, filename_list in dest_info.items():
+                    for filename in filename_list:
+                        if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib', '.manifest'):
+                            continue
+
+                        if not cross_platform:
+                            if builtin_os.osname() in ('windows', 'windows-x64'):
+                                if os.path.splitext(filename)[-1] in ('.so', '.sh'):
+                                    if os.path.splitext(filename)[-1] in ('.so'):
+                                        if 'ruby/' not in builtin_os.normpath(filename):
+                                            continue
+                                    else:
+                                        continue
+                            else:
+                                if os.path.splitext(filename)[-1] in ('.exe', '.dll', '.bat'):
+                                    continue
+
+                        if os.path.isfile(os.path.join(dirname, filename)):
+                            arcname = None
+
+                            if expand_filename:
+                                filename, arcname = expand_filename(version, dirname, filename, type)
+
+                            name = os.path.join(dirname, filename)
+
+                            if type in ('upgrade'):
+                                name = self.upgrade_expand_filename(name, tmpdir)
+
+                            zipinfo[builtin_os.normpath(os.path.join(dest, arcname))] = name
+
+            try:
+                zipname = os.path.join(zipfile_home, '%s_%s.zip' % (name, version.replace(' ', '')))
+
+                if not os.path.isdir(os.path.dirname(zipname)):
+                    os.makedirs(os.path.dirname(zipname), exist_ok = True)
+
+                with zipfile.ZipFile(zipname, 'w') as zip:
+                    for line in ('$ zipfile: %s' % zip.filename, '  in (' + os.getcwd() + ')'):
+                        print(line)
+
+                    for arcname, filename in zipinfo.items():
+                        zip.write(filename, arcname)
+
+            except Exception as e:
+                print(e)
+
+                shutil.rmtree(tmpdir, ignore_errors = True)
+
+                return False
+
+        shutil.rmtree(tmpdir, ignore_errors = True)
+
+        for name, dirname_info in copies.items():
+            try:
+                for line in ('$ copy: %s' % name, '  in (' + os.getcwd() + ')'):
+                    print(line)
+
+                for dirname, dest_info in dirname_info.items():
+                    for dest, filename_list in dest_info.items():
+                        for filename in filename_list:
+                            if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib'):
+                                continue
+
+                            if not cross_platform:
+                                if builtin_os.osname() in ('windows', 'windows-x64'):
+                                    if os.path.splitext(filename)[-1] in ('.so', '.sh'):
+                                        if os.path.splitext(filename)[-1] in ('.so'):
+                                            if 'ruby/' not in builtin_os.normpath(filename):
+                                                continue
+                                        else:
+                                            continue
+                                else:
+                                    if os.path.splitext(filename)[-1] in ('.dll', '.bat'):
+                                        continue
+
+                            if os.path.isfile(os.path.join(dirname, filename)):
+                                dst = filename
+
+                                if expand_filename:
+                                    filename, dst = expand_filename(version, dirname, filename, type)
+
+                                dst = os.path.join(zipfile_home, name, dest, dst)
+
+                                if not os.path.isdir(os.path.dirname(dst)):
+                                    os.makedirs(os.path.dirname(dst), exist_ok = True)
+
+                                shutil.copyfile(os.path.join(dirname, filename), dst)
+            except Exception as e:
+                print(e)
+
+                return False
+
+        return True
 
     def inner_artifactory(self, path, artifact_path, artifact_filenames = None, suffix = None):
         return super().inner_artifactory(path, artifact_path, artifact_filenames, suffix, False)
@@ -1168,6 +1158,171 @@ class bn_build(build):
                 pass
 
         return (filename, dst)
+
+    def upgrade_expand_filename(self, name, tmpdir):
+        if re.search(r'ums-server\/procs\/ppus\/bn\.ppu\/bn-ptn\.pmu\/.*\/ican-adaptercmdcode-config.*\.xml$', name):
+            try:
+                tree = etree.parse(name)
+
+                for e in tree.findall('commandCode'):
+                    cmdcode = e.attrib['cmdCode']
+
+                    if cmdcode == '88224':
+                        for element in e.getchildren():
+                            e.remove(element)
+
+                        element = etree.Element('prcessMgr')
+                        element.set('mgrName', 'ProcessMgr')
+
+                        process_node_element = etree.Element('processNode')
+                        process_name_element = etree.Element('processName')
+                        process_name_element.text = 'com.zte.ican.emf.subnet.process.TDoNothingProcess'
+                        process_node_element.append(process_name_element)
+                        element.append(process_node_element)
+
+                        e.append(element)
+                    elif cmdcode == '80724':
+                        for element in e.getchildren():
+                            e.remove(element)
+
+                        element = etree.Element('needMutex')
+                        element.text = 'false'
+                        e.append(element)
+
+                        element = etree.Element('prcessMgr')
+                        element.set('mgrName', 'ProcessMgr')
+
+                        process_node_element = etree.Element('processNode')
+                        process_name_element = etree.Element('processName')
+                        process_name_element.text = 'com.zte.ican.emf.subnet.process.TCreateMEProcess'
+                        process_node_element.append(process_name_element)
+                        element.append(process_node_element)
+
+                        e.append(element)
+                    elif cmdcode == '84205':
+                        for element in e.getchildren():
+                            e.remove(element)
+
+                        element = etree.Element('prcessMgr')
+                        element.set('mgrName', 'ProcessMgr')
+                        e.append(element)
+                    elif cmdcode == '81300':
+                        for element in e.getchildren():
+                            e.remove(element)
+
+                        element = etree.Element('cmdType')
+                        element.set('overTime', '30')
+                        element.text = 'S'
+                        e.append(element)
+
+                        element = etree.Element('needMutex')
+                        element.text = 'false'
+                        e.append(element)
+
+                        element = etree.Element('prcessMgr')
+                        element.set('mgrName', 'ProcessMgr')
+                        e.append(element)
+                    elif cmdcode == '80702':
+                        for element in e.getchildren():
+                            e.remove(element)
+
+                        element = etree.Element('needMutex')
+                        element.text = 'false'
+                        e.append(element)
+
+                        element = etree.Element('prcessMgr')
+                        element.set('mgrName', 'ProcessMgr')
+
+                        process_node_element = etree.Element('processNode')
+                        process_name_element = etree.Element('processName')
+                        process_name_element.text = 'com.zte.ums.bn.mecopy.emf.process.BeginCopyMEDataProcess'
+                        process_node_element.append(process_name_element)
+                        element.append(process_node_element)
+
+                        process_node_element = etree.Element('processNode')
+                        process_name_element = etree.Element('processName')
+                        process_name_element.text = 'com.zte.ums.bn.mecopy.emf.process.EndCopyMEDataProcess'
+                        process_node_element.append(process_name_element)
+                        element.append(process_node_element)
+
+                        e.append(element)
+                    elif cmdcode == '80703':
+                        for element in e.getchildren():
+                            e.remove(element)
+
+                        element = etree.Element('needMutex')
+                        element.text = 'true'
+                        e.append(element)
+
+                        element = etree.Element('supportOffline')
+                        element.text = 'true'
+                        e.append(element)
+
+                        element = etree.Element('prcessMgr')
+                        element.set('mgrName', 'ProcessMgr')
+
+                        process_node_element = etree.Element('processNode')
+                        process_name_element = etree.Element('processName')
+                        process_name_element.text = 'com.zte.ums.bn.ne.emf.uploadDownload.ptn9000.process.TMESetPreCheckProcess'
+                        process_node_element.append(process_name_element)
+                        element.append(process_node_element)
+
+                        process_node_element = etree.Element('processNode')
+                        process_name_element = etree.Element('processName')
+                        process_name_element.text = 'com.zte.ican.emf.subnet.process.TModifyMEProcess'
+                        process_node_element.append(process_name_element)
+                        element.append(process_node_element)
+
+                        process_node_element = etree.Element('processNode')
+                        process_name_element = etree.Element('processName')
+                        process_name_element.text = 'com.zte.ican.emf.subnet.process.TPublishModifyMEProcess'
+                        process_node_element.append(process_name_element)
+                        element.append(process_node_element)
+
+                        e.append(element)
+                    else:
+                        pass
+
+                name = os.path.join(tmpdir, builtin_os.tmpfilename())
+                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
+            except:
+                pass
+        elif re.search(r'ums-server\/procs\/ppus\/bn\.ppu\/(bn-mstp|bn-wdm)\.pmu\/.*\/ican-adaptercmdcode-config.*\.xml$', name):
+            try:
+                tree = etree.parse(name)
+
+                for e in tree.findall('commandCode'):
+                    cmdcode = e.attrib['cmdCode']
+
+                    if cmdcode == '80724':
+                        for element in e.getchildren():
+                            e.remove(element)
+
+                        element = etree.Element('needMutex')
+                        element.text = 'true'
+                        e.append(element)
+
+                        element = etree.Element('prcessMgr')
+                        element.set('mgrName', 'ProcessMgr')
+
+                        process_node_element = etree.Element('processNode')
+                        process_name_element = etree.Element('processName')
+                        process_name_element.text = 'CCreateMEProcess'
+                        process_node_element.append(process_name_element)
+                        element.append(process_node_element)
+
+                        e.append(element)
+                    else:
+                        pass
+
+                name = os.path.join(tmpdir, builtin_os.tmpfilename())
+                tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
+            except:
+                pass
+        else:
+            pass
+
+        return name
 
     def expand_dashboard(self, path, file):
         file = builtin_os.normpath(file)

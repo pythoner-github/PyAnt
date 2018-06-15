@@ -1,6 +1,8 @@
+import datetime
 import os
 import os.path
 import platform
+import random
 import shutil
 import tempfile
 
@@ -33,6 +35,9 @@ def gettempdir():
         return 'c:/temp'
     else:
         return tempfile.gettempdir()
+
+def tmpfilename():
+    return '%s%04d' % (datetime.datetime.now().strftime('%Y%m%d%H%M%S'), random.randint(1,10000))
 
 class chdir:
     def __init__(self, path, create = False):

@@ -511,7 +511,7 @@ class build():
             print(line)
 
     def package_home(self, version, type):
-        return os.path.normpath(os.path.abspath(os.path.join('../zipfile', version.replace(' ', ''), type)))
+        return os.path.normpath(os.path.abspath(os.path.join('../zipfile', type, version.replace(' ', ''))))
 
     def expand_dashboard(self, path, file):
         return file
@@ -727,7 +727,7 @@ class bn_build(build):
             suffix = '-%s' % builtin_os.osname()
 
             if type not in ('ems',):
-                suffix += '(%s)' % type
+                suffix += '_%s' % type
 
             if type in ('lct',):
                 filenames = (

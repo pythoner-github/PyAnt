@@ -952,12 +952,12 @@ class bn_build(build):
                             if expand_filename:
                                 filename, arcname = expand_filename(version, dirname, filename, type)
 
-                            name = os.path.join(dirname, filename)
+                            srcname = os.path.join(dirname, filename)
 
                             if type in ('upgrade'):
-                                name = self.upgrade_expand_filename(name, tmpdir)
+                                srcname = self.upgrade_expand_filename(srcname, tmpdir)
 
-                            zipinfo[builtin_os.normpath(os.path.join(dest, arcname))] = name
+                            zipinfo[builtin_os.normpath(os.path.join(dest, arcname))] = srcname
 
             try:
                 zipname = os.path.join(zipfile_home, '%s_%s.zip' % (name, version.replace(' ', '')))

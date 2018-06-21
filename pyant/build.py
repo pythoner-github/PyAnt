@@ -18,20 +18,21 @@ Usage:
     name command home arg
 
     command:
-        updateall           arg: branch
-        update              arg: module branch
-        compile_base        arg: cmd
-        compile             arg: module cmd clean retry_cmd dirname lang
-        package             arg: branch type
-        check               arg:
-        kw_compile          arg: output module cmd lang
-        kw_build            arg: module lang
-        dashboard           arg: module, paths, branch
-        dashboard_monitor   arg: branch
-        patch_auto          arg:
-        patch               arg: path
-        patch_init          arg: path, branch
-        patch_install       arg: path, type
+        updateall                   arg: branch
+        update                      arg: module branch
+        compile_base                arg: cmd
+        compile                     arg: module cmd clean retry_cmd dirname lang
+        package                     arg: branch type
+        check                       arg:
+        kw_compile                  arg: output module cmd lang
+        kw_build                    arg: module lang
+        dashboard                   arg: module, paths, branch
+        dashboard_gerrit            arg: module, branch
+        dashboard_monitor           arg: branch
+        patch_auto                  arg:
+        patch                       arg: path
+        patch_init                  arg: path, branch
+        patch_install               arg: path, type
 '''
 
 def build(argv = None):
@@ -242,6 +243,19 @@ def build(argv = None):
                 build.metric_end(id, status)
 
                 return status
+            elif command == 'dashboard_gerrit':
+                module, branch, *_ = arg
+
+                id = build.metric_start(module, False)
+
+                if name not in ('bn',):
+                    status = build.dashboard_gerrit(branch)
+
+                build.metric_end(id, status)
+
+                return status
+
+
             elif command == 'dashboard_monitor':
                 branch = arg[0]
 

@@ -93,7 +93,7 @@ class build():
 
             return False
 
-    def dashboard_gerrit(self, branch = None):
+    def dashboard_gerrit(self, repos, revision, branch = None):
         if os.path.isdir(self.path):
             if not git.reset(self.path, branch):
                 return False
@@ -101,77 +101,67 @@ class build():
         if not self.update(branch):
             return False
 
+        status = True
+
         if os.path.isdir(self.path):
             with builtin_os.chdir(self.path) as chdir:
-                refs = git.refs_changes(self.repos)
+                cmd = command.command()
+
+                for line in cmd.command('git fetch %s +refs/changes/*:refs/changes/*' % repos):
+                    lines.append(line)
+
+                if not cmd.result():
+                    return False
+
+                for line in cmd.command('git checkout -f %s' % revision):
+                    lines.append(line)
+
+                if not cmd.result():
+                    return False
 
                 status = True
 
-                if refs:
-                    error_authors = []
+                logs = git.log(None, '--stat=256 %s' % revision)
 
-                    for ref in refs:
-                        cmd = command.command()
+                if logs:
+                    paths = []
 
-                        for line in cmd.command('git checkout -f %s' % refs[ref]):
-                            lines.append(line)
+                    for log in logs:
+                        if log['changes']:
+                            for k, v in log['changes'].items():
+                                for file in v:
+                                    if expand_dashboard:
+                                        filenames = expand_dashboard(path, file)
 
-                        if not cmd.result():
-                            status = False
+                                        if filenames:
+                                            if isinstance(filenames, str):
+                                                filenames = (filenames,)
+                                        else:
+                                            filenames = ()
+                                    else:
+                                        filenames = (file,)
 
-                            continue
+                                    for filename in filenames:
+                                        dir = self.pom_path(filename)
 
-                        arg = '--stat=256 %s' % refs[ref]
+                                        if dir:
+                                            if dir not in paths:
+                                                paths.append(dir)
 
-                        logs = git.log(None, arg)
+                    for path in paths:
+                        if os.path.isdir(path):
+                            with builtin_os.chdir(path) as chdir:
+                                mvn = maven.maven()
+                                mvn.notification = '<%S_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
 
-                        if logs:
-                            authors = []
-                            paths = []
+                                mvn.clean()
 
-                            for log in logs:
-                                if log['changes']:
-                                    if log['author'] not in authors:
-                                        authors.append(log['author'])
+                                cmdline = 'mvn install -fn -U'
 
-                                    for k, v in log['changes'].items():
-                                        for file in v:
-                                            if expand_dashboard:
-                                                filenames = expand_dashboard(path, file)
+                                if not mvn.compile(cmdline, 'mvn install -fn -U'):
+                                    status = False
 
-                                                if filenames:
-                                                    if isinstance(filenames, str):
-                                                        filenames = (filenames,)
-                                                else:
-                                                    filenames = ()
-                                            else:
-                                                filenames = (file,)
-
-                                            for filename in filenames:
-                                                dir = self.pom_path(filename)
-
-                                                if dir:
-                                                    if dir not in paths:
-                                                        paths.append(dir)
-
-                            for path in paths:
-                                if os.path.isdir(path):
-                                    with builtin_os.chdir(path) as chdir:
-                                        mvn = maven.maven()
-                                        mvn.notification = '<%S_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
-
-                                        mvn.clean()
-
-                                        cmdline = 'mvn install -fn -U'
-
-                                        if not mvn.compile(cmdline, 'mvn install -fn -U'):
-                                            for author in authors:
-                                                if author not in error_authors:
-                                                    error_authors.append(author)
-
-                                            status = False
-
-                                            continue
+                                    continue
 
         return status
 

@@ -352,48 +352,6 @@ def reset(path = None, branch = None):
 
         return False
 
-def refs_changes(url, path = None):
-    if not path:
-        path = '.'
-
-    if os.path.isdir(path):
-        cmdline = 'git fetch %s +refs/changes/*:refs/changes/*' % url
-
-        with builtin_os.chdir(path) as chdir:
-            lines = []
-
-            cmd = command.command()
-
-            for line in cmd.command(cmdline):
-                lines.append(line)
-
-            if cmd.result():
-                refs = collections.OrderedDict()
-
-                for line in lines:
-                    line = line.rstrip()
-
-                    m = re.search(r'.*\s*->\s*(.*)$', line.strip())
-
-                    if m:
-                        ref = m.group(1)
-
-                        tmp = []
-
-                        for line_ in cmd.command('git rev-parse %s' % ref):
-                            tmp.append(line_)
-
-                        if cmd.result():
-                            refs[ref] = '\n'.join(tmp).strip().splitlines()[-1]
-
-                return refs
-            else:
-                return None
-    else:
-        print('no such directory: %s' % os.path.normpath(path))
-
-        return None
-
 def config(path = None, arg = None):
     if not path:
         path = '.'

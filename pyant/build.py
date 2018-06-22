@@ -27,7 +27,7 @@ Usage:
         kw_compile                  arg: output module cmd lang
         kw_build                    arg: module lang
         dashboard                   arg: module, paths, branch
-        dashboard_gerrit            arg: module, branch
+        dashboard_gerrit            arg: repos, revision, branch
         dashboard_monitor           arg: branch
         patch_auto                  arg:
         patch                       arg: path
@@ -244,18 +244,11 @@ def build(argv = None):
 
                 return status
             elif command == 'dashboard_gerrit':
-                module, branch, *_ = arg
+                repos = builtin_os.join(const.SSH_GIT, os.environ.get('GERRIT_PROJECT'))
+                revision = os.environ.get('GERRIT_PATCHSET_REVISION')
+                branch = os.environ.get('GERRIT_BRANCH')
 
-                id = build.metric_start(module, False)
-
-                if name not in ('bn',):
-                    status = build.dashboard_gerrit(branch)
-
-                build.metric_end(id, status)
-
-                return status
-
-
+                return build.dashboard_gerrit(repos, revision, branch)
             elif command == 'dashboard_monitor':
                 branch = arg[0]
 

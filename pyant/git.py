@@ -115,7 +115,7 @@ def pull(path = None, arg = None, revert = False):
 
         return False
 
-def log(path = None, arg = None):
+def log(path = None, arg = None, display = False):
     if not path:
         path = '.'
 
@@ -142,6 +142,9 @@ def log(path = None, arg = None):
 
             for line in cmd.command(cmdline):
                 lines.append(line)
+
+                if display:
+                    print(line)
 
                 # if re.search(r'^\$\s+', line.strip()) or re.search(r'^in\s+\(.*\)$', line.strip()):
                 #     print(line)

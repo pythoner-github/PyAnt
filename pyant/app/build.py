@@ -121,7 +121,7 @@ class build():
 
                 status = True
 
-                logs = git.log(None, '--stat=256 %s' % revision)
+                logs = git.log(None, '-1 --stat=256 %s' % revision, True)
 
                 if logs:
                     paths = []
@@ -129,8 +129,6 @@ class build():
                     for log in logs:
                         if log['revision'] != revision:
                             continue
-
-                        print(log)
 
                         if log['changes']:
                             for k, v in log['changes'].items():

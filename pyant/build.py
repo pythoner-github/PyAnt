@@ -27,7 +27,7 @@ Usage:
         kw_compile                  arg: output module cmd lang
         kw_build                    arg: module lang
         dashboard                   arg: module, paths, branch
-        dashboard_gerrit            arg: repos, revision, branch
+        dashboard_gerrit            arg:
         dashboard_monitor           arg: branch
         patch_auto                  arg:
         patch                       arg: path

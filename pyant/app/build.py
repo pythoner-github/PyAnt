@@ -108,13 +108,13 @@ class build():
                 cmd = command.command()
 
                 for line in cmd.command('git fetch %s +refs/changes/*:refs/changes/*' % repos):
-                    lines.append(line)
+                    print(line)
 
                 if not cmd.result():
                     return False
 
                 for line in cmd.command('git checkout -f %s' % revision):
-                    lines.append(line)
+                    print(line)
 
                 if not cmd.result():
                     return False
@@ -127,19 +127,15 @@ class build():
                     paths = []
 
                     for log in logs:
+                        if log['revision'] != revision:
+                            continue
+
+                        print(log)
+
                         if log['changes']:
                             for k, v in log['changes'].items():
                                 for file in v:
-                                    if expand_dashboard:
-                                        filenames = expand_dashboard(path, file)
-
-                                        if filenames:
-                                            if isinstance(filenames, str):
-                                                filenames = (filenames,)
-                                        else:
-                                            filenames = ()
-                                    else:
-                                        filenames = (file,)
+                                    filenames = (file,)
 
                                     for filename in filenames:
                                         dir = self.pom_path(filename)
@@ -152,7 +148,7 @@ class build():
                         if os.path.isdir(path):
                             with builtin_os.chdir(path) as chdir:
                                 mvn = maven.maven()
-                                mvn.notification = '<%S_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
+                                mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
 
                                 mvn.clean()
 

@@ -23,6 +23,7 @@ Usage:
         compile_base                arg: cmd
         compile                     arg: module cmd clean retry_cmd dirname lang
         package                     arg: branch type
+        update_package              arg: branch type
         check                       arg:
         kw_compile                  arg: output module cmd lang
         kw_build                    arg: module lang
@@ -128,7 +129,7 @@ def build(argv = None):
                 build.metric_end(id, status)
 
                 return status
-            elif command == 'package':
+            elif command in ('package', 'update_package'):
                 branch, type, *_ = arg
 
                 if not version:
@@ -137,7 +138,10 @@ def build(argv = None):
 
                     version = '%s_%s' % (branch, datetime.datetime.now().strftime('%Y%m%d'))
 
-                return build.package(version, type)
+                if command == 'package':
+                    return build.package(version, type)
+                else:
+                    return build.update_package(version, type)
             elif command == 'check':
                 if name in ('bn',):
                     status = True

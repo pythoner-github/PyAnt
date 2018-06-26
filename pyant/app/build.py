@@ -81,6 +81,14 @@ class build():
 
         return True
 
+    def update_package(self, version, type = None):
+        if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
+            artifact = self.artifact_repos['snapshot']
+        else:
+            artifact = self.artifact_repos['alpha']
+
+        return True
+
     def dashboard(self, paths, branch = None):
         if not self.update(branch):
             return False
@@ -811,6 +819,35 @@ class bn_build(build):
                     suffix
                 ):
                     return False
+
+            return True
+
+        return False
+
+    def update_package(self, version, type = None):
+        if not type:
+            type = 'ems'
+
+        type = type.strip().lower()
+
+        if self.inner_package(version, '*/installdisk/updatedisk.xml', type, self.expand_filename, False):
+            if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
+                artifact = self.artifact_repos['snapshot']
+            else:
+                artifact = self.artifact_repos['alpha']
+
+            suffix = '-update-%s' % builtin_os.osname()
+
+            if type not in ('ems',):
+                suffix += '_%s' % type
+
+            if not self.inner_artifactory(
+                self.package_home(version, type),
+                os.path.join(artifact, version.replace(' ', '')),
+                None,
+                suffix
+            ):
+                return False
 
             return True
 

@@ -127,9 +127,6 @@ class build():
                     paths = []
 
                     for log in logs:
-                        if log['revision'] != revision:
-                            continue
-
                         if log['changes']:
                             for k, v in log['changes'].items():
                                 for file in v:

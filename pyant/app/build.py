@@ -13,7 +13,7 @@ import zipfile
 
 from lxml import etree
 
-from pyant import check, command, git, maven, password
+from pyant import check, command, git, maven, password, string
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 

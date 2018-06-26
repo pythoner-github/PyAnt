@@ -901,14 +901,51 @@ class bn_build(build):
 
         packages = {}
         copies = {}
+        vars = {}
 
         for file in glob.iglob(xpath, recursive = True):
             try:
-                tree = etree.parse(file)
+                tree = etree.parse(file, etree.XMLParser(strip_cdata=False))
             except:
                 print('error: parse xml file fail: %s' % os.path.abspath(file))
 
                 return False
+
+            vars[file] = {
+                'os': builtin_os.osname()
+            }
+
+            for e in tree.findall('%s/opts/attr' % type):
+                name = e.get('name', '').strip()
+                value = ''
+
+                for element in e.findall('value'):
+                    value = element.text.strip()
+
+                    if '<![CDATA[' in etree.tostring(element, encoding='utf-8').decode('utf-8'):
+                        value = '<![CDATA[%s]]' % value
+
+                    break
+
+                filenames = []
+
+                for element in e.findall('files/file'):
+                    filename = element.get('name', '').strip()
+
+                    if filename == '.':
+                        filenames.append(file)
+                    else:
+                        for _filename in glob.iglob(os.path.join(os.path.dirname(file), filename), recursive = True):
+                            filenames.append(os.path.normpath(_filename))
+
+                if not filenames:
+                    filenames.append(file)
+
+                for filename in filenames:
+                    if not vars.get(filename):
+                        vars[filename] = {}
+
+                    vars[filename][name] = value
 
             for hash, _xpath in ((packages, 'packages/package'), (copies, 'copies/copy')):
                 for e in tree.findall(builtin_os.join(type, _xpath)):
@@ -920,9 +957,11 @@ class bn_build(build):
                         dest = ''
 
                     if name and dirname:
-                        name = builtin_os.normpath(name.strip())
-                        dirname = builtin_os.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
-                        dest = builtin_os.normpath(dest.strip())
+                        _vars = vars.get(file)
+
+                        name = builtin_os.normpath(string.vars_expand(name.strip(), _vars))
+                        dirname = builtin_os.normpath(os.path.join(os.path.dirname(file), string.vars_expand(dirname.strip(), _vars)))
+                        dest = builtin_os.normpath(string.vars_expand(dest.strip(), _vars))
 
                         if os.path.isdir(dirname):
                             if name not in hash:
@@ -1013,7 +1052,7 @@ class bn_build(build):
                             arcname = None
 
                             if expand_filename:
-                                filename, arcname = expand_filename(version, dirname, filename, type)
+                                filename, arcname = expand_filename(version, dirname, filename, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
 
                             srcname = os.path.join(dirname, filename)
 
@@ -1042,8 +1081,6 @@ class bn_build(build):
 
                 return False
 
-        shutil.rmtree(tmpdir, ignore_errors = True)
-
         for name, dirname_info in copies.items():
             try:
                 for line in ('$ copy: %s' % name, '  in (' + os.getcwd() + ')'):
@@ -1071,7 +1108,7 @@ class bn_build(build):
                                 dst = filename
 
                                 if expand_filename:
-                                    filename, dst = expand_filename(version, dirname, filename, type)
+                                    filename, dst = expand_filename(version, dirname, filename, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
 
                                 dst = os.path.join(zipfile_home, name, dest, dst)
 
@@ -1082,7 +1119,11 @@ class bn_build(build):
             except Exception as e:
                 print(e)
 
+                shutil.rmtree(tmpdir, ignore_errors = True)
+
                 return False
+
+        shutil.rmtree(tmpdir, ignore_errors = True)
 
         return True
 
@@ -1189,9 +1230,21 @@ class bn_build(build):
                 if os.path.isdir(path):
                     os.environ['WDM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
-    def expand_filename(self, version, dirname, filename, type):
+    def expand_filename(self, version, dirname, filename, type, tmpdir, vars = None):
         dst = filename
         name = os.path.join(dirname, filename)
+
+        if vars:
+            lines = []
+
+            with open(name, encoding = 'utf-8') as f:
+                for line in f.readlines():
+                    lines.append(string.vars_expand(line.rstrip(), vars))
+
+            name = os.path.join(tmpdir, builtin_os.tmpfilename())
+
+            with open(name, 'w', encoding = 'utf-8') as f:
+                f.write('\n'.join(lines))
 
         dst = dst.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
 

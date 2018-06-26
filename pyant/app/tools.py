@@ -75,9 +75,7 @@ def bn_cut_upgrade_installation(installation_home):
                     if re.search(r'^install.*\.zip$', os.path.basename(file)):
                         if os.path.isfile('conf/internalconfig.xml'):
                             try:
-                                xml_parser = etree.XMLParser(strip_cdata=False)
-
-                                tree = etree.parse('conf/internalconfig.xml', xml_parser)
+                                tree = etree.parse('conf/internalconfig.xml', etree.XMLParser(strip_cdata=False))
 
                                 for e in tree.findall('config'):
                                     key = e.get('key')

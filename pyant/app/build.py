@@ -249,6 +249,9 @@ class build():
             return False
 
     def metric_start(self, module = None, night = True):
+        if os.environ.get('METRIC_IGNORE'):
+            return None
+
         cmdline = None
 
         if not module:

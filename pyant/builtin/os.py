@@ -70,4 +70,8 @@ class tmpdir:
 
     def __exit__(self, type, value, traceback):
         os.chdir(self.cwd)
-        shutil.rmtree(self.path, ignore_errors = True)
+
+        try:
+            shutil.rmtree(self.path)
+        except:
+            pass

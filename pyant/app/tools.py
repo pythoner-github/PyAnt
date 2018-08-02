@@ -65,7 +65,7 @@ def bn_cut_upgrade_installation(installation_home):
             for file in zipfiles:
                 with builtin_os.tmpdir(tempfile.mkdtemp()) as tmpdir:
                     try:
-                        with zipfile.ZipFile(os.path.join(chdir.path, file), 'r') as zip:
+                        with zipfile.ZipFile(os.path.join(chdir.path, file)) as zip:
                             zip.extractall(tmpdir.path)
                     except Exception as e:
                         print(e)
@@ -115,7 +115,7 @@ def bn_cut_upgrade_installation(installation_home):
                                     os.remove(filename)
 
                     try:
-                        with zipfile.ZipFile(os.path.join(chdir.path, file), 'w') as zip:
+                        with zipfile.ZipFile(os.path.join(chdir.path, file), 'w', compression=zipfile.ZIP_DEFLATED) as zip:
                             for filename in glob.iglob('**/*', recursive = True):
                                 zip.write(filename)
 

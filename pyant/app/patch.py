@@ -6,6 +6,7 @@ import os.path
 import random
 import re
 import shutil
+import tempfile
 import zipfile
 
 from lxml import etree
@@ -1268,9 +1269,10 @@ class installation():
         else:
             self.output = self.path
 
+        self.name = 'none'
         self.type = 'none'
 
-    def install(self, version, type = None):
+    def install(self, version, sp_next = False, type = None):
         if not os.path.isdir(self.output):
             print('no such directory: %s' % os.path.normpath(self.output))
 
@@ -1305,7 +1307,7 @@ class installation():
                         if os.path.isfile(file):
                             info[file] = os.path.abspath(file)
 
-            with builtin_os.tmpdir(tempfile.mkdtemp(dir=os.getcwd()), False) as _tmpdir:
+            with builtin_os.tmpdir(builtin_os.tmpfilename()) as _tmpdir:
                 for file in info:
                     if os.path.splitext(file)[1] in ['.pdb', '.exp', '.lib', '.debuginfo']:
                         continue
@@ -1319,44 +1321,110 @@ class installation():
 
                         return False
 
-                if not self.install_extend(version, type):
+                if not self.install_extend(version, sorted(id_info.keys())[-1], sp_next, type):
                     return False
 
         return True
 
     # ------------------------------------------------------
 
-    def install_extend(self, version, type = None):
+    def installation(self, version, type):
+        return os.path.join(self.output, 'installation', version, 'installation/patch')
+
+    def install_extend(self, version, id, sp_next, type):
+        zipname = os.path.join(self.installation(version, type), '%s-%s.zip' % (self.name, self.patchname(version, id, sp_next, type)))
+
+        try:
+            if not os.path.isdir(os.path.dirname(zipname)):
+                os.makedirs(os.path.dirname(zipname), exist_ok = True)
+
+            with zipfile.ZipFile(zipname, 'w', compression=zipfile.ZIP_DEFLATED) as zip:
+                for line in ('$ zipfile: %s' % zip.filename, '  in (' + os.getcwd() + ')'):
+                    print(line)
+
+                for filename in glob.iglob('**/*', recursive = True):
+                    if os.path.isfile(filename):
+                        zip.write(filename)
+        except Exception as e:
+            return False
+
         return True
+
+    def patchname(self, version, id, sp_next, type):
+        prefix = '%s-SP' % version
+        last_sp = 0
+        last_index = 0
+
+        installation_home = self.installation(version, type)
+
+        if os.path.isdir(installation_home):
+            with builtin_os.chdir(installation_home) as chdir:
+                for filename in glob.iglob('*%s*.zip' % prefix):
+                    m = re.search(r'-SP(\d+)\(001-(\d+)\)', filename)
+
+                    if m:
+                        last_sp = max(last_sp, int(m.group(1)))
+                        last_index = max(last_index, int(m.group(2)))
+                    else:
+                        m = re.search(r'-SP(\d+)\((\d+)\)', filename)
+
+                        if m:
+                            last_sp = max(last_sp, int(m.group(1)))
+                            last_index = max(last_index, int(m.group(2)))
+
+        if sp_next or last_sp == 0:
+            last_sp += 1
+
+        return '%s%03d(%03d)-%s' % (prefix, last_sp, last_index + 1, id)
 
 class stn_installation(installation):
     def __init__(self, path):
         super().__init__(path)
 
+        self.name = 'stn'
         self.type = 'stn'
 
 class umebn_installation(installation):
     def __init__(self, path):
         super().__init__(path)
 
+        self.name = 'umebn'
         self.type = 'umebn'
 
 class sdno_installation(installation):
     def __init__(self, path):
         super().__init__(path)
 
+        self.name = 'sdno'
         self.type = 'sdno'
 
 class bn_installation(installation):
     def __init__(self, path):
         super().__init__(path)
 
+        if not os.path.isdir(self.output):
+            if os.path.isdir(os.path.join(self.path, 'build/patch')):
+                self.output = os.path.join(self.path, 'build/patch')
+
+        self.name = 'bn'
         self.type = 'ems'
 
     # ------------------------------------------------------
 
-    def install_extend(self, version, type = None):
-        return True
+    def installation(self, version, type):
+        osname = builtin_os.osname()
+
+        if type not in ('ems'):
+            osname += "(%s)" % type
+
+        return os.path.join(self.output, 'installation', version, 'installation', osname, 'patch')
+
+    def install_extend(self, version, id, sp_next, type):
+        if builtin_os.osname() in ('linux', 'solaris'):
+            for filename in glob.iglob('**/*.dll', recursive = True):
+                os.remove(filename)
+
+        return super().install_extend(version, id, sp_next, type)
 
     def ums_db_update_info(self, paths, filename = 'install/dbscript-patch/ums-db-update-info.xml'):
         dbs = {}

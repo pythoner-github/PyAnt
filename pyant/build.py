@@ -33,7 +33,7 @@ Usage:
         patch_auto                  arg:
         patch                       arg: path
         patch_init                  arg: path, branch
-        patch_install               arg: path, type
+        patch_install               arg: path, sp_next, type
 '''
 
 def build(argv = None):
@@ -268,12 +268,14 @@ def build(argv = None):
 
                 return app_patch(path).init(branch)
             elif command == 'patch_install':
-                path, type, *_ = arg
+                path, sp_next, type, *_ = arg
 
-                if name in ('bn',):
-                    return app_installation(path).install(version, type)
+                if str(sp_next).lower() == 'true':
+                    sp_next = True
                 else:
-                    return app_installation(path).install(version)
+                    sp_next = False
+
+                return app_installation(path).install(version, sp_next, type)
             else:
                 print(usage.strip())
 

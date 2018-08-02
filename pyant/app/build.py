@@ -543,7 +543,7 @@ class build():
                         zipname = '%s.zip' % os.path.basename(path)
 
                     try:
-                        with zipfile.ZipFile(zipname, 'w') as zip:
+                        with zipfile.ZipFile(zipname, 'w', compression=zipfile.ZIP_DEFLATED) as zip:
                             for file in glob.iglob('installation/**/*', recursive = True):
                                 zip.write(file)
                     except Exception as e:
@@ -1107,7 +1107,7 @@ class bn_build(build):
                 if not os.path.isdir(os.path.dirname(zipname)):
                     os.makedirs(os.path.dirname(zipname), exist_ok = True)
 
-                with zipfile.ZipFile(zipname, 'w') as zip:
+                with zipfile.ZipFile(zipname, 'w', compression=zipfile.ZIP_DEFLATED) as zip:
                     for line in ('$ zipfile: %s' % zip.filename, '  in (' + os.getcwd() + ')'):
                         print(line)
 

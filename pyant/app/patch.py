@@ -1346,6 +1346,8 @@ class installation():
                     if os.path.isfile(filename):
                         zip.write(filename)
         except Exception as e:
+            print(e)
+
             return False
 
         return True

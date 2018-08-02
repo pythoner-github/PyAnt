@@ -1272,11 +1272,14 @@ class installation():
         self.name = 'none'
         self.type = 'none'
 
-    def install(self, version, sp_next = False, type = None):
+    def install(self, version, display_version = None, sp_next = False, type = None):
         if not os.path.isdir(self.output):
             print('no such directory: %s' % os.path.normpath(self.output))
 
             return False
+
+        if display_version is None:
+            display_version = version
 
         if type is None:
             type = self.type
@@ -1321,7 +1324,7 @@ class installation():
 
                         return False
 
-                if not self.install_extend(version, sorted(id_info.keys())[-1], sp_next, type):
+                if not self.process(version, display_version, sorted(id_info.keys())[-1], sp_next, type):
                     return False
 
         return True
@@ -1331,7 +1334,7 @@ class installation():
     def installation(self, version, type):
         return os.path.join(self.output, 'installation', version, 'installation/patch')
 
-    def install_extend(self, version, id, sp_next, type):
+    def process(self, version, display_version, id, sp_next, type):
         zipname = os.path.join(self.installation(version, type), '%s-%s.zip' % (self.name, self.patchname(version, id, sp_next, type)))
 
         try:
@@ -1421,12 +1424,59 @@ class bn_installation(installation):
 
         return os.path.join(self.output, 'installation', version, 'installation', osname, 'patch')
 
-    def install_extend(self, version, id, sp_next, type):
+    def process(self, version, display_version, id, sp_next, type):
         if builtin_os.osname() in ('linux', 'solaris'):
             for filename in glob.iglob('**/*.dll', recursive = True):
                 os.remove(filename)
 
-        return super().install_extend(version, id, sp_next, type)
+        self.ppuinfo(version, display_version)
+
+        return super().process(version, display_version, id, sp_next, type)
+
+    def ppuinfo(version, display_version):
+        # ums-client/procs/ppus/bn.ppu/ppuinfo.xml
+        # ums-server/procs/ppus/bn.ppu/ppuinfo.xml
+
+        tree = etree.ElementTree(etree.XML("<ppu/>"))
+
+        display_element = etree.Element('display-name')
+        display_element.set('en_US', 'BN-xTN')
+        display_element.set('zh_CN', 'BN-xTN')
+
+        tree.getroot().append(display_element)
+
+        info_element = etree.Element('info')
+        info_element.set('version', version)
+        info_element.set('display-version', display_version)
+        info_element.set('en_US', 'Bearer Network Transport Common Module')
+        info_element.set('zh_CN', '承载传输公用组件')
+
+        tree.getroot().append(info_element)
+
+        for filename in ('ums-client/procs/ppus/bn.ppu/ppuinfo.xml', 'ums-server/procs/ppus/bn.ppu/ppuinfo.xml'):
+            os.makedirs(os.path.dirname(filename), exist_ok = True)
+
+            try:
+                tree.write(filename, encoding='gb2312', pretty_print=True, xml_declaration=True)
+            except Exception as e:
+                print(e)
+
+        # ums-client/procs/ppus/e2e.ppu/ppuinfo.xml
+        # ums-server/procs/ppus/e2e.ppu/ppuinfo.xml
+
+        display_element.set('en_US', 'E2E')
+        display_element.set('zh_CN', 'E2E')
+
+        info_element.set('en_US', 'End-To-End Module')
+        info_element.set('zh_CN', '端到端组件')
+
+        for filename in ('ums-client/procs/ppus/e2e.ppu/ppuinfo.xml', 'ums-server/procs/ppus/e2e.ppu/ppuinfo.xml'):
+            os.makedirs(os.path.dirname(filename), exist_ok = True)
+
+            try:
+                tree.write(filename, encoding='gb2312', pretty_print=True, xml_declaration=True)
+            except Exception as e:
+                print(e)
 
     def ums_db_update_info(self, paths, filename = 'install/dbscript-patch/ums-db-update-info.xml'):
         dbs = {}

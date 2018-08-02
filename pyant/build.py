@@ -275,7 +275,12 @@ def build(argv = None):
                 else:
                     sp_next = False
 
-                return app_installation(path).install(version, sp_next, type)
+                display_version = None
+
+                if os.environ.get('DISPLAY_VERSION'):
+                    display_version = os.environ['DISPLAY_VERSION'].strip()
+
+                return app_installation(path).install(version, display_version, sp_next, type)
             else:
                 print(usage.strip())
 

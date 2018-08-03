@@ -1337,13 +1337,13 @@ class installation():
         return os.path.join(self.output, 'installation', version, 'installation/patch')
 
     def process(self, zipname_suffix, version, display_version, id_info, sp_next, type):
-        zipname = os.path.join(self.installation(version, type), '%s%s.zip' % (self.name, zipname_suffix))
+        zip_filename = os.path.join(self.installation(version, type), '%s%s.zip' % (self.name, zipname_suffix))
 
         try:
-            if not os.path.isdir(os.path.dirname(zipname)):
-                os.makedirs(os.path.dirname(zipname), exist_ok = True)
+            if not os.path.isdir(os.path.dirname(zip_filename)):
+                os.makedirs(os.path.dirname(zip_filename), exist_ok = True)
 
-            with zipfile.ZipFile(zipname, 'w', compression=zipfile.ZIP_DEFLATED) as zip:
+            with zipfile.ZipFile(zip_filename, 'w', compression=zipfile.ZIP_DEFLATED) as zip:
                 for line in ('$ zipfile: %s' % zip.filename, '  in (' + os.getcwd() + ')'):
                     print(line)
 
@@ -1427,7 +1427,7 @@ class bn_installation(installation):
         return os.path.join(self.output, 'installation', version, 'installation', osname, 'patch')
 
     def process(self, zipname_suffix, version, display_version, id_info, sp_next, type):
-        zipname = os.path.join(self.installation(version, type), '%s%s.zip' % (self.name, zipname_suffix))
+        zipname = '%s%s' % (self.name, zipname_suffix)
 
         if not self.process_extend(zipname, type):
             return False
@@ -1448,7 +1448,7 @@ class bn_installation(installation):
             for filename in glob.iglob('**/*.dll', recursive = True):
                 os.remove(filename)
 
-        return super().process(version, display_version, id, sp_next, type)
+        return super().process(zipname_suffix, version, display_version, id_info, sp_next, type)
 
     def process_extend(self, zipname, type):
         path = os.path.join(self.path, 'build')

@@ -11,7 +11,7 @@ import zipfile
 
 from lxml import etree
 
-from pyant import command, daemon, git, maven, password, smtp
+from pyant import command, daemon, git, maven, password, smtp, string
 from pyant.app import const
 from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
@@ -1324,7 +1324,9 @@ class installation():
 
                         return False
 
-                if not self.process(version, display_version, sorted(id_info.keys())[-1], sp_next, type):
+                zipname_suffix = self.patchname(version, sorted(id_info.keys())[-1], sp_next, type)
+
+                if not self.process(zipname_suffix, version, display_version, id_info, sp_next, type):
                     return False
 
         return True
@@ -1334,8 +1336,8 @@ class installation():
     def installation(self, version, type):
         return os.path.join(self.output, 'installation', version, 'installation/patch')
 
-    def process(self, version, display_version, id, sp_next, type):
-        zipname = os.path.join(self.installation(version, type), '%s-%s.zip' % (self.name, self.patchname(version, id, sp_next, type)))
+    def process(self, zipname_suffix, version, display_version, id_info, sp_next, type):
+        zipname = os.path.join(self.installation(version, type), '%s%s.zip' % (self.name, zipname_suffix))
 
         try:
             if not os.path.isdir(os.path.dirname(zipname)):
@@ -1356,7 +1358,7 @@ class installation():
         return True
 
     def patchname(self, version, id, sp_next, type):
-        prefix = '%s-SP' % version
+        prefix = '-%s-SP' % version
         last_sp = 0
         last_index = 0
 
@@ -1424,16 +1426,113 @@ class bn_installation(installation):
 
         return os.path.join(self.output, 'installation', version, 'installation', osname, 'patch')
 
-    def process(self, version, display_version, id, sp_next, type):
+    def process(self, zipname_suffix, version, display_version, id_info, sp_next, type):
+        zipname = os.path.join(self.installation(version, type), '%s%s.zip' % (self.name, zipname_suffix))
+
+        if not self.process_extend(zipname, type):
+            return False
+
+        if not self.ppuinfo(version, display_version):
+            return False
+
+        if not self.ums_db_update_info(sorted(id_info.values())):
+            return False
+
+        if not self.update_patchinfo(sorted(id_info.keys()), type):
+            return False
+
+        if not self.patchset_update_info(zipname, version, display_version):
+            return False
+
         if builtin_os.osname() in ('linux', 'solaris'):
             for filename in glob.iglob('**/*.dll', recursive = True):
                 os.remove(filename)
 
-        self.ppuinfo(version, display_version)
-
         return super().process(version, display_version, id, sp_next, type)
 
-    def ppuinfo(version, display_version):
+    def process_extend(self, zipname, type):
+        path = os.path.join(self.path, 'build')
+
+        if os.path.isdir(os.path.join(path, 'code')):
+            path = os.path.join(path, 'code')
+
+        cwd = os.getcwd()
+        vars = {
+            'zipname': zipname
+        }
+
+        with builtin_os.chdir(path) as chdir:
+            for file in glob.iglob('*/installdisk/extends.xml'):
+                try:
+                    tree = etree.parse(file)
+                except Exception as e:
+                    print(e)
+
+                    return False
+
+                for e in tree.findall(os.path.join(type, 'patch')):
+                    dirname = e.get('dirname')
+
+                    if dirname:
+                        dirname = builtin_os.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
+
+                        if os.path.isdir(dirname):
+                            with builtin_os.chdir(dirname) as _chdir:
+                                copies = collections.OrderedDict()
+
+                                for element in e.findall('file'):
+                                    name = element.get('name')
+                                    dest = element.get('dest')
+
+                                    if name and dest:
+                                        name = builtin_os.normpath(string.vars_expand(name.strip(), vars))
+                                        dest = builtin_os.normpath(string.vars_expand(dest.strip(), vars))
+
+                                        if os.path.isfile(name):
+                                            copies[dest] = name
+                                        elif os.path.isdir(name):
+                                            with builtin_os.chdir(name) as tmp_chdir:
+                                                for filename in glob.iglob('**/*', recursive = True):
+                                                    if os.path.isfile(filename):
+                                                        copies[os.path.join(dest, filename)] = os.path.join(name, filename)
+                                        else:
+                                            print('no such file or directory: %s' % os.path.abspath(name))
+
+                                for element in e.findall('ignore'):
+                                    name = element.get('name')
+
+                                    if name:
+                                        name = builtin_os.normpath(string.vars_expand(name.strip(), vars))
+
+                                        if os.path.isfile(name):
+                                            if name in copies:
+                                                del copies[name]
+                                        elif os.path.isdir(name):
+                                            for filename in glob.iglob(os.path.join(name, '**/*'), recursive = True):
+                                                if os.path.isfile(filename):
+                                                    if filename in copies:
+                                                        del copies[filename]
+                                        else:
+                                            print('no such file or directory: %s' % os.path.abspath(name))
+
+                                for dest, name in copies.items():
+                                    try:
+                                        dst = os.path.join(cwd, dest)
+
+                                        if not os.path.isdir(os.path.dirname(dst)):
+                                            os.makedirs(os.path.dirname(dst), exist_ok = True)
+
+                                        shutil.copyfile(name, dst)
+                                    except Exception as e:
+                                        print(e)
+
+                                        return False
+                        else:
+                            print('no such directory: %s' % dirname)
+
+        return True
+
+    def ppuinfo(self, version, display_version):
         # ums-client/procs/ppus/bn.ppu/ppuinfo.xml
         # ums-server/procs/ppus/bn.ppu/ppuinfo.xml
 
@@ -1461,6 +1560,8 @@ class bn_installation(installation):
             except Exception as e:
                 print(e)
 
+                return False
+
         # ums-client/procs/ppus/e2e.ppu/ppuinfo.xml
         # ums-server/procs/ppus/e2e.ppu/ppuinfo.xml
 
@@ -1478,7 +1579,12 @@ class bn_installation(installation):
             except Exception as e:
                 print(e)
 
-    def ums_db_update_info(self, paths, filename = 'install/dbscript-patch/ums-db-update-info.xml'):
+                return False
+
+        return True
+
+    def ums_db_update_info(self, paths):
+        filename = 'install/dbscript-patch/ums-db-update-info.xml'
         dbs = {}
 
         for path in paths:
@@ -1540,4 +1646,12 @@ class bn_installation(installation):
 
         lines.append('</install-db>')
 
-        return '\n'.join(lines)
+        #return '\n'.join(lines)
+
+        return True
+
+    def update_patchinfo(self, ids, type):
+        return True
+
+    def patchset_update_info(self, zipname, version, display_version, deletes = None, ppuname = None, pmuname = None):
+        return True

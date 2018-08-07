@@ -1657,7 +1657,7 @@ class bn_installation(installation):
         with builtin_os.chdir(self.output) as chdir:
             for id in ids:
                 if os.path.isdir(os.path.join('patch', id, 'ids')):
-                    for file in glob.iglob('patch', id, 'ids/*.xml'):
+                    for file in glob.iglob(os.path.join('patch', id, 'ids/*.xml')):
                         info = self.get_patch_info(file)
 
                         if info:
@@ -1684,7 +1684,7 @@ class bn_installation(installation):
                             else:
                                 tree.getroot().append(element)
                 else:
-                    for file in glob.iglob('patch', id, '*.xml'):
+                    for file in glob.iglob(os.path.join('patch', id, '*.xml')):
                         info = self.get_patch_info(file)
 
                         if info:
@@ -1795,14 +1795,14 @@ class bn_installation(installation):
         with builtin_os.chdir(self.output) as chdir:
             for id in ids:
                 if os.path.isdir(os.path.join('patch', id, 'ids')):
-                    for file in glob.iglob('patch', id, 'ids/*.xml'):
+                    for file in glob.iglob(os.path.join('patch', id, 'ids/*.xml')):
                         deletes = self.get_patch_deletes(file, type)
 
                         for delete_file in deletes:
                             if delete_file not in delete_files:
                                 delete_files.append(delete_file)
                 else:
-                    for file in glob.iglob('patch', id, '*.xml'):
+                    for file in glob.iglob(os.path.join('patch', id, '*.xml')):
                         deletes = self.get_patch_deletes(file, type)
 
                         for delete_file in deletes:
@@ -1872,7 +1872,14 @@ class bn_installation(installation):
         info = {}
 
         for e in tree.findall('patch/info/attr'):
-            info[e.get('name', '').strip()] = e.text.strip()
+            name = e.get('name', '').strip()
+
+            if e.text:
+                value = e.text.strip()
+            else:
+                value = ''
+
+            info[name] = value
 
         return info
 

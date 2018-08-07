@@ -1441,7 +1441,7 @@ class bn_installation(installation):
         if not self.update_patchinfo(sorted(id_info.keys()), type):
             return False
 
-        if not self.patchset_update_info(zipname, version, display_version):
+        if not self.patchset_update_info(zipname, sorted(id_info.keys()), version, display_version, type):
             return False
 
         if builtin_os.osname() in ('linux', 'solaris'):
@@ -1651,7 +1651,257 @@ class bn_installation(installation):
         return True
 
     def update_patchinfo(self, ids, type):
+        tree = etree.ElementTree(etree.XML("<update/>"))
+        tree_defect = etree.ElementTree(etree.XML("<update/>"))
+
+        with builtin_os.chdir(self.output) as chdir:
+            for id in ids:
+                if os.path.isdir(os.path.join('patch', id, 'ids')):
+                    for file in glob.iglob('patch', id, 'ids/*.xml'):
+                        info = self.get_patch_info(file)
+
+                        if info:
+                            element = etree.Element('info')
+                            element.set('name', id)
+
+                            attr_element = etree.Element('attr')
+                            attr_element.set('name', '提交人员')
+                            attr_element.text = info['提交人员']
+                            element.append(attr_element)
+
+                            attr_element = etree.Element('attr')
+                            attr_element.set('name', '开发经理')
+                            attr_element.text = info['开发经理']
+                            element.append(attr_element)
+
+                            attr_element = etree.Element('attr')
+                            attr_element.set('name', '变更描述')
+                            attr_element.text = info['变更描述']
+                            element.append(attr_element)
+
+                            if info['变更类型'] in ('故障', ):
+                                tree_defect.getroot().append(element)
+                            else:
+                                tree.getroot().append(element)
+                else:
+                    for file in glob.iglob('patch', id, '*.xml'):
+                        info = self.get_patch_info(file)
+
+                        if info:
+                            element = etree.Element('info')
+                            element.set('name', id)
+
+                            attr_element = etree.Element('attr')
+                            attr_element.set('name', '提交人员')
+                            attr_element.text = info['提交人员']
+                            element.append(attr_element)
+
+                            attr_element = etree.Element('attr')
+                            attr_element.set('name', '开发经理')
+                            attr_element.text = info['开发经理']
+                            element.append(attr_element)
+
+                            attr_element = etree.Element('attr')
+                            attr_element.set('name', '变更描述')
+                            attr_element.text = info['变更描述']
+                            element.append(attr_element)
+
+                            if info['变更类型'] in ('故障', ):
+                                tree_defect.getroot().append(element)
+                            else:
+                                tree.getroot().append(element)
+
+                        break
+
+
+        dirname = os.path.join('update/patchinfo', datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
+        os.makedirs(dirname, exist_ok = True)
+
+        try:
+            tree.write(os.path.join(dirname, 'update.xml'), encoding='utf-8', pretty_print=True, xml_declaration=True)
+            tree_defect.write(os.path.join(dirname, 'update_defect.xml'), encoding='utf-8', pretty_print=True, xml_declaration=True)
+        except Exception as e:
+            print(e)
+
+            return False
+
         return True
 
-    def patchset_update_info(self, zipname, version, display_version, deletes = None, ppuname = None, pmuname = None):
+    def patchset_update_info(self, zipname, ids, version, display_version, type, ppuname = None, pmuname = None):
+        tree = etree.ElementTree(etree.XML("<update-info/>"))
+
+        if ppuname == 'bn-ip':
+            ppuname = 'bn'
+            pmuname = 'bn-ip'
+        elif ppuname == 'bn':
+            if type == 'ems':
+                ppuname = 'e2e'
+        else:
+            ppuname = 'bn'
+
+        tree.getroot().set('ppuname', ppuname)
+
+        if pmuname:
+            tree.getroot().set('pmuname', pmuname)
+
+        if type == 'service':
+            tree.getroot().set('ppuname', 'bn')
+            tree.getroot().set('pmuname', 'bn-servicetools')
+            tree.getroot().set('hotpatch', 'true')
+
+        element = etree.Element('description')
+
+        e = etree.Element('zh_cn')
+        e.text = 'NetNumen U31统一网管系统%s' % display_version
+        element.append(e)
+
+        e = etree.Element('en_us')
+        e.text = 'NetNumen U31 Unified Network Management System %s' % display_version
+        element.append(e)
+
+        tree.getroot().append(element)
+
+        if type == 'service':
+            element = etree.Element('hotpatch')
+            element.set('restart-client', 'true')
+            element.set('run-operation', 'true')
+            tree.getroot().append(element)
+
+            element = etree.Element('pmus')
+            e = etree.Element('pmu')
+            e.set('name', 'bn-servicetools')
+            element.append(e)
+            tree.getroot().append(element)
+
+        element = etree.Element('src-version')
+        e = etree.Element('version')
+        e.set('main', version)
+        element.append(e)
+        tree.getroot().append(element)
+
+        element = etree.Element('patchs')
+
+        names = self.patchset_names(version, type)
+
+        for name in names:
+            e = etree.Element('patch')
+            e.text = name
+            element.append(e)
+
+        tree.getroot().append(element)
+
+        delete_files = []
+
+        with builtin_os.chdir(self.output) as chdir:
+            for id in ids:
+                if os.path.isdir(os.path.join('patch', id, 'ids')):
+                    for file in glob.iglob('patch', id, 'ids/*.xml'):
+                        deletes = self.get_patch_deletes(file, type)
+
+                        for delete_file in deletes:
+                            if delete_file not in delete_files:
+                                delete_files.append(delete_file)
+                else:
+                    for file in glob.iglob('patch', id, '*.xml'):
+                        deletes = self.get_patch_deletes(file, type)
+
+                        for delete_file in deletes:
+                            if delete_file not in delete_files:
+                                delete_files.append(delete_file)
+
+                        break
+
+        if delete_files:
+            element = etree.Element('delete-file-list')
+
+            for file in delete_files:
+                e = etree.Element('file-item')
+                e.set('delfile', file)
+                element.append(e)
+
+            tree.getroot().append(element)
+
+        dirname = os.path.join('update-info', zipname)
+        os.makedirs(dirname, exist_ok = True)
+
+        try:
+            tree.write(os.path.join(dirname, 'patchset-update-info.xml'), encoding='utf-8', pretty_print=True, xml_declaration=True)
+        except Exception as e:
+            print(e)
+
+            return False
+
         return True
+
+    def patchset_names(self, version, type):
+        prefix = '-%s-SP' % version
+        last_index = 0
+
+        installation_home = self.installation(version, type)
+
+        if os.path.isdir(installation_home):
+            with builtin_os.chdir(installation_home) as chdir:
+                for filename in glob.iglob('*%s*.zip' % prefix):
+                    m = re.search(r'-SP(\d+)\(001-(\d+)\)', filename)
+
+                    if m:
+                        last_index = max(last_index, int(m.group(2)))
+                    else:
+                        m = re.search(r'-SP(\d+)\((\d+)\)', filename)
+
+                        if m:
+                            last_index = max(last_index, int(m.group(2)))
+
+        last_index += 1
+
+        names = []
+
+        for i in range(last_index):
+            names.append('%s-%s-%03d' % (self.name, version, i + 1))
+
+        return names
+
+    def get_patch_info(self, file):
+        try:
+            tree = etree.parse(file)
+        except Exception as e:
+            print(e)
+
+            return None
+
+        info = {}
+
+        for e in tree.findall('patch/info/attr'):
+            info[e.get('name', '').strip()] = e.text.strip()
+
+        return info
+
+    def get_patch_deletes(self, file, type):
+        try:
+            tree = etree.parse(file)
+        except Exception as e:
+            print(e)
+
+            return []
+
+        deletes = []
+
+        for e in tree.findall('patch/deploy/delete/attr'):
+            name = builtin_os.normpath(e.get('name', '').strip())
+            cur_type = e.get('type', '').strip()
+
+            if not cur_type:
+                cur_type = self.type
+
+            types = []
+
+            for x in cur_type.split(','):
+                types.append(x.strip())
+
+            if 'service' in types:
+                types.append('ems')
+
+            if type in types:
+                deletes.append(name)
+
+        return deletes

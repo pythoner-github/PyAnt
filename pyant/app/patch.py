@@ -1324,9 +1324,9 @@ class installation():
 
                         return False
 
-                zipname_suffix = self.patchname(version, sorted(id_info.keys())[-1], sp_next, type)
+                suffix = self.patchname(version, sorted(id_info.keys())[-1], sp_next, type)
 
-                if not self.process(zipname_suffix, version, display_version, id_info, sp_next, type):
+                if not self.process(suffix, version, display_version, id_info, sp_next, type):
                     return False
 
         return True
@@ -1336,8 +1336,8 @@ class installation():
     def installation(self, version, type):
         return os.path.join(self.output, 'installation', version, 'installation/patch')
 
-    def process(self, zipname_suffix, version, display_version, id_info, sp_next, type):
-        zip_filename = os.path.join(self.installation(version, type), '%s%s.zip' % (self.name, zipname_suffix))
+    def process(self, suffix, version, display_version, id_info, sp_next, type):
+        zip_filename = os.path.join(self.installation(version, type), '%s%s.zip' % (self.name, suffix))
 
         try:
             if not os.path.isdir(os.path.dirname(zip_filename)):
@@ -1426,13 +1426,107 @@ class bn_installation(installation):
 
         return os.path.join(self.output, 'installation', version, 'installation', osname, 'patch')
 
-    def process(self, zipname_suffix, version, display_version, id_info, sp_next, type):
-        zipname = '%s%s' % (self.name, zipname_suffix)
+    def process(self, suffix, version, display_version, id_info, sp_next, type):
+        # pmu
 
-        if not self.process_extend(zipname, type):
-            return False
+        if os.path.isdir('pmu'):
+            for dirname in glob.iglob('pmu/*'):
+                with builtin_os.chdir(dirname) as chdir:
+                    self.name = os.path.basename(dirname)
+                    ppuname = self.name.split('-')[0]
+                    pmuname = self.name
+
+                    tmp_id_info = {}
+
+                    for id, value in id_info.items():
+                        if os.path.isdir(os.path.join(value, 'pmu', self.name)):
+                            tmp_id_info[id] = os.path.join(value, 'pmu', self.name)
+
+                    if not self.inner_process(suffix, version, display_version, tmp_id_info, sp_next, type, ppuname, pmuname):
+                        return False
+
+            try:
+                shutil.rmtree('pmu')
+            except:
+                pass
+
+        # bn
 
         if not self.ppuinfo(version, display_version):
+            return False
+
+        self.name = 'bn'
+        ppuname = 'bn'
+
+        tmp_id_info = {}
+
+        for id, value in id_info.items():
+            if os.path.isdir(os.path.join(value, 'pmu')):
+                if len(glob.glob(os.path.join(value, '*'))) > 1:
+                    tmp_id_info[id] = value
+            else:
+                tmp_id_info[id] = value
+
+        if not self.inner_process(suffix, version, display_version, tmp_id_info, sp_next, type, ppuname):
+            return False
+
+        return True
+
+    def ppuinfo(self, version, display_version):
+        # ums-client/procs/ppus/bn.ppu/ppuinfo.xml
+        # ums-server/procs/ppus/bn.ppu/ppuinfo.xml
+
+        tree = etree.ElementTree(etree.XML("<ppu/>"))
+
+        display_element = etree.Element('display-name')
+        display_element.set('en_US', 'BN-xTN')
+        display_element.set('zh_CN', 'BN-xTN')
+
+        tree.getroot().append(display_element)
+
+        info_element = etree.Element('info')
+        info_element.set('version', version)
+        info_element.set('display-version', display_version)
+        info_element.set('en_US', 'Bearer Network Transport Common Module')
+        info_element.set('zh_CN', '承载传输公用组件')
+
+        tree.getroot().append(info_element)
+
+        for filename in ('ums-client/procs/ppus/bn.ppu/ppuinfo.xml', 'ums-server/procs/ppus/bn.ppu/ppuinfo.xml'):
+            os.makedirs(os.path.dirname(filename), exist_ok = True)
+
+            try:
+                tree.write(filename, encoding='gb2312', pretty_print=True, xml_declaration=True)
+            except Exception as e:
+                print(e)
+
+                return False
+
+        # ums-client/procs/ppus/e2e.ppu/ppuinfo.xml
+        # ums-server/procs/ppus/e2e.ppu/ppuinfo.xml
+
+        display_element.set('en_US', 'E2E')
+        display_element.set('zh_CN', 'E2E')
+
+        info_element.set('en_US', 'End-To-End Module')
+        info_element.set('zh_CN', '端到端组件')
+
+        for filename in ('ums-client/procs/ppus/e2e.ppu/ppuinfo.xml', 'ums-server/procs/ppus/e2e.ppu/ppuinfo.xml'):
+            os.makedirs(os.path.dirname(filename), exist_ok = True)
+
+            try:
+                tree.write(filename, encoding='gb2312', pretty_print=True, xml_declaration=True)
+            except Exception as e:
+                print(e)
+
+                return False
+
+        return True
+
+    def inner_process(self, suffix, version, display_version, id_info, sp_next, type, ppuname, pmuname = None):
+        zipname = '%s%s' % (self.name, suffix)
+
+        if not self.process_extend(zipname, type):
             return False
 
         if not self.ums_db_update_info(sorted(id_info.values())):
@@ -1441,14 +1535,14 @@ class bn_installation(installation):
         if not self.update_patchinfo(sorted(id_info.keys()), type):
             return False
 
-        if not self.patchset_update_info(zipname, sorted(id_info.keys()), version, display_version, type):
+        if not self.patchset_update_info(zipname, sorted(id_info.keys()), version, display_version, type, ppuname, pmuname):
             return False
 
         if builtin_os.osname() in ('linux', 'solaris'):
             for filename in glob.iglob('**/*.dll', recursive = True):
                 os.remove(filename)
 
-        return super().process(zipname_suffix, version, display_version, id_info, sp_next, type)
+        return super().process(suffix, version, display_version, id_info, sp_next, type)
 
     def process_extend(self, zipname, type):
         path = os.path.join(self.path, 'build')
@@ -1529,57 +1623,6 @@ class bn_installation(installation):
                                         return False
                         else:
                             print('no such directory: %s' % dirname)
-
-        return True
-
-    def ppuinfo(self, version, display_version):
-        # ums-client/procs/ppus/bn.ppu/ppuinfo.xml
-        # ums-server/procs/ppus/bn.ppu/ppuinfo.xml
-
-        tree = etree.ElementTree(etree.XML("<ppu/>"))
-
-        display_element = etree.Element('display-name')
-        display_element.set('en_US', 'BN-xTN')
-        display_element.set('zh_CN', 'BN-xTN')
-
-        tree.getroot().append(display_element)
-
-        info_element = etree.Element('info')
-        info_element.set('version', version)
-        info_element.set('display-version', display_version)
-        info_element.set('en_US', 'Bearer Network Transport Common Module')
-        info_element.set('zh_CN', '承载传输公用组件')
-
-        tree.getroot().append(info_element)
-
-        for filename in ('ums-client/procs/ppus/bn.ppu/ppuinfo.xml', 'ums-server/procs/ppus/bn.ppu/ppuinfo.xml'):
-            os.makedirs(os.path.dirname(filename), exist_ok = True)
-
-            try:
-                tree.write(filename, encoding='gb2312', pretty_print=True, xml_declaration=True)
-            except Exception as e:
-                print(e)
-
-                return False
-
-        # ums-client/procs/ppus/e2e.ppu/ppuinfo.xml
-        # ums-server/procs/ppus/e2e.ppu/ppuinfo.xml
-
-        display_element.set('en_US', 'E2E')
-        display_element.set('zh_CN', 'E2E')
-
-        info_element.set('en_US', 'End-To-End Module')
-        info_element.set('zh_CN', '端到端组件')
-
-        for filename in ('ums-client/procs/ppus/e2e.ppu/ppuinfo.xml', 'ums-server/procs/ppus/e2e.ppu/ppuinfo.xml'):
-            os.makedirs(os.path.dirname(filename), exist_ok = True)
-
-            try:
-                tree.write(filename, encoding='gb2312', pretty_print=True, xml_declaration=True)
-            except Exception as e:
-                print(e)
-
-                return False
 
         return True
 
@@ -1727,7 +1770,7 @@ class bn_installation(installation):
 
         return True
 
-    def patchset_update_info(self, zipname, ids, version, display_version, type, ppuname = None, pmuname = None):
+    def patchset_update_info(self, zipname, ids, version, display_version, type, ppuname, pmuname):
         tree = etree.ElementTree(etree.XML("<update-info/>"))
 
         if ppuname == 'bn-ip':

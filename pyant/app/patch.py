@@ -1529,7 +1529,7 @@ class bn_installation(installation):
         if not self.process_extend(zipname, type):
             return False
 
-        if not self.ums_db_update_info(sorted(id_info.values())):
+        if not self.dbscript_patch(sorted(id_info.values()), version, type):
             return False
 
         if not self.update_patchinfo(sorted(id_info.keys()), type):
@@ -1626,9 +1626,36 @@ class bn_installation(installation):
 
         return True
 
-    def ums_db_update_info(self, paths):
-        filename = 'install/dbscript-patch/ums-db-update-info.xml'
+    def dbscript_patch(self, paths, version, type):
+        dirname = os.path.join('scripts', self.patchset_names(version, type)[-1])
+
+        if os.path.isdir('install/dbscript-patch'):
+            filenames = []
+
+            for dir in glob.iglob('install/dbscript-patch/*'):
+                if os.path.isdir(dir):
+                    with builtin_os.chdir(dir) as chdir:
+                        for file in glob.iglob('**/*', recursive = True):
+                            filenames.append(os.path.join(os.path.basename(dir), file))
+
+            if filenames:
+                for file in filenames:
+                    os.makedirs(os.path.dirname(os.path.join(dirname, file)), exist_ok = True)
+
+                    try:
+                        shutil.copyfile(os.path.join('install/dbscript-patch', file), os.path.join(dirname, file))
+                    except Exception as e:
+                        print(e)
+
+                        return False
+
+            try:
+                shutil.rmtree('install/dbscript-patch')
+            except:
+                pass
+
         dbs = {}
+        filename = 'install/dbscript-patch/ums-db-update-info.xml'
 
         for path in paths:
             file = os.path.join(path, filename)
@@ -1639,57 +1666,80 @@ class bn_installation(installation):
                 except Exception as e:
                     print(e)
 
-                    return None
+                    return False
 
-                for e in tree.findall('/install-db/data-source'):
+                for e in tree.findall('data-source'):
                     data_source = e.get('key', '').strip()
 
-                    if data_source not in dbs:
-                        dbs[data_source] = {}
+                    if data_source:
+                        if data_source not in dbs:
+                            dbs[data_source] = {}
 
-                    for element in e.findall('//item'):
-                        filename = element.get('filename', '').strip().replace('\\', '/')
-                        rollback = element.get('rollback', '').strip().replace('\\', '/')
+                        for element in e.findall('*//item'):
+                            xpath = '/'.join(re.sub(r'[\[\]\d]+', '', tree.getelementpath(element)).split('/')[1:-1])
 
-                        if not filename or not rollback:
-                            print('%s: filename or rollback is empty' % file)
+                            filename = builtin_os.normpath(element.get('filename', '').strip())
+                            rollback = builtin_os.normpath(element.get('rollback', '').strip())
 
-                            return None
+                            if not filename or not rollback:
+                                print('%s: filename or rollback is empty' % file)
 
-                        dbname = filename.split('/')[1]
+                                return False
 
-                        if dbname not in dbs[data_source]:
-                            dbs[data_source][dbname] = {}
+                            if xpath not in dbs[data_source]:
+                                dbs[data_source][xpath] = {}
 
-                        dbs[data_source][dbname][filename] = element.items()
+                            dbs[data_source][xpath][filename] = element.items()
 
-        lines = []
-        lines.append('<install-db>')
+        tree = etree.ElementTree(etree.XML("<install-db/>"))
 
         for data_source in dbs:
-            lines.append('  <data-source key="%s">' % data_source)
+            element = etree.Element('data-source')
+            element.set('key', data_source)
 
-            for lang in ('zh', 'en'):
-                lines.append('      <%s>' % lang)
+            for xpath in dbs[data_source]:
+                lang, dbname, normal, *_ = xpath.split('/')
 
-                for dbname in dbs[data_source]:
-                    lines.append('          <%s>' % dbname)
-                    lines.append('              <normal>')
+                lang_element = etree.Element(lang)
+                element.append(lang_element)
 
-                    for filename in sorted(dbs[data_source][dbname].keys()):
-                        attrs = ['k="%s"' % v for k, v in dbs[data_source][dbname][filename].items()]
-                        lines.append('                  <item %s/>' % ' '.join(sorted(attrs)))
+                dbname_element = etree.Element(dbname)
+                lang_element.append(dbname_element)
 
-                    lines.append('          </%s>' % dbname)
-                    lines.append('              </normal>')
+                normal_element = etree.Element(normal)
+                dbname_element.append(normal_element)
 
-                lines.append('      </%s>' % lang)
+                for filename in sorted(dbs[data_source][xpath]):
+                    item_element = etree.Element('item')
+                    normal_element.append(item_element)
 
-            lines.append('  </data-source>')
+                    rollback = ''
+                    attrs = []
 
-        lines.append('</install-db>')
+                    for key, value in sorted(dbs[data_source][xpath][filename]):
+                        if key == 'filename':
+                            pass
+                        elif key == 'rollback':
+                            rollback = value
+                        else:
+                            attrs.append((key, value))
 
-        #return '\n'.join(lines)
+                    item_element.set('filename', filename)
+                    item_element.set('rollback', rollback)
+
+                    for key, value in attrs:
+                        item_element.set(key, value)
+
+            tree.getroot().append(element)
+
+        os.makedirs(dirname, exist_ok = True)
+
+        try:
+            tree.write(os.path.join(dirname, 'ums-db-update-info.xml'), encoding='utf-8', pretty_print=True, xml_declaration=True)
+        except Exception as e:
+            print(e)
+
+            return False
 
         return True
 
@@ -1780,7 +1830,7 @@ class bn_installation(installation):
             if type == 'ems':
                 ppuname = 'e2e'
         else:
-            ppuname = 'bn'
+            pass
 
         tree.getroot().set('ppuname', ppuname)
 

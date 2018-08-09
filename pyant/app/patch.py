@@ -1,4 +1,5 @@
 import collections
+import csv
 import datetime
 import glob
 import os
@@ -1542,7 +1543,13 @@ class bn_installation(installation):
             for filename in glob.iglob('**/*.dll', recursive = True):
                 os.remove(filename)
 
-        return super().process(suffix, version, display_version, id_info, sp_next, type)
+        if not super().process(suffix, version, display_version, id_info, sp_next, type):
+            return False
+
+        if not self.change_info(zipname, id_info, version, type):
+            return False
+
+        return True
 
     def process_extend(self, zipname, type):
         path = os.path.join(self.path, 'build')
@@ -1759,20 +1766,20 @@ class bn_installation(installation):
 
                             attr_element = etree.Element('attr')
                             attr_element.set('name', '提交人员')
-                            attr_element.text = info['提交人员']
+                            attr_element.text = info['info']['提交人员']
                             element.append(attr_element)
 
                             attr_element = etree.Element('attr')
                             attr_element.set('name', '开发经理')
-                            attr_element.text = info['开发经理']
+                            attr_element.text = info['info']['开发经理']
                             element.append(attr_element)
 
                             attr_element = etree.Element('attr')
                             attr_element.set('name', '变更描述')
-                            attr_element.text = info['变更描述']
+                            attr_element.text = info['info']['变更描述']
                             element.append(attr_element)
 
-                            if info['变更类型'] in ('故障', ):
+                            if info['info']['变更类型'] in ('故障', ):
                                 tree_defect.getroot().append(element)
                             else:
                                 tree.getroot().append(element)
@@ -1786,26 +1793,25 @@ class bn_installation(installation):
 
                             attr_element = etree.Element('attr')
                             attr_element.set('name', '提交人员')
-                            attr_element.text = info['提交人员']
+                            attr_element.text = info['info']['提交人员']
                             element.append(attr_element)
 
                             attr_element = etree.Element('attr')
                             attr_element.set('name', '开发经理')
-                            attr_element.text = info['开发经理']
+                            attr_element.text = info['info']['开发经理']
                             element.append(attr_element)
 
                             attr_element = etree.Element('attr')
                             attr_element.set('name', '变更描述')
-                            attr_element.text = info['变更描述']
+                            attr_element.text = info['info']['变更描述']
                             element.append(attr_element)
 
-                            if info['变更类型'] in ('故障', ):
+                            if info['info']['变更类型'] in ('故障', ):
                                 tree_defect.getroot().append(element)
                             else:
                                 tree.getroot().append(element)
 
                         break
-
 
         dirname = os.path.join('update/patchinfo', datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
         os.makedirs(dirname, exist_ok = True)
@@ -1926,6 +1932,81 @@ class bn_installation(installation):
 
         return True
 
+    def change_info(self, zipname, id_info, version, type):
+        changes = [
+            [
+                '变更来源',
+                '变更类型',
+                '开发经理',
+                '提交人员',
+                '故障/需求ID',
+                '变更描述',
+                '变更分析和测试建议',
+                '集成测试人员',
+                '集成测试结果',
+                '补丁编号',
+                '变更文件',
+                '补丁文件',
+                '系统测试人员',
+                '系统测试方法',
+                '系统测试结果',
+                '走查人员',
+                '走查结果'
+            ]
+        ]
+
+        with builtin_os.chdir(self.output) as chdir:
+            for id in id_info:
+                for file in glob.iglob(os.path.join('patch', id, '*.xml')):
+                    info = self.get_patch_info(file)
+
+                    if info:
+                        filenames = []
+
+                        with builtin_os.chdir(id_info[id]) as chdir:
+                            for file in glob.iglob('**/*', recursive = True):
+                                if os.path.isfile(file):
+                                    filenames.append(builtin_os.normpath(file))
+
+                        changes.append(
+                            [
+                                info['info']['变更来源'],   # '变更来源'
+                                info['info']['变更类型'],   # '变更类型'
+                                info['info']['开发经理'],   # '开发经理'
+                                info['info']['提交人员'],   # '提交人员'
+                                info['info']['关联故障'],   # '故障/需求ID'
+                                info['info']['变更描述'],   # '变更描述'
+                                info['info']['影响分析'],   # '变更分析和测试建议'
+                                '',                         # '集成测试人员'
+                                '',                         # '集成测试结果'
+                                id,                         # '补丁编号'
+                                '\n'.join(info['source']),  # '变更文件'
+                                '\n'.join(filenames),       # '补丁文件'
+                                '',                         # '系统测试人员'
+                                '',                         # '系统测试方法'
+                                '',                         # '系统测试结果'
+                                info['info']['走查人员'],   # '走查人员'
+                                info['info']['走查结果'],   # '走查结果'
+                            ]
+                        )
+
+                    break
+
+        filename = os.path.join(self.installation(version, type), '%s.csv' % zipname)
+
+        os.makedirs(os.path.dirname(filename), exist_ok = True)
+
+        try:
+            with open(filename, 'w', newline='') as f:
+                writer = csv.writer(f)
+
+                for change in changes:
+                    writer.writerow(change)
+        except Exception as e:
+            print(e)
+
+        return False
+
     def patchset_names(self, version, type):
         prefix = '-%s-SP' % version
         last_index = 0
@@ -1962,7 +2043,16 @@ class bn_installation(installation):
 
             return None
 
-        info = {}
+        info = {
+            'source': [],
+            'info'  : {}
+        }
+
+        for e in tree.findall('patch/source/attr'):
+            name = e.get('name', '').strip()
+
+            if name:
+                info['source'].append(name)
 
         for e in tree.findall('patch/info/attr'):
             name = e.get('name', '').strip()
@@ -1972,7 +2062,7 @@ class bn_installation(installation):
             else:
                 value = ''
 
-            info[name] = value
+            info['info'][name] = value
 
         return info
 

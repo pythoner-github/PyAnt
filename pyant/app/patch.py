@@ -1665,10 +1665,10 @@ class bn_installation(installation):
                 pass
 
         dbs = {}
-        filename = 'install/dbscript-patch/ums-db-update-info.xml'
+        name = 'install/dbscript-patch/ums-db-update-info.xml'
 
         for path in paths:
-            file = os.path.join(path, filename)
+            file = os.path.join(path, name)
 
             if os.path.isfile(file):
                 try:

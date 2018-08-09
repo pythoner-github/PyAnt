@@ -1970,23 +1970,23 @@ class bn_installation(installation):
 
                         changes.append(
                             [
-                                info['info']['变更来源'],   # '变更来源'
-                                info['info']['变更类型'],   # '变更类型'
-                                info['info']['开发经理'],   # '开发经理'
-                                info['info']['提交人员'],   # '提交人员'
-                                info['info']['关联故障'],   # '故障/需求ID'
-                                info['info']['变更描述'],   # '变更描述'
-                                info['info']['影响分析'],   # '变更分析和测试建议'
-                                '',                         # '集成测试人员'
-                                '',                         # '集成测试结果'
-                                id,                         # '补丁编号'
-                                '\n'.join(info['source']),  # '变更文件'
-                                '\n'.join(filenames),       # '补丁文件'
-                                '',                         # '系统测试人员'
-                                '',                         # '系统测试方法'
-                                '',                         # '系统测试结果'
-                                info['info']['走查人员'],   # '走查人员'
-                                info['info']['走查结果'],   # '走查结果'
+                                info['info']['变更来源'],           # '变更来源'
+                                info['info']['变更类型'],           # '变更类型'
+                                info['info']['开发经理'],           # '开发经理'
+                                info['info']['提交人员'],           # '提交人员'
+                                info['info']['关联故障'],           # '故障/需求ID'
+                                info['info']['变更描述'],           # '变更描述'
+                                info['info']['影响分析'],           # '变更分析和测试建议'
+                                '',                                 # '集成测试人员'
+                                '',                                 # '集成测试结果'
+                                id,                                 # '补丁编号'
+                                '\n'.join(info['source']),          # '变更文件'
+                                '\n'.join(filenames),               # '补丁文件'
+                                '',                                 # '系统测试人员'
+                                '',                                 # '系统测试方法'
+                                '',                                 # '系统测试结果'
+                                info['info'].get('走查人员', ''),   # '走查人员'
+                                info['info'].get('走查结果', ''),   # '走查结果'
                             ]
                         )
 
@@ -2005,7 +2005,9 @@ class bn_installation(installation):
         except Exception as e:
             print(e)
 
-        return False
+            return False
+
+        return True
 
     def patchset_names(self, version, type):
         prefix = '-%s-SP' % version
@@ -2048,21 +2050,25 @@ class bn_installation(installation):
             'info'  : {}
         }
 
-        for e in tree.findall('patch/source/attr'):
-            name = e.get('name', '').strip()
+        for e in tree.findall('patch'):
+            home = e.get('name', '').strip()
+
+            for e in tree.findall('source/attr'):
+                name = e.get('name', '').strip()
 
             if name:
-                info['source'].append(name)
+                info['source'].append(builtin_os.join(home, name))
 
-        for e in tree.findall('patch/info/attr'):
-            name = e.get('name', '').strip()
+            if len(info['info']) == 0:
+                for e in tree.findall('info/attr'):
+                    name = e.get('name', '').strip()
 
-            if e.text:
-                value = e.text.strip()
-            else:
-                value = ''
+                    if e.text:
+                        value = e.text.strip()
+                    else:
+                        value = ''
 
-            info['info'][name] = value
+                    info['info'][name] = value
 
         return info
 

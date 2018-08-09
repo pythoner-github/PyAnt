@@ -1998,7 +1998,7 @@ class bn_installation(installation):
         os.makedirs(os.path.dirname(filename), exist_ok = True)
 
         try:
-            with open(filename, 'w', newline='') as f:
+            with open(filename, 'w', encoding='utf-8', newline='') as f:
                 writer = csv.writer(f)
 
                 for change in changes:
@@ -2048,7 +2048,21 @@ class bn_installation(installation):
 
         info = {
             'source': [],
-            'info'  : {}
+            'info'  : {
+                '提交人员': '',
+                '变更版本': '',
+                '变更类型': '',
+                '变更描述': '',
+                '关联故障': '',
+                '影响分析': '',
+                '依赖变更': '',
+                '走查人员': '',
+                '走查结果': '',
+                '自测结果': '',
+                '变更来源': '',
+                '开发经理': '',
+                '抄送人员': ''
+            }
         }
 
         for e in tree.findall('patch'):

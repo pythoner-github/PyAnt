@@ -1428,6 +1428,8 @@ class bn_installation(installation):
         return os.path.join(self.output, 'installation', version, 'installation', osname, 'patch')
 
     def process(self, suffix, version, display_version, id_info, sp_next, type):
+        patchsets = self.patchset_names(version, type)
+
         # pmu
 
         if os.path.isdir('pmu'):
@@ -1468,7 +1470,7 @@ class bn_installation(installation):
             else:
                 tmp_id_info[id] = value
 
-        if not self.inner_process(suffix, version, display_version, tmp_id_info, sp_next, type, ppuname):
+        if not self.inner_process(suffix, patchsets, version, display_version, tmp_id_info, sp_next, type, ppuname):
             return False
 
         return True
@@ -1524,19 +1526,19 @@ class bn_installation(installation):
 
         return True
 
-    def inner_process(self, suffix, version, display_version, id_info, sp_next, type, ppuname, pmuname = None):
+    def inner_process(self, suffix, patchsets, version, display_version, id_info, sp_next, type, ppuname, pmuname = None):
         zipname = '%s%s' % (self.name, suffix)
 
         if not self.process_extend(zipname, type):
             return False
 
-        if not self.dbscript_patch(sorted(id_info.values()), version, type):
+        if not self.dbscript_patch(sorted(id_info.values()), patchsets, version, type):
             return False
 
         if not self.update_patchinfo(sorted(id_info.keys()), type):
             return False
 
-        if not self.patchset_update_info(zipname, sorted(id_info.keys()), version, display_version, type, ppuname, pmuname):
+        if not self.patchset_update_info(zipname, patchsets, sorted(id_info.keys()), version, display_version, type, ppuname, pmuname):
             return False
 
         if builtin_os.osname() in ('linux', 'solaris'):
@@ -1633,8 +1635,8 @@ class bn_installation(installation):
 
         return True
 
-    def dbscript_patch(self, paths, version, type):
-        dirname = os.path.join('scripts', self.patchset_names(version, type)[-1])
+    def dbscript_patch(self, paths, patchsets, version, type):
+        dirname = os.path.join('scripts', patchsets[-1])
 
         if os.path.isdir('install/dbscript-patch'):
             filenames = []
@@ -1643,7 +1645,8 @@ class bn_installation(installation):
                 if os.path.isdir(dir):
                     with builtin_os.chdir(dir) as chdir:
                         for file in glob.iglob('**/*', recursive = True):
-                            filenames.append(os.path.join(os.path.basename(dir), file))
+                            if os.path.isfile(file):
+                                filenames.append(os.path.join(os.path.basename(dir), file))
 
             if filenames:
                 for file in filenames:
@@ -1826,7 +1829,7 @@ class bn_installation(installation):
 
         return True
 
-    def patchset_update_info(self, zipname, ids, version, display_version, type, ppuname, pmuname):
+    def patchset_update_info(self, zipname, patchsets, ids, version, display_version, type, ppuname, pmuname):
         tree = etree.ElementTree(etree.XML("<update-info/>"))
 
         if ppuname == 'bn-ip':
@@ -1880,9 +1883,7 @@ class bn_installation(installation):
 
         element = etree.Element('patchs')
 
-        names = self.patchset_names(version, type)
-
-        for name in names:
+        for name in patchsets:
             e = etree.Element('patch')
             e.text = name
             element.append(e)
@@ -2053,18 +2054,18 @@ class bn_installation(installation):
         for e in tree.findall('patch'):
             home = e.get('name', '').strip()
 
-            for e in tree.findall('source/attr'):
-                name = e.get('name', '').strip()
+            for element in e.findall('source/attr'):
+                name = element.get('name', '').strip()
 
-            if name:
-                info['source'].append(builtin_os.join(home, name))
+                if name:
+                    info['source'].append(builtin_os.join(home, name))
 
             if len(info['info']) == 0:
-                for e in tree.findall('info/attr'):
-                    name = e.get('name', '').strip()
+                for element in e.findall('info/attr'):
+                    name = element.get('name', '').strip()
 
-                    if e.text:
-                        value = e.text.strip()
+                    if element.text:
+                        value = element.text.strip()
                     else:
                         value = ''
 

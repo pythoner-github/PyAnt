@@ -1445,7 +1445,7 @@ class bn_installation(installation):
                         if os.path.isdir(os.path.join(value, 'pmu', self.name)):
                             tmp_id_info[id] = os.path.join(value, 'pmu', self.name)
 
-                    if not self.inner_process(suffix, version, display_version, tmp_id_info, sp_next, type, ppuname, pmuname):
+                    if not self.inner_process(suffix, patchsets, version, display_version, tmp_id_info, sp_next, type, ppuname, pmuname):
                         return False
 
             try:

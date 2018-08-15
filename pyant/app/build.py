@@ -991,9 +991,9 @@ class bn_build(build):
                 for e in tree.findall(builtin_os.join(type, _xpath)):
                     name = e.get('name')
                     dirname = e.get('dirname')
-                    dest = e.get('dest')
+                    dest = e.get('dest', '')
 
-                    if dest in (None, '.'):
+                    if dest in ('', '.'):
                         dest = ''
 
                     if name and dirname:
@@ -1016,7 +1016,7 @@ class bn_build(build):
                                         element_name = os.path.normpath(string.vars_expand(element_name.strip(), _vars))
                                         element_dest = os.path.normpath(string.vars_expand(element_dest.strip(), _vars))
 
-                                        if element_dest in (None, '.'):
+                                        if element_dest in ('', '.'):
                                             element_dest = element_name
 
                                         if dirname not in hash[name]:
@@ -1027,18 +1027,30 @@ class bn_build(build):
 
                                         found = False
 
-                                        for path in glob.iglob(element_name, recursive = True):
+                                        if os.path.isfile(element_name):
                                             found = True
 
-                                            if os.path.isfile(path):
-                                                hash[name][dirname][dest][element_dest] = path
-                                            elif os.path.isdir(path):
-                                                with builtin_os.chdir(path) as _chdir:
-                                                    for filename in glob.iglob('**/*', recursive = True):
-                                                        if os.path.isfile(filename):
-                                                            hash[name][dirname][dest][os.path.join(element_dest, filename)] = os.path.join(path, filename)
-                                            else:
-                                                pass
+                                            hash[name][dirname][dest][element_dest] = element_name
+                                        elif os.path.isdir(element_name):
+                                            found = True
+
+                                            with builtin_os.chdir(element_name) as _chdir:
+                                                for filename in glob.iglob('**/*', recursive = True):
+                                                    if os.path.isfile(filename):
+                                                        hash[name][dirname][dest][os.path.join(element_dest, filename)] = os.path.join(element_name, filename)
+                                        else:
+                                            for path in glob.iglob(element_name, recursive = True):
+                                                found = True
+
+                                                if os.path.isfile(path):
+                                                    hash[name][dirname][dest][path] = path
+                                                elif os.path.isdir(path):
+                                                    with builtin_os.chdir(path) as _chdir:
+                                                        for filename in glob.iglob('**/*', recursive = True):
+                                                            if os.path.isfile(filename):
+                                                                hash[name][dirname][dest][os.path.join(path, filename)] = os.path.join(path, filename)
+                                                else:
+                                                    pass
 
                                         if not found:
                                             print('no such file or directory: %s' % os.path.abspath(element_name))

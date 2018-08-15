@@ -178,7 +178,6 @@ def build(argv = None):
                 else:
                     path = os.path.join(output, name)
 
-
                 kw_option = '--output "%s"' % os.path.join(path, 'kwinject/kwinject.out')
 
                 if cmd:

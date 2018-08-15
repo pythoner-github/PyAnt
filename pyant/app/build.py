@@ -149,6 +149,11 @@ class build():
 
                     for path in paths:
                         if os.path.isdir(path):
+                            lang = None
+
+                            if builtin_os.normpath(path).startswith('code_c/'):
+                                lang = 'cpp'
+
                             with builtin_os.chdir(path) as chdir:
                                 mvn = maven.maven()
                                 mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
@@ -159,6 +164,11 @@ class build():
 
                                 if not mvn.compile(cmdline, 'mvn install -fn -U'):
                                     status = False
+
+                                    continue
+
+                                if not self.kw_check('.', lang):
+                                    # status = False
 
                                     continue
 
@@ -178,7 +188,10 @@ class build():
 
         return True
 
-    def kw_build(self, path):
+    def kw_build(self, path = None):
+        if not path:
+            path = '.'
+
         if os.path.isdir(path):
             with builtin_os.chdir(path) as chdir:
                 if os.path.isfile('kwinject/kwinject.out'):
@@ -240,6 +253,80 @@ class build():
                         print(line)
 
                     if not cmd.result():
+                        return False
+
+            return True
+        else:
+            print('no such directory: %s' % os.path.normpath(path))
+
+            return False
+
+    def kw_check(self, path = None, lang = None):
+        if not path:
+            path = '.'
+
+        if os.path.isdir(path):
+            with builtin_os.chdir(path) as chdir:
+                kwinject = 'target/kwinject.out'
+
+                if not os.path.isdir(os.path.dirname(kwinject)):
+                    os.makedirs(os.path.dirname(kwinject), exist_ok = True)
+
+                cmd = command.command()
+
+                if lang == 'cpp':
+                    cmdline = 'kwinject --output %s mvn install -U -fn' % kwinject
+                else:
+                    cmdline = 'kwmaven --output %s install -U -fn' % kwinject
+
+                for line in cmd.command(cmdline):
+                    print(line)
+
+                if not cmd.result():
+                    return False
+
+                with builtin_os.chdir(os.path.dirname(kwinject)) as _chdir:
+                    kwreport = 'kwreport.xml'
+
+                    cmdlines = [
+                        'kwcheck create kwcheck',
+                        'kwcheck import %s' % os.path.basename(kwinject),
+                        'kwcheck run -F xml --report %s --license-host %s --license-port %s' % (kwreport, const.KLOCWORK_LICENSE_HOST, const.KLOCWORK_LICENSE_PORT)
+                    ]
+
+                    for cmdline in cmdlines:
+                        for line in cmd.command(cmdline):
+                            print(line)
+
+                        if not cmd.result():
+                            return False
+
+                    try:
+                        tree = etree.parse(kwreport)
+                    except Exception as e:
+                        print(e)
+
+                        return False
+
+                    namespace = tree.getroot().nsmap
+
+                    defect = {}
+
+                    for e in tree.findall('problem', namespace):
+                        info = {}
+
+                        for element in e.iter():
+                            tag = element.tag.replace('{%s}' % namespace[None], '')
+
+                            if tag in ('file', 'line', 'method', 'code', 'message', 'severity'):
+                                info[tag] = element.text
+
+                        if info['severity'] not in defect:
+                            defect[info['severity']] = []
+
+                        defect[info['severity']].append(info)
+
+                    if ('Critical' in defect) or ('Error' in defect):
                         return False
 
             return True

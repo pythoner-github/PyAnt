@@ -116,3 +116,13 @@ if os.environ.get('KLOCWORK_HTTP'):
     KLOCWORK_HTTP = os.environ['KLOCWORK_HTTP']
 else:
     KLOCWORK_HTTP = 'http://10.8.10.15:8080'
+
+if os.environ.get('KLOCWORK_LICENSE_HOST'):
+    KLOCWORK_LICENSE_HOST = os.environ['KLOCWORK_LICENSE_HOST']
+else:
+    KLOCWORK_LICENSE_HOST = '10.42.171.61'
+
+if os.environ.get('KLOCWORK_LICENSE_PORT'):
+    KLOCWORK_LICENSE_PORT = os.environ['KLOCWORK_LICENSE_PORT']
+else:
+    KLOCWORK_LICENSE_PORT = '27000'

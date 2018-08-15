@@ -1243,7 +1243,7 @@ class bn_patch(patch):
         for x in type.split(','):
             x = x.strip()
 
-            if x in ('ems', 'nms', 'lct', 'update', 'upgrade', 'service'):
+            if x in ('ems', 'nms', 'upgrade', 'lct', 'su31', 'su31nm', 'su31-e2e', 'su31-nme2e', 'service'):
                 if x not in types:
                     types.append(x)
             else:

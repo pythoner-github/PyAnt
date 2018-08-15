@@ -1010,15 +1010,20 @@ class bn_build(build):
                             with builtin_os.chdir(dirname) as chdir:
                                 for element in e.findall('file'):
                                     element_name = element.get('name')
+                                    element_dest = element.get('dest', '')
 
                                     if element_name:
-                                        element_name = os.path.normpath(element_name.strip())
+                                        element_name = os.path.normpath(string.vars_expand(element_name.strip(), _vars))
+                                        element_dest = os.path.normpath(string.vars_expand(element_dest.strip(), _vars))
+
+                                        if element_dest in (None, '.'):
+                                            element_dest = element_name
 
                                         if dirname not in hash[name]:
                                             hash[name][dirname] = collections.OrderedDict()
 
                                         if dest not in hash[name][dirname]:
-                                            hash[name][dirname][dest] = []
+                                            hash[name][dirname][dest] = {}
 
                                         found = False
 
@@ -1026,12 +1031,12 @@ class bn_build(build):
                                             found = True
 
                                             if os.path.isfile(path):
-                                                hash[name][dirname][dest].append(path)
+                                                hash[name][dirname][dest][element_dest] = path
                                             elif os.path.isdir(path):
-                                                for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
-                                                    if os.path.isfile(filename):
-                                                        if filename not in hash[name][dirname][dest]:
-                                                            hash[name][dirname][dest].append(filename)
+                                                with builtin_os.chdir(path) as _chdir:
+                                                    for filename in glob.iglob('**/*', recursive = True):
+                                                        if os.path.isfile(filename):
+                                                            hash[name][dirname][dest][os.path.join(element_dest, filename)] = os.path.join(path, filename)
                                             else:
                                                 pass
 
@@ -1053,12 +1058,12 @@ class bn_build(build):
 
                                                     if os.path.isfile(path):
                                                         if path in hash[name][dirname][dest]:
-                                                            hash[name][dirname][dest].remove(path)
+                                                            del hash[name][dirname][dest][path]
                                                     elif os.path.isdir(path):
                                                         for filename in glob.iglob(os.path.join(path, '**/*'), recursive = True):
                                                             if os.path.isfile(filename):
                                                                 if filename in hash[name][dirname][dest]:
-                                                                    hash[name][dirname][dest].remove(filename)
+                                                                    del hash[name][dirname][dest][filename]
                                                     else:
                                                         pass
 
@@ -1071,8 +1076,8 @@ class bn_build(build):
             zipinfo = collections.OrderedDict()
 
             for dirname, dest_info in dirname_info.items():
-                for dest, filename_list in dest_info.items():
-                    for filename in filename_list:
+                for dest, filename_info in dest_info.items():
+                    for destname, filename in filename_info.items():
                         if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib', '.manifest'):
                             continue
 
@@ -1089,10 +1094,10 @@ class bn_build(build):
                                     continue
 
                         if os.path.isfile(os.path.join(dirname, filename)):
-                            arcname = None
+                            arcname = destname
 
                             if expand_filename:
-                                filename, arcname = expand_filename(version, dirname, filename, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
+                                filename, arcname = expand_filename(version, dirname, filename, destname, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
 
                             srcname = os.path.join(dirname, filename)
 
@@ -1127,8 +1132,8 @@ class bn_build(build):
                     print(line)
 
                 for dirname, dest_info in dirname_info.items():
-                    for dest, filename_list in dest_info.items():
-                        for filename in filename_list:
+                    for dest, filename_info in dest_info.items():
+                        for destname, filename in filename_info.items():
                             if os.path.splitext(filename)[-1] in ('.debuginfo', '.pdb', '.exp', '.lib'):
                                 continue
 
@@ -1145,10 +1150,10 @@ class bn_build(build):
                                         continue
 
                             if os.path.isfile(os.path.join(dirname, filename)):
-                                dst = filename
+                                dst = destname
 
                                 if expand_filename:
-                                    filename, dst = expand_filename(version, dirname, filename, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
+                                    filename, dst = expand_filename(version, dirname, filename, destname, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
 
                                 dst = os.path.join(zipfile_home, name, dest, dst)
 
@@ -1270,8 +1275,8 @@ class bn_build(build):
                 if os.path.isdir(path):
                     os.environ['WDM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
 
-    def expand_filename(self, version, dirname, filename, type, tmpdir, vars = None):
-        dst = filename
+    def expand_filename(self, version, dirname, filename, destname, type, tmpdir, vars = None):
+        dst = destname
         name = os.path.join(dirname, filename)
 
         if vars:

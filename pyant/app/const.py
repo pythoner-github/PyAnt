@@ -25,7 +25,7 @@ else:
 if os.environ.get('METRIC_HTTP'):
     METRIC_HTTP = os.environ['METRIC_HTTP']
 else:
-    METRIC_HTTP = 'http://10.41.213.28/WebService/ZTE.Wireline.WebService/BuildAPI.ashx'
+    METRIC_HTTP = 'http://10.46.205.130/WebService/ZTE.Wireline.WebService/BuildAPI.ashx'
 
 if os.environ.get('METRIC_ID_BN_ITN'):
     METRIC_ID_BN_ITN = os.environ['METRIC_ID_BN_ITN']
@@ -116,6 +116,11 @@ if os.environ.get('KLOCWORK_HTTP'):
     KLOCWORK_HTTP = os.environ['KLOCWORK_HTTP']
 else:
     KLOCWORK_HTTP = 'http://10.8.10.15:8080'
+
+if os.environ.get('KLOCWORK_PCONF_FILE'):
+    KLOCWORK_PCONF_FILE = os.environ['KLOCWORK_PCONF_FILE']
+else:
+    KLOCWORK_PCONF_FILE = '/opt/analysis_profile.pconf'
 
 if os.environ.get('KLOCWORK_LICENSE_HOST'):
     KLOCWORK_LICENSE_HOST = os.environ['KLOCWORK_LICENSE_HOST']

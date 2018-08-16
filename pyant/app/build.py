@@ -293,7 +293,7 @@ class build():
                     cmdlines = [
                         'kwcheck create kwcheck',
                         'kwcheck import %s' % os.path.basename(kwinject),
-                        'kwcheck import %s' % const.KLOCWORK_MCONF_FILE,
+                        'kwcheck import %s' % const.KLOCWORK_PCONF_FILE,
                         'kwcheck run -F xml --report %s --license-host %s --license-port %s' % (kwreport, const.KLOCWORK_LICENSE_HOST, const.KLOCWORK_LICENSE_PORT)
                     ]
 

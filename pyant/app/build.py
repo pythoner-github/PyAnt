@@ -335,8 +335,10 @@ class build():
                     if ('Critical' in defect) or ('Error' in defect):
                         for severity in ('Critical', 'Error'):
                             if severity in defect:
-                                print('klocwork %s defect:' % severity.lower())
-                                print('-' * 60)
+                                print()
+                                print('=' * 60)
+                                print('KLOCWORK %s DEFECT:' % severity.upper())
+                                print('=' * 60)
 
                                 for code in defect[severity]:
                                     print('  %s:' % code)
@@ -347,8 +349,6 @@ class build():
                                         print('    method   : %s' % info['method'])
                                         print('    message  : %s' % info['message'])
                                         print()
-
-                            print()
 
                         #return False
 

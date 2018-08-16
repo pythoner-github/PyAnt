@@ -155,20 +155,20 @@ class build():
                                 lang = 'cpp'
 
                             with builtin_os.chdir(path) as chdir:
-                                mvn = maven.maven()
-                                mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
-
-                                mvn.clean()
-
-                                cmdline = 'mvn install -fn -U'
-
-                                if not mvn.compile(cmdline, 'mvn install -fn -U'):
-                                    status = False
-
-                                    continue
+                                # mvn = maven.maven()
+                                # mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
+                                #
+                                # mvn.clean()
+                                #
+                                # cmdline = 'mvn install -fn -U'
+                                #
+                                # if not mvn.compile(cmdline, 'mvn install -fn -U'):
+                                #     status = False
+                                #
+                                #     continue
 
                                 if not self.kw_check('.', lang):
-                                    # status = False
+                                    status = False
 
                                     continue
 
@@ -272,25 +272,28 @@ class build():
                 if not os.path.isdir(os.path.dirname(kwinject)):
                     os.makedirs(os.path.dirname(kwinject), exist_ok = True)
 
-                cmd = command.command()
+                mvn = maven.maven()
+                mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
+
+                mvn.clean()
 
                 if lang == 'cpp':
                     cmdline = 'kwinject --output %s mvn install -U -fn' % kwinject
                 else:
                     cmdline = 'kwmaven --output %s install -U -fn' % kwinject
 
-                for line in cmd.command(cmdline):
-                    print(line)
-
-                if not cmd.result():
+                if not mvn.compile(cmdline):
                     return False
 
                 with builtin_os.chdir(os.path.dirname(kwinject)) as _chdir:
                     kwreport = 'kwreport.xml'
 
+                    cmd = command.command()
+
                     cmdlines = [
                         'kwcheck create kwcheck',
                         'kwcheck import %s' % os.path.basename(kwinject),
+                        'kwcheck import %s' % const.KLOCWORK_MCONF_FILE,
                         'kwcheck run -F xml --report %s --license-host %s --license-port %s' % (kwreport, const.KLOCWORK_LICENSE_HOST, const.KLOCWORK_LICENSE_PORT)
                     ]
 
@@ -322,12 +325,32 @@ class build():
                                 info[tag] = element.text
 
                         if info['severity'] not in defect:
-                            defect[info['severity']] = []
+                            defect[info['severity']] = {}
 
-                        defect[info['severity']].append(info)
+                        if info['code'] not in defect[info['severity']]:
+                            defect[info['severity']][info['code']] = []
+
+                        defect[info['severity']][info['code']].append(info)
 
                     if ('Critical' in defect) or ('Error' in defect):
-                        return False
+                        for severity in ('Critical', 'Error'):
+                            if severity in defect:
+                                print('klocwork %s defect:' % severity.lower())
+                                print('-' * 60)
+
+                                for code in defect[severity]:
+                                    print('  %s:' % code)
+
+                                    for info in defect[severity][code]:
+                                        print('    file     : %s' % info['file'])
+                                        print('    line     : %s' % info['line'])
+                                        print('    method   : %s' % info['method'])
+                                        print('    message  : %s' % info['message'])
+                                        print()
+
+                            print()
+
+                        #return False
 
             return True
         else:

@@ -13,7 +13,7 @@ import zipfile
 
 from lxml import etree
 
-from pyant import check, command, git, maven, password, string
+from pyant import check, command, git, maven, password, smtp, string
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
@@ -285,6 +285,8 @@ class build():
                 if not mvn.compile(cmdline):
                     return False
 
+                defect = {}
+
                 with builtin_os.chdir(os.path.dirname(kwinject)) as _chdir:
                     kwreport = 'kwreport.xml'
 
@@ -313,8 +315,6 @@ class build():
 
                     namespace = tree.getroot().nsmap
 
-                    defect = {}
-
                     for e in tree.findall('problem', namespace):
                         info = {}
 
@@ -332,25 +332,41 @@ class build():
 
                         defect[info['severity']][info['code']].append(info)
 
-                    if ('Critical' in defect) or ('Error' in defect):
-                        for severity in ('Critical', 'Error'):
-                            if severity in defect:
-                                print()
-                                print('=' * 60)
-                                print('KLOCWORK %s DEFECT:' % severity.upper())
-                                print('=' * 60)
+                if ('Critical' in defect) or ('Error' in defect):
+                    lines = []
 
-                                for code in defect[severity]:
-                                    print('  %s:' % code)
+                    for severity in ('Critical', 'Error'):
+                        if severity in defect:
+                            lines.append()
+                            lines.append('=' * 60)
+                            lines.append('KLOCWORK %s DEFECT:' % severity.upper())
+                            lines.append('=' * 60)
 
-                                    for info in defect[severity][code]:
-                                        print('    file     : %s' % info['file'])
-                                        print('    line     : %s' % info['line'])
-                                        print('    method   : %s' % info['method'])
-                                        print('    message  : %s' % info['message'])
-                                        print()
+                            for code in defect[severity]:
+                                lines.append('  %s:' % code)
 
-                        #return False
+                                for info in defect[severity][code]:
+                                    lines.append('    file     : %s' % info['file'])
+                                    lines.append('    line     : %s' % info['line'])
+                                    lines.append('    method   : %s' % info['method'])
+                                    lines.append('    message  : %s' % info['message'])
+                                    lines.append()
+
+                    for line in lines:
+                        print(line)
+
+                    if os.environ.get('GERRIT_EMAIL'):
+                        admin_addrs = None
+
+                        if os.environ.get('SENDMAIL.ADMIN'):
+                            admin_addrs = string.split(os.environ.get('SENDMAIL.ADMIN'))
+
+                        smtp.sendmail(
+                            '<%s_DASHBOARD_GERRIT_BUILD 通知> KW检查失败, 请尽快处理' % self.name.upper(),
+                            os.environ['GERRIT_EMAIL'], admin_addrs, '<br>\n'.join(lines)
+                        )
+
+                    #return False
 
             return True
         else:

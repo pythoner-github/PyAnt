@@ -6,7 +6,7 @@ import tempfile
 
 from lxml import etree
 
-from pyant import command, git, smtp
+from pyant import command, git, smtp, string
 from pyant.builtin import os as builtin_os
 
 __all__ = ('maven',)
@@ -571,7 +571,7 @@ class maven:
             admin_addrs = None
 
             if os.environ.get('SENDMAIL.ADMIN'):
-                admin_addrs = [x.strip() for x in os.environ.get('SENDMAIL.ADMIN').split(',')]
+                admin_addrs = string.split(os.environ.get('SENDMAIL.ADMIN'))
 
             for file in self.errors:
                 if file:

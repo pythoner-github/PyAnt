@@ -549,15 +549,7 @@ class patch():
                     continue
 
                 if x in ('走查人员', '抄送人员'):
-                    authors = []
-
-                    for author in info['info'][x].split(','):
-                        author = author.strip()
-
-                        if author not in authors:
-                            authors.append(author)
-
-                    info['info'][x] = authors
+                    info['info'][x] = string.split(info['info'][x])
 
                     continue
 
@@ -1052,7 +1044,7 @@ class bn_patch(patch):
         osname = e.get('os', '').strip()
 
         if osname:
-            info['os'] = tuple(x.strip() for x in osname.split(','))
+            info['os'] = tuple(string.split(osname))
 
             if not set(info['os']) - set(('windows', 'linux', 'solaris')):
                 print('patch[%s]: patch节点的os属性值错误, 只能包含windows, linux, solaris' % index)

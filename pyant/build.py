@@ -5,7 +5,7 @@ import re
 import shutil
 import sys
 
-from pyant import check
+from pyant import check, string
 from pyant.app import const, patch
 from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
@@ -232,7 +232,7 @@ def build(argv = None):
                 module, paths, branch, *_ = arg
 
                 if paths:
-                    paths = [x.strip() for x in paths.split(',')]
+                    paths = string.split(paths)
                 else:
                     paths = []
 

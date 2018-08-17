@@ -337,7 +337,7 @@ class build():
 
                     for severity in ('Critical', 'Error'):
                         if severity in defect:
-                            lines.append()
+                            lines.append('')
                             lines.append('=' * 60)
                             lines.append('KLOCWORK %s DEFECT:' % severity.upper())
                             lines.append('=' * 60)
@@ -350,7 +350,7 @@ class build():
                                     lines.append('    line     : %s' % info['line'])
                                     lines.append('    method   : %s' % info['method'])
                                     lines.append('    message  : %s' % info['message'])
-                                    lines.append()
+                                    lines.append('')
 
                     for line in lines:
                         print(line)

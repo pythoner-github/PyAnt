@@ -7,6 +7,7 @@ import os.path
 import random
 import re
 import shutil
+import tarfile
 import tempfile
 import zipfile
 
@@ -339,6 +340,11 @@ class patch():
                                 status = False
 
                                 continue
+
+                        if not self.build_check(os.path.join(tempdir, str(index))):
+                            status = False
+
+                            continue
 
                         current[-1][-1] = True
 
@@ -838,6 +844,18 @@ class patch():
     def build_deploy_script(self, types, zipfilename, tmpdir = None):
         return True
 
+    def build_check(self, path):
+        with builtin_os.chdir(path) as chdir:
+            for file in glob.iglob('**/*.xml', recursive = True):
+                try:
+                    etree.parse(file)
+                except Exception as e:
+                    print(e)
+
+                return False
+
+        return True
+
     def sendmail(self, notification, to_addrs, cc_addrs = None, lines = None, file = None):
         if lines is None:
             lines = []
@@ -1001,6 +1019,36 @@ class umebn_patch(patch):
                     status = False
 
         return status
+
+    def build_check(self, path):
+        with builtin_os.chdir(path) as chdir:
+            for appname in glob.iglob('*'):
+                if os.path.isdir(appname):
+                    with builtin_os.chdir(appname) as _chdir:
+                        # commonservice-instance-config.xml
+                        # *.spd
+                        # *.tar.gz
+
+                        if not os.path.isfile('commonservice-instance-config.xml'):
+                            print('no such file: %s' % os.path.abspath('commonservice-instance-config.xml'))
+
+                            return False
+
+                        if not os.path.isfile('%s.spd' % appname):
+                            print('no such file: %s' % os.path.abspath('%s.spd' % appname))
+
+                            return False
+
+                        for tarname in glob.iglob('%s*.tar.gz' % appname):
+                            with tarfile.open(tarname) as tar:
+                                try:
+                                    tar.getmember(os.path.join(appname, 'install.sh'))
+                                except Exception as e:
+                                    print('no such file: %s(%s)' % (os.path.join(appname, 'install.sh'), os.path.abspath(tarname)))
+
+                                    return False
+
+        return super().build_check(path)
 
 class sdno_patch(umebn_patch):
     def __init__(self, path):

@@ -1118,6 +1118,7 @@ class bn_build(build):
                     name = e.get('name')
                     dirname = e.get('dirname')
                     dest = e.get('dest', '')
+                    ver = e.get('version', version)
 
                     if dest in ('', '.'):
                         dest = ''
@@ -1128,6 +1129,9 @@ class bn_build(build):
                         name = builtin_os.normpath(string.vars_expand(name.strip(), _vars))
                         dirname = builtin_os.normpath(os.path.join(os.path.dirname(file), string.vars_expand(dirname.strip(), _vars)))
                         dest = builtin_os.normpath(string.vars_expand(dest.strip(), _vars))
+                        ver = builtin_os.normpath(string.vars_expand(ver.strip(), _vars))
+
+                        name = '%s_%s' % (name, ver.replace(' ', ''))
 
                         if os.path.isdir(dirname):
                             if name not in hash:
@@ -1245,7 +1249,7 @@ class bn_build(build):
                             zipinfo[builtin_os.normpath(os.path.join(dest, arcname))] = srcname
 
             try:
-                zipname = os.path.join(zipfile_home, '%s_%s.zip' % (name, version.replace(' ', '')))
+                zipname = os.path.join(zipfile_home, '%s.zip' % name)
 
                 if not os.path.isdir(os.path.dirname(zipname)):
                     os.makedirs(os.path.dirname(zipname), exist_ok = True)

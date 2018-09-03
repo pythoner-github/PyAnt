@@ -1002,6 +1002,81 @@ class bn_build(build):
 
             return False
 
+    def dashboard_gerrit(self, module, repos, revision, branch = None):
+        module_path = self.repos[module]
+
+        if os.path.isdir(module_path):
+            if not git.reset(module_path, branch):
+                return False
+
+        if not self.update(module, branch):
+            return False
+
+        status = True
+
+        if os.path.isdir(module_path):
+            with builtin_os.chdir(module_path) as chdir:
+                cmd = command.command()
+
+                for line in cmd.command('git fetch %s +refs/changes/*:refs/changes/*' % repos):
+                    print(line)
+
+                if not cmd.result():
+                    return False
+
+                for line in cmd.command('git checkout -f %s' % revision):
+                    print(line)
+
+                if not cmd.result():
+                    return False
+
+                status = True
+
+                logs = git.log(None, '-1 --stat=256 %s' % revision, True)
+
+                if logs:
+                    paths = []
+
+                    for log in logs:
+                        if log['changes']:
+                            for k, v in log['changes'].items():
+                                for file in v:
+                                    filenames = (file,)
+
+                                    for filename in filenames:
+                                        dir = self.pom_path(filename)
+
+                                        if dir:
+                                            if dir not in paths:
+                                                paths.append(dir)
+
+                    for path in paths:
+                        if os.path.isdir(path):
+                            lang = None
+
+                            if builtin_os.normpath(path).startswith('code_c/'):
+                                lang = 'cpp'
+
+                            with builtin_os.chdir(path) as chdir:
+                                # mvn = maven.maven()
+                                # mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
+                                #
+                                # mvn.clean()
+                                #
+                                # cmdline = 'mvn install -fn -U'
+                                #
+                                # if not mvn.compile(cmdline, 'mvn install -fn -U'):
+                                #     status = False
+                                #
+                                #     continue
+
+                                if not self.kw_check('.', lang):
+                                    status = False
+
+                                    continue
+
+        return status
+
     def dashboard_monitor(self, branch = None):
         if not self.update(None, branch):
             return False

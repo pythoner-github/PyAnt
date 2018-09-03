@@ -251,7 +251,10 @@ def build(argv = None):
                 revision = os.environ.get('GERRIT_PATCHSET_REVISION')
                 branch = os.environ.get('GERRIT_BRANCH')
 
-                return build.dashboard_gerrit(repos, revision, branch)
+                if name in ('bn',):
+                    return build.dashboard_gerrit(arg[0], repos, revision, branch)
+                else:
+                    return build.dashboard_gerrit(repos, revision, branch)
             elif command == 'dashboard_monitor':
                 branch = arg[0]
 

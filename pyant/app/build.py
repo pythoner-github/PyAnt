@@ -90,6 +90,10 @@ class build():
         return True
 
     def dashboard(self, paths, branch = None):
+        if os.path.isdir(self.path):
+            if not git.reset(self.path, branch):
+                return False
+
         if not self.update(branch):
             return False
 
@@ -983,8 +987,22 @@ class bn_build(build):
         return False
 
     def dashboard(self, module, paths, branch = None):
-        if not self.update(module, branch):
-            return False
+        modules = []
+
+        if module in ('ptn', 'ptn2'):
+            modules = ['ptn', 'ptn2']
+        else:
+            modules = [module]
+
+        for _module in modules:
+            module_path = self.repos[_module]
+
+            if os.path.isdir(module_path):
+                if not git.reset(module_path, branch):
+                    return False
+
+            if not self.update(_module, branch):
+                return False
 
         if not os.environ.get('NOT_DASHBOARD_DEVTOOLS'):
             if not self.update('devtools', branch):
@@ -1003,16 +1021,32 @@ class bn_build(build):
             return False
 
     def dashboard_gerrit(self, module, repos, revision, branch = None):
-        module_path = self.repos[module]
+        modules = []
 
-        if os.path.isdir(module_path):
-            if not git.reset(module_path, branch):
+        if module in ('ptn', 'ptn2'):
+            modules = ['ptn', 'ptn2']
+        else:
+            modules = [module]
+
+        for _module in modules:
+            module_path = self.repos[_module]
+
+            if os.path.isdir(module_path):
+                if not git.reset(module_path, branch):
+                    return False
+
+            if not self.update(_module, branch):
                 return False
 
-        if not self.update(module, branch):
-            return False
+        if not os.environ.get('NOT_DASHBOARD_DEVTOOLS'):
+            if not self.update('devtools', branch):
+                return False
+
+        self.environ('cpp')
 
         status = True
+
+        module_path = self.repos[module]
 
         if os.path.isdir(module_path):
             with builtin_os.chdir(module_path) as chdir:
@@ -1047,8 +1081,16 @@ class bn_build(build):
                                         dir = self.pom_path(filename)
 
                                         if dir:
+                                            if re.search(r'^code_c\/database\/.*\/xml\/.*\.xml$', filename):
+                                                if os.path.isfile('code_c/database/dbscript/pom.xml'):
+                                                    if os.path.isfile(os.path.join(os.path.dirname(filename), '../pom.xml')):
+                                                        if 'code_c/database/dbscript' not in paths:
+                                                            paths.append('code_c/database/dbscript')
+
                                             if dir not in paths:
                                                 paths.append(dir)
+
+                    paths = expand_dashboard_gerrit(module, paths)
 
                     for path in paths:
                         if os.path.isdir(path):
@@ -1301,7 +1343,7 @@ class bn_build(build):
                         if not cross_platform:
                             if builtin_os.osname() in ('windows', 'windows-x64'):
                                 if os.path.splitext(filename)[-1] in ('.so', '.sh'):
-                                    if os.path.splitext(filename)[-1] in ('.so'):
+                                    if os.path.splitext(filename)[-1] in ('.so', ):
                                         if 'ruby/' not in builtin_os.normpath(filename):
                                             continue
                                     else:
@@ -1318,7 +1360,7 @@ class bn_build(build):
 
                             srcname = os.path.join(dirname, filename)
 
-                            if type in ('upgrade'):
+                            if type in ('upgrade', ):
                                 srcname = self.upgrade_expand_filename(srcname, tmpdir)
 
                             zipinfo[builtin_os.normpath(os.path.join(dest, arcname))] = srcname
@@ -1357,7 +1399,7 @@ class bn_build(build):
                             if not cross_platform:
                                 if builtin_os.osname() in ('windows', 'windows-x64'):
                                     if os.path.splitext(filename)[-1] in ('.so', '.sh'):
-                                        if os.path.splitext(filename)[-1] in ('.so'):
+                                        if os.path.splitext(filename)[-1] in ('.so',):
                                             if 'ruby/' not in builtin_os.normpath(filename):
                                                 continue
                                         else:
@@ -1397,11 +1439,11 @@ class bn_build(build):
             return const.METRIC_ID_BN_ITN
         elif module_name in ('ptn2', 'ip'):
             return const.METRIC_ID_BN_IPN
-        elif module_name in ('e2e'):
+        elif module_name in ('e2e',):
             return const.METRIC_ID_BN_E2E
         elif module_name in ('xmlfile', 'nbi', 'inventory'):
             return const.METRIC_ID_BN_NBI
-        elif module_name in ('wdm'):
+        elif module_name in ('wdm',):
             return const.METRIC_ID_BN_OTN
         else:
             return None
@@ -1523,10 +1565,10 @@ class bn_build(build):
                     if version:
                         for e in tree.findall('version'):
                             e.text = version
-                elif os.path.basename(name) in ('dbtool-config.xml'):
+                elif os.path.basename(name) in ('dbtool-config.xml',):
                     for e in tree.findall('ems_type'):
                         e.text = type
-                elif os.path.basename(name) in ('package-update-info.xml'):
+                elif os.path.basename(name) in ('package-update-info.xml',):
                     tree.getroot().set('package-name', tree.getroot().get('package-name').replace(' -B', '-B').replace(' ', '_'))
                 else:
                     pass
@@ -1705,7 +1747,7 @@ class bn_build(build):
     def expand_dashboard(self, path, file):
         file = builtin_os.normpath(file)
 
-        if path in ('U31R22_INTERFACE'):
+        if path in ('U31R22_INTERFACE',):
             if file.startswith('code/asn/'):
                 return ('code/finterface', 'code_c/finterface')
             elif file.startswith('code_c/asn/sdh-wdm/qx-interface/asn/'):
@@ -1718,11 +1760,11 @@ class bn_build(build):
                 return 'code_c/qxinterface/qxotntlv'
             else:
                 return file
-        elif path in ('U31R22_NBI'):
+        elif path in ('U31R22_NBI',):
             if file.startswith('code_c/adapters/xtncorba/corbaidl/'):
-                return ('code_c/adapters/xtncorba/corbaidl/corbaidl', 'code_c/adapters/xtncorba/corbaidl/corbaidl2')
+                return ('code_c/adapters/xtncorba/corbaidl/corbaidl_common', 'code_c/adapters/xtncorba/corbaidl/corbaidl')
             elif file.startswith('code_c/adapters/xtntmfcorba/corbaidl/'):
-                return ('adapters/xtntmfcorba/corbaidl/corbaidl', 'code_c/adapters/xtntmfcorba/corbaidl/corbaidl2')
+                return ('code_c/adapters/xtntmfcorba/corbaidl/corbaidl_common', 'code_c/adapters/xtntmfcorba/corbaidl/corbaidl')
             else:
                 return file
         else:
@@ -1732,3 +1774,53 @@ class bn_build(build):
                         return ('code_c/database/dbscript', file)
 
             return file
+
+    def expand_dashboard_gerrit(self, module, paths):
+        _paths = []
+
+        for path in paths:
+            _path = path
+
+            if module in ('U31R22_INTERFACE',):
+                if path.startswith('code/finterface'):
+                    _path = 'code/finterface'
+                elif path.startswith('code/netconf'):
+                    _path = 'code/netconf'
+                elif path.startswith('code/otn/wdmqx'):
+                    _path = 'code/otn/wdmqx'
+                elif path.startswith('code/ptn/qx'):
+                    _path = 'code/ptn/qx'
+                elif path.startswith('code/ptn/netconf_sptn'):
+                    _path = 'code/ptn/netconf_sptn'
+                elif path.startswith('code_c/finterface'):
+                    _path = 'code_c/finterface'
+                elif path.startswith('code_c/qxinterface/qxinterface'):
+                    _path = 'code_c/qxinterface/qxinterface'
+                elif path.startswith('code_c/qxinterface/qx5800'):
+                    _path = 'code_c/qxinterface/qx5800'
+                elif path.startswith('code_c/qxinterface/qxwdm721'):
+                    _path = 'code_c/qxinterface/qxwdm721'
+                elif path.startswith('code_c/qxinterface/qxotntlv'):
+                    _path = 'code_c/qxinterface/qxotntlv'
+                else:
+                    _path = path
+            elif module in ('U31R22_NBI',):
+                if path.startswith('code_c/adapters/xtncorba/corbaidl'):
+                    if 'code_c/adapters/xtncorba/corbaidl/corbaidl_common' not in _paths:
+                        _paths.append('code_c/adapters/xtncorba/corbaidl/corbaidl_common')
+
+                    path = 'code_c/adapters/xtncorba/corbaidl/corbaidl'
+                elif path.startswith('code_c/adapters/xtntmfcorba/corbaidl'):
+                    if 'code_c/adapters/xtntmfcorba/corbaidl/corbaidl_common' not in _paths:
+                        _paths.append('code_c/adapters/xtntmfcorba/corbaidl/corbaidl_common')
+
+                    path = 'code_c/adapters/xtntmfcorba/corbaidl/corbaidl'
+                else:
+                    _path = path
+            else:
+                _path = path
+
+            if _path not in _paths:
+                _paths.append(_path)
+
+        return _paths

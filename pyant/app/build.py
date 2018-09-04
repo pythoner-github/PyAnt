@@ -1090,7 +1090,7 @@ class bn_build(build):
                                             if dir not in paths:
                                                 paths.append(dir)
 
-                    paths = expand_dashboard_gerrit(module, paths)
+                    paths = self.expand_dashboard_gerrit(module, paths)
 
                     for path in paths:
                         if os.path.isdir(path):

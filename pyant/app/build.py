@@ -995,7 +995,7 @@ class bn_build(build):
             modules = [module]
 
         for _module in modules:
-            module_path = self.repos[_module]
+            module_path = os.path.basename(self.repos[_module])
 
             if os.path.isdir(module_path):
                 if not git.reset(module_path, branch):
@@ -1029,7 +1029,7 @@ class bn_build(build):
             modules = [module]
 
         for _module in modules:
-            module_path = self.repos[_module]
+            module_path = os.path.basename(self.repos[_module])
 
             if os.path.isdir(module_path):
                 if not git.reset(module_path, branch):
@@ -1046,7 +1046,7 @@ class bn_build(build):
 
         status = True
 
-        module_path = self.repos[module]
+        module_path = os.path.basename(self.repos[module])
 
         if os.path.isdir(module_path):
             with builtin_os.chdir(module_path) as chdir:

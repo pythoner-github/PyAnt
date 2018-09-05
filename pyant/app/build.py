@@ -273,13 +273,13 @@ class build():
             with builtin_os.chdir(path) as chdir:
                 kwinject = 'target/kwinject.out'
 
-                if not os.path.isdir(os.path.dirname(kwinject)):
-                    os.makedirs(os.path.dirname(kwinject), exist_ok = True)
-
                 mvn = maven.maven()
                 mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
 
                 mvn.clean()
+
+                if not os.path.isdir(os.path.dirname(kwinject)):
+                    os.makedirs(os.path.dirname(kwinject), exist_ok = True)
 
                 if lang == 'cpp':
                     cmdline = 'kwinject --output %s mvn install -U -fn' % kwinject

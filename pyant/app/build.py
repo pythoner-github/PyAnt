@@ -1248,7 +1248,8 @@ class bn_build(build):
                         dest = builtin_os.normpath(string.vars_expand(dest.strip(), _vars))
                         ver = builtin_os.normpath(string.vars_expand(ver.strip(), _vars))
 
-                        name = '%s_%s' % (name, ver.replace(' ', ''))
+                        if _xpath == 'packages/package':
+                            name = '%s_%s' % (name, ver.replace(' ', ''))
 
                         if os.path.isdir(dirname):
                             if name not in hash:

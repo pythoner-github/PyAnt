@@ -1089,6 +1089,29 @@ class bn_build(build):
 
                                             if dir not in paths:
                                                 paths.append(dir)
+                                        else:
+                                            if module in ('interface',):
+                                                if filename.startswith('code/asn/'):
+                                                    if 'code/finterface' not in paths:
+                                                        paths.append('code/finterface')
+
+                                                    if 'code_c/finterface' not in paths:
+                                                        paths.append('code_c/finterface')
+                                                else:
+                                                    if filename.startswith('code_c/asn/sdh-wdm/qx-interface/asn/'):
+                                                        dir = 'code_c/qxinterface/qxinterface'
+                                                    elif filename.startswith('code_c/asn/sdh-wdm/qx-interface/asn5800/'):
+                                                        dir = 'code_c/qxinterface/qx5800'
+                                                    elif filename.startswith('code_c/asn/sdh-wdm/qx-interface/asnwdm721/'):
+                                                        dir = 'code_c/qxinterface/qxwdm721'
+                                                    elif filename.startswith('code_c/asn/otntlvqx/'):
+                                                        dir = 'code_c/qxinterface/qxotntlv'
+                                                    else:
+                                                        pass
+
+                                                    if dir:
+                                                        if dir not in paths:
+                                                            paths.append(dir)
 
                     paths = self.expand_dashboard_gerrit(module, paths)
 
@@ -1100,22 +1123,23 @@ class bn_build(build):
                                 lang = 'cpp'
 
                             with builtin_os.chdir(path) as chdir:
-                                # mvn = maven.maven()
-                                # mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
-                                #
-                                # mvn.clean()
-                                #
-                                # cmdline = 'mvn install -fn -U'
-                                #
-                                # if not mvn.compile(cmdline, 'mvn install -fn -U'):
-                                #     status = False
-                                #
-                                #     continue
+                                if module in ('interface',):
+                                    mvn = maven.maven()
+                                    mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
 
-                                if not self.kw_check('.', lang):
-                                    status = False
+                                    mvn.clean()
 
-                                    continue
+                                    cmdline = 'mvn install -fn -U'
+
+                                    if not mvn.compile(cmdline, None, lang):
+                                        status = False
+
+                                        continue
+                                else:
+                                    if not self.kw_check('.', lang):
+                                        status = False
+
+                                        continue
 
         return status
 

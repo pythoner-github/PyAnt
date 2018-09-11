@@ -289,88 +289,89 @@ class build():
                 if not mvn.compile(cmdline):
                     return False
 
-                defect = {}
+                if os.path.isfile(kwinject):
+                    defect = {}
 
-                with builtin_os.chdir(os.path.dirname(kwinject)) as _chdir:
-                    kwreport = 'kwreport.xml'
+                    with builtin_os.chdir(os.path.dirname(kwinject)) as _chdir:
+                        kwreport = 'kwreport.xml'
 
-                    cmd = command.command()
+                        cmd = command.command()
 
-                    cmdlines = [
-                        'kwcheck create kwcheck',
-                        'kwcheck import %s' % os.path.basename(kwinject),
-                        'kwcheck import %s' % const.KLOCWORK_PCONF_FILE,
-                        'kwcheck run -F xml --report %s --license-host %s --license-port %s' % (kwreport, const.KLOCWORK_LICENSE_HOST, const.KLOCWORK_LICENSE_PORT)
-                    ]
+                        cmdlines = [
+                            'kwcheck create kwcheck',
+                            'kwcheck import %s' % os.path.basename(kwinject),
+                            'kwcheck import %s' % const.KLOCWORK_PCONF_FILE,
+                            'kwcheck run -F xml --report %s --license-host %s --license-port %s' % (kwreport, const.KLOCWORK_LICENSE_HOST, const.KLOCWORK_LICENSE_PORT)
+                        ]
 
-                    for cmdline in cmdlines:
-                        for line in cmd.command(cmdline):
-                            print(line)
+                        for cmdline in cmdlines:
+                            for line in cmd.command(cmdline):
+                                print(line)
 
-                        if not cmd.result():
+                            if not cmd.result():
+                                return False
+
+                        try:
+                            tree = etree.parse(kwreport)
+                        except Exception as e:
+                            print(e)
+
                             return False
 
-                    try:
-                        tree = etree.parse(kwreport)
-                    except Exception as e:
-                        print(e)
+                        namespace = tree.getroot().nsmap
 
-                        return False
+                        for e in tree.findall('problem', namespace):
+                            info = {}
 
-                    namespace = tree.getroot().nsmap
+                            for element in e.iter():
+                                tag = element.tag.replace('{%s}' % namespace[None], '')
 
-                    for e in tree.findall('problem', namespace):
-                        info = {}
+                                if tag in ('file', 'line', 'method', 'code', 'message', 'severity'):
+                                    info[tag] = element.text
 
-                        for element in e.iter():
-                            tag = element.tag.replace('{%s}' % namespace[None], '')
+                            if info['severity'] not in defect:
+                                defect[info['severity']] = {}
 
-                            if tag in ('file', 'line', 'method', 'code', 'message', 'severity'):
-                                info[tag] = element.text
+                            if info['code'] not in defect[info['severity']]:
+                                defect[info['severity']][info['code']] = []
 
-                        if info['severity'] not in defect:
-                            defect[info['severity']] = {}
+                            defect[info['severity']][info['code']].append(info)
 
-                        if info['code'] not in defect[info['severity']]:
-                            defect[info['severity']][info['code']] = []
+                    if ('Critical' in defect) or ('Error' in defect):
+                        lines = []
 
-                        defect[info['severity']][info['code']].append(info)
+                        for severity in ('Critical', 'Error'):
+                            if severity in defect:
+                                lines.append('')
+                                lines.append('=' * 60)
+                                lines.append('KLOCWORK %s DEFECT:' % severity.upper())
+                                lines.append('=' * 60)
 
-                if ('Critical' in defect) or ('Error' in defect):
-                    lines = []
+                                for code in defect[severity]:
+                                    lines.append('  %s:' % code)
 
-                    for severity in ('Critical', 'Error'):
-                        if severity in defect:
-                            lines.append('')
-                            lines.append('=' * 60)
-                            lines.append('KLOCWORK %s DEFECT:' % severity.upper())
-                            lines.append('=' * 60)
+                                    for info in defect[severity][code]:
+                                        lines.append('    file     : %s' % info['file'])
+                                        lines.append('    line     : %s' % info['line'])
+                                        lines.append('    method   : %s' % info['method'])
+                                        lines.append('    message  : %s' % info['message'])
+                                        lines.append('')
 
-                            for code in defect[severity]:
-                                lines.append('  %s:' % code)
+                        for line in lines:
+                            print(line)
 
-                                for info in defect[severity][code]:
-                                    lines.append('    file     : %s' % info['file'])
-                                    lines.append('    line     : %s' % info['line'])
-                                    lines.append('    method   : %s' % info['method'])
-                                    lines.append('    message  : %s' % info['message'])
-                                    lines.append('')
+                        if os.environ.get('GERRIT_EMAIL'):
+                            admin_addrs = None
 
-                    for line in lines:
-                        print(line)
+                            if os.environ.get('SENDMAIL.ADMIN'):
+                                admin_addrs = string.split(os.environ.get('SENDMAIL.ADMIN'))
 
-                    if os.environ.get('GERRIT_EMAIL'):
-                        admin_addrs = None
+                            smtp.sendmail(
+                                '<%s_DASHBOARD_GERRIT_BUILD 通知> KW检查失败, 请尽快处理' % self.name.upper(),
+                                os.environ['GERRIT_EMAIL'], admin_addrs, '<br>\n'.join(lines)
+                            )
 
-                        if os.environ.get('SENDMAIL.ADMIN'):
-                            admin_addrs = string.split(os.environ.get('SENDMAIL.ADMIN'))
-
-                        smtp.sendmail(
-                            '<%s_DASHBOARD_GERRIT_BUILD 通知> KW检查失败, 请尽快处理' % self.name.upper(),
-                            os.environ['GERRIT_EMAIL'], admin_addrs, '<br>\n'.join(lines)
-                        )
-
-                    #return False
+                        #return False
 
             return True
         else:

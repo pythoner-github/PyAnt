@@ -227,7 +227,9 @@ class patch():
         os.makedirs(self.output, exist_ok = True)
 
         with builtin_os.chdir(self.path) as chdir:
-            os.makedirs('code', exist_ok = True)
+            if update:
+                os.makedirs('code', exist_ok = True)
+
             os.makedirs('build', exist_ok = True)
             os.makedirs('xml', exist_ok = True)
 

@@ -1812,8 +1812,104 @@ class bn_build(build):
         return _paths
 
     def kw_check_filter(self, defect):
+        branch = 'master'
 
+        for k in git.config():
+            m = re.search(r'^branch\.(.*)\.remote$', k)
 
-        KLOCWORK_DATE
+            if m:
+                branch = m.group(1)
+
+        lines = []
+
+        cmd = command.command()
+
+        for line in cmd.command('git rev-list -n 1 --before="%s" %s' % (const.KLOCWORK_DATE, branch)):
+            lines.append(line)
+
+        if not cmd.result():
+            return defect
+
+        commit = lines[-1]
+
+        lines = []
+
+        for line in cmd.command('git diff %s' % commit):
+            lines.append(line)
+
+        info = self.diff(lines)
 
         return defect
+
+    def diff(self, lines):
+        info = {}
+
+        tmp_lines = []
+
+        for line in lines:
+            line = line.strip()
+
+            m = re.search(r'^diff\s+--git\s+a\/(.*)\s+b/.*$', line)
+
+            if m:
+                if tmp_lines:
+                    filename, diff_info = self.diff_lines(tmp_lines)
+
+                    if not info.get(filename):
+                        info[filename] = []
+
+                    info[filename] += diff_info
+
+                tmp_lines = []
+
+            tmp_lines.append(line)
+
+        if tmp_lines:
+            filename, diff_info = self.diff_lines(tmp_lines)
+
+            if not info.get(filename):
+                info[filename] = []
+
+            info[filename] += diff_info
+
+        return info
+
+    def diff_lines(self, lines):
+        filename = None
+        diff_info = []
+
+        lineno = -1
+
+        for line in lines:
+            m = re.search(r'^diff\s+--git\s+a\/(.*)\s+b/.*$', line)
+
+            if m:
+                filename = m.group(1)
+                continue
+
+            m = re.search(r'^\++\s+\/dev\/null$', line)
+
+            if m:
+                filename = None
+                break
+
+            m = re.search(r'^@@\s+-(\d+),(\d+)\s+\+(\d+),(\d+)\s+@@$', line)
+
+            if m:
+                lineno = int(m.group(3))
+                continue
+
+            if lineno > -1:
+                m = re.search(r'^-.*$', line)
+
+                if m:
+                    continue
+
+                m = re.search(r'^\+.*$', line)
+
+                if m:
+                    diff_info.append(lineno)
+
+                lineno += 1
+
+        return (filename, diff_info)

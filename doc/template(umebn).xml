@@ -7,21 +7,12 @@
   -->
   <patch name='umebn'>
     <!--
-      删除信息(可选)
-
-      name  : 需要在编译环境中删除的文件或目录
-    -->
-    <delete>
-      <attr name='support/platform/dbinit/target'/>
-    </delete>
-
-    <!--
       变更信息(可选)
 
       name  : 需要变更的文件或目录
     -->
     <source>
-      <attr name='support/platform/dbinit/src'/>
+      <attr name='support/platform'/>
     </source>
 
     <!--

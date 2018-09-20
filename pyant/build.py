@@ -10,7 +10,7 @@ from pyant.app import const, patch
 from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
-__build_name__ = ('bn', 'stn', 'umebn', 'sdno')
+__build_name__ = ('bn', 'umebn')
 __all__ = ('build',)
 
 usage = '''
@@ -80,18 +80,10 @@ def build(argv = None):
                 build = app_build.bn_build()
                 app_patch = patch.bn_patch
                 app_installation = patch.bn_installation
-            elif name == 'stn':
-                build = app_build.stn_build()
-                app_patch = patch.stn_patch
-                app_installation = patch.stn_installation
-            elif name == 'umebn':
+            else:
                 build = app_build.umebn_build()
                 app_patch = patch.umebn_patch
                 app_installation = patch.umebn_installation
-            else:
-                build = app_build.sdno_build()
-                app_patch = patch.sdno_patch
-                app_installation = patch.sdno_installation
 
             if command == 'updateall':
                 branch = arg[0]

@@ -986,17 +986,6 @@ class patch():
     def get_xml_zipfile(self, file):
         return None
 
-class stn_patch(patch):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.name = 'stn'
-        self.type = 'stn'
-        self.notification = '<STN_PATCH 通知>'
-        self.modules = {
-            'stn' : app_build.stn_build().repos
-        }
-
 class umebn_patch(patch):
     def __init__(self, path):
         super().__init__(path)
@@ -1009,6 +998,13 @@ class umebn_patch(patch):
         }
 
     # ------------------------------------------------------
+
+    def build_source(self, name, sources):
+        if not os.path.isdir(os.path.join('build', name)):
+            return False
+
+        if not self.build_update_source(os.path.join('build', name), sources):
+            return False
 
     def build_update_source(self, path, sources):
         status = True
@@ -1049,17 +1045,6 @@ class umebn_patch(patch):
                                     return False
 
         return super().build_check(path)
-
-class sdno_patch(umebn_patch):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.name = 'sdno'
-        self.type = 'sdno'
-        self.notification = '<SDNO_PATCH 通知>'
-        self.modules = {
-            'sdno' : app_build.sdno_build().repos
-        }
 
 class bn_patch(patch):
     def __init__(self, path):
@@ -1425,26 +1410,12 @@ class installation():
 
         return '%s%03d(%03d)-%s' % (prefix, last_sp, last_index + 1, id)
 
-class stn_installation(installation):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.name = 'stn'
-        self.type = 'stn'
-
 class umebn_installation(installation):
     def __init__(self, path):
         super().__init__(path)
 
         self.name = 'umebn'
         self.type = 'umebn'
-
-class sdno_installation(installation):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.name = 'sdno'
-        self.type = 'sdno'
 
 class bn_installation(installation):
     def __init__(self, path):

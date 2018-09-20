@@ -17,7 +17,7 @@ from pyant import check, command, git, maven, password, smtp, string
 from pyant.app import const
 from pyant.builtin import os as builtin_os
 
-__all__ = ('stn_build', 'umebn_build', 'sdno_build', 'bn_build')
+__all__ = ('umebn_build', 'bn_build')
 
 class build():
     def __init__(self, name, repos, artifact_repos):
@@ -748,27 +748,6 @@ class build():
 
         return self.pom_path(os.path.dirname(path))
 
-class stn_build(build):
-    def __init__(self):
-        artifact_repos = {
-            'snapshot'  : 'stn_contoller-snapshot-generic',
-            'alpha'     : 'stn_contoller-alpha-generic',
-            'release'   : 'stn_contoller-release-generic'
-        }
-
-        super().__init__(
-            'stn',
-            builtin_os.join(const.SSH_GIT, 'stn/sdn_tunnel'),
-            artifact_repos
-        )
-
-        self.type = 'stn'
-
-    # ------------------------------------------------------
-
-    def metric_id(self, module_name = None):
-        return const.METRIC_ID_STN
-
 class umebn_build(build):
     def __init__(self):
         artifact_repos = {
@@ -792,30 +771,6 @@ class umebn_build(build):
 
     def metric_id(self, module_name = None):
         return const.METRIC_ID_UMEBN
-
-class sdno_build(build):
-    def __init__(self):
-        artifact_repos = {
-            'snapshot'  : 'sdno-snapshot-generic',
-            'alpha'     : 'sdno-alpha-generic',
-            'release'   : 'sdno-release-generic'
-        }
-
-        super().__init__(
-            'sdno',
-            builtin_os.join(const.SSH_GIT, 'sdno'),
-            artifact_repos
-        )
-
-        self.type = 'sdno'
-
-    def compile_base(self, cmd = None):
-        return True
-
-    # ------------------------------------------------------
-
-    def metric_id(self, module_name = None):
-        return const.METRIC_ID_SDNO
 
 class bn_build(build):
     def __init__(self):

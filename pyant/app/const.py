@@ -128,3 +128,8 @@ if os.environ.get('KLOCWORK_LICENSE_PORT'):
     KLOCWORK_LICENSE_PORT = os.environ['KLOCWORK_LICENSE_PORT']
 else:
     KLOCWORK_LICENSE_PORT = '27000'
+
+if os.environ.get('KLOCWORK_DATE'):
+    KLOCWORK_DATE = os.environ['KLOCWORK_DATE']
+else:
+    KLOCWORK_DATE = '2018-09-01 00:00:00'

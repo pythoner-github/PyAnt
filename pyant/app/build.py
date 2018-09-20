@@ -1812,4 +1812,8 @@ class bn_build(build):
         return _paths
 
     def kw_check_filter(self, defect):
+
+
+        KLOCWORK_DATE
+
         return defect

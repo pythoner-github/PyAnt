@@ -222,7 +222,7 @@ class patch():
         self.notification = '<PATCH 通知>'
         self.modules = {}
 
-    def init(self, branch):
+    def init(self, branch, update = True):
         os.makedirs(self.path, exist_ok = True)
         os.makedirs(self.output, exist_ok = True)
 
@@ -240,14 +240,15 @@ class patch():
 
         status = True
 
-        with builtin_os.chdir(os.path.join(self.path, 'code')) as chdir:
-            for module in self.modules:
-                if os.path.isdir(module):
-                    if not git.pull(module, revert = True):
-                        status = False
-                else:
-                    if not git.clone(self.modules[module], module, branch):
-                        status = False
+        if update:
+            with builtin_os.chdir(os.path.join(self.path, 'code')) as chdir:
+                for module in self.modules:
+                    if os.path.isdir(module):
+                        if not git.pull(module, revert = True):
+                            status = False
+                    else:
+                        if not git.clone(self.modules[module], module, branch):
+                            status = False
 
         return status
 
@@ -996,6 +997,9 @@ class umebn_patch(patch):
         self.modules = {
             'umebn' : app_build.umebn_build().repos
         }
+
+    def init(self, branch):
+        return super().init(branch, False)
 
     # ------------------------------------------------------
 

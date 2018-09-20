@@ -337,6 +337,8 @@ class build():
 
                             defect[info['severity']][info['code']].append(info)
 
+                    defect = self.kw_check_filter(defect)
+
                     if ('Critical' in defect) or ('Error' in defect):
                         lines = []
 
@@ -378,6 +380,9 @@ class build():
             print('no such directory: %s' % os.path.normpath(path))
 
             return False
+
+    def kw_check_filter(self, defect):
+        return defect
 
     def metric_start(self, module = None, night = True):
         if os.environ.get('METRIC_IGNORE'):
@@ -1805,3 +1810,6 @@ class bn_build(build):
                 _paths.append(_path)
 
         return _paths
+
+    def kw_check_filter(self, defect):
+        return defect

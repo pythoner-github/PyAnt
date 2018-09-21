@@ -1852,7 +1852,7 @@ class bn_build(build):
                     if info['file'] not in diff_info:
                         continue
 
-                    if int(info['line']) in diff_info['file']:
+                    if int(info['line']) in diff_info[info['file']]:
                         if severity not in fixed_defect:
                             fixed_defect[severity] = {}
 

@@ -93,7 +93,7 @@ else:
         JENKINS_CLI = '/build/jenkins/jenkins-cli.jar'
 
 # EMAIL
-PYRO_MAIL = 'PYRO:daemon.mail@10.8.9.80:9000'
+PYRO_MAIL = 'PYRO:daemon.mail@10.8.11.107:9000'
 
 # PATCH
 

@@ -308,6 +308,8 @@ class patch():
                     for info in info_list:
                         index += 1
 
+                        print(info)
+
                         if info.get('os'):
                             if builtin_os.osname() not in info['os']:
                                 continue
@@ -579,12 +581,12 @@ class patch():
         info['compile'] = collections.OrderedDict()
         info['deploy'] = collections.OrderedDict()
 
-        dirname = os.path.join(self.path, 'code', self.name)
+        dirname = os.path.join(self.path, 'build', self.name)
 
         if os.path.isdir(dirname):
             with builtin_os.chdir(dirname) as chdir:
                 if info.get('source'):
-                    for dir in self.get_git_dirs(info['source']):
+                    for dir in info['source']:
                         info['compile'][os.path.join(dir, 'build')] = True
                         info['deploy'][':'.join((os.path.join(dir, 'build/output'), ''))] = [self.type]
         else:
@@ -1016,7 +1018,7 @@ class umebn_patch(patch):
         status = True
 
         with builtin_os.chdir(path) as chdir:
-            for dir in self.get_git_dirs(sources):
+            for dir in sources:
                 if not git.pull(dir, revert = True):
                     status = False
 

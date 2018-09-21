@@ -1,0 +1,2 @@
+class dashboard:
+    pass

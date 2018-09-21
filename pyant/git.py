@@ -8,7 +8,7 @@ import subprocess
 from pyant import command
 from pyant.builtin import os as builtin_os
 
-__all__ = ('clone', 'pull', 'log', 'info', 'config')
+__all__ = ('clone', 'pull', 'log', 'info', 'config', 'home')
 
 def clone(url, path = None, branch = None, arg = None):
     cmdline = 'git clone'
@@ -391,8 +391,6 @@ def config(path = None, arg = None):
 
     return conf
 
-# ----------------------------------------------------------
-
 def home(path = None):
     if not path:
         path = '.'
@@ -412,6 +410,8 @@ def home(path = None):
                 return home(os.path.dirname(path))
     else:
         return None
+
+# ----------------------------------------------------------
 
 def is_submodule(path = None):
     if not path:

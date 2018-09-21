@@ -327,7 +327,10 @@ class build():
                                 tag = element.tag.replace('{%s}' % namespace[None], '')
 
                                 if tag in ('file', 'line', 'method', 'code', 'message', 'severity'):
-                                    info[tag] = element.text
+                                    if tag == 'file':
+                                        info[tag] = os.path.abspath(element.text)
+                                    else:
+                                        info[tag] = element.text
 
                             if info['severity'] not in defect:
                                 defect[info['severity']] = {}
@@ -337,7 +340,7 @@ class build():
 
                             defect[info['severity']][info['code']].append(info)
 
-                    defect = self.kw_check_filter(defect)
+                    defect = self.kw_check_fixed(defect)
 
                     if ('Critical' in defect) or ('Error' in defect):
                         lines = []
@@ -381,7 +384,7 @@ class build():
 
             return False
 
-    def kw_check_filter(self, defect):
+    def kw_check_fixed(self, defect):
         return defect
 
     def metric_start(self, module = None, night = True):
@@ -1811,8 +1814,10 @@ class bn_build(build):
 
         return _paths
 
-    def kw_check_filter(self, defect):
+    def kw_check_fixed(self, defect):
         branch = 'master'
+
+        git_home = git.home()
 
         for k in git.config():
             m = re.search(r'^branch\.(.*)\.remote$', k)
@@ -1837,11 +1842,28 @@ class bn_build(build):
         for line in cmd.command('git diff %s' % commit):
             lines.append(line)
 
-        info = self.diff(lines)
+        fixed_defect = {}
 
-        return defect
+        diff_info = self.diff(lines, git_home)
 
-    def diff(self, lines):
+        for severity in defect:
+            for code in defect[severity]:
+                for info in defect[severity][code]:
+                    if info['file'] not in diff_info:
+                        continue
+
+                    if int(info['line']) in diff_info['file']:
+                        if severity not in fixed_defect:
+                            fixed_defect[severity] = {}
+
+                        if code not in fixed_defect[severity]:
+                            fixed_defect[severity][code] = []
+
+                        fixed_defect[severity][code].append(info)
+
+        return fixed_defect
+
+    def diff(self, lines, git_home = None):
         info = {}
 
         tmp_lines = []
@@ -1853,7 +1875,7 @@ class bn_build(build):
 
             if m:
                 if tmp_lines:
-                    filename, diff_info = self.diff_lines(tmp_lines)
+                    filename, diff_info = self.diff_lines(tmp_lines, git_home)
 
                     if not info.get(filename):
                         info[filename] = []
@@ -1865,7 +1887,7 @@ class bn_build(build):
             tmp_lines.append(line)
 
         if tmp_lines:
-            filename, diff_info = self.diff_lines(tmp_lines)
+            filename, diff_info = self.diff_lines(tmp_lines, git_home)
 
             if not info.get(filename):
                 info[filename] = []
@@ -1874,7 +1896,10 @@ class bn_build(build):
 
         return info
 
-    def diff_lines(self, lines):
+    def diff_lines(self, lines, git_home = None):
+        if git_home is None:
+            git_home = '.'
+
         filename = None
         diff_info = []
 
@@ -1884,7 +1909,9 @@ class bn_build(build):
             m = re.search(r'^diff\s+--git\s+a\/(.*)\s+b/.*$', line)
 
             if m:
-                filename = m.group(1)
+                with builtin_os.chdir(git_home) as chdir:
+                    filename = os.path.abspath(m.group(1))
+
                 continue
 
             m = re.search(r'^\++\s+\/dev\/null$', line)
@@ -1893,7 +1920,7 @@ class bn_build(build):
                 filename = None
                 break
 
-            m = re.search(r'^@@\s+-(\d+),(\d+)\s+\+(\d+),(\d+)\s+@@$', line)
+            m = re.search(r'^@@\s+-(\d+),(\d+)\s+\+(\d+),(\d+)\s+@@.*$', line)
 
             if m:
                 lineno = int(m.group(3))

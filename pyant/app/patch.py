@@ -18,11 +18,7 @@ from pyant.app import const
 from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
-__all__ = (
-    'auto',
-    'stn_patch', 'umebn_patch', 'sdno_patch', 'bn_patch',
-    'stn_installation', 'umebn_installation', 'sdno_installation', 'bn_installation'
-)
+__all__ = ('auto', 'patch', 'installation')
 
 def auto():
     status = True
@@ -40,7 +36,7 @@ def auto():
 
                     continue
 
-                m = re.search(r'^(stn|umebn|sdno|bn)_.*\((\d{8}.*)\)$', dir)
+                m = re.search(r'^(umebn|bn)_.*\((\d{8}.*)\)$', dir)
 
                 if not m:
                     shutil.rmtree(dir, ignore_errors = True)
@@ -53,7 +49,6 @@ def auto():
                 if module in ('bn',):
                     deploy_homes = [
                         os.path.join(const.PATCH_TEMPLATE_HOME, module, 'linux', name),
-                        os.path.join(const.PATCH_TEMPLATE_HOME, module, 'solaris', name),
                         os.path.join(const.PATCH_TEMPLATE_HOME, module, 'windows', name),
                         os.path.join(const.PATCH_TEMPLATE_HOME, module, 'windows_x86', name)
                     ]
@@ -197,7 +192,6 @@ def auto():
 #           dev
 #           release
 #               20171203
-#                   code
 #                   build
 #                   xml
 #       patch
@@ -222,37 +216,19 @@ class patch():
         self.notification = '<PATCH 通知>'
         self.modules = {}
 
-    def init(self, branch, update = True):
+    def init(self, branch = None):
         os.makedirs(self.path, exist_ok = True)
         os.makedirs(self.output, exist_ok = True)
 
         with builtin_os.chdir(self.path) as chdir:
-            if update:
-                os.makedirs('code', exist_ok = True)
-
             os.makedirs('build', exist_ok = True)
             os.makedirs('xml', exist_ok = True)
-
-            for file in glob.iglob('build/*/.git', recursive = True):
-                shutil.rmtree(file, ignore_errors = True)
 
         with builtin_os.chdir(self.output) as chdir:
             os.makedirs('installation', exist_ok = True)
             os.makedirs('patch', exist_ok = True)
 
-        status = True
-
-        if update:
-            with builtin_os.chdir(os.path.join(self.path, 'code')) as chdir:
-                for module in self.modules:
-                    if os.path.isdir(module):
-                        if not git.pull(module, revert = True):
-                            status = False
-                    else:
-                        if not git.clone(self.modules[module], module, branch):
-                            status = False
-
-        return status
+        return True
 
     def build(self):
         status = True
@@ -265,88 +241,63 @@ class patch():
                     if not os.path.isfile(file):
                         continue
 
-                    info_list = self.load_xml(file)
+                    infoes = self.load_xml(file)
 
-                    if info_list is None:
+                    if infoes is None:
                         to_addrs, cc_addrs = self.get_addrs_from_file(file)
 
                         message.append((os.path.basename(file), '解析XML文件失败', False))
                         self.sendmail('%s 解析XML文件失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
 
-                        os.remove(file)
-
-                        zipfilename = self.get_xml_zipfile(file)
-
-                        if zipfilename:
-                            if os.path.isfile(zipfilename):
-                                os.remove(zipfilename)
+                        clean_env(file);
 
                         status = False
                         continue
 
-                    if len(info_list) == 0:
+                    if len(infoes) == 0:
                         message.append((os.path.basename(file), '未找到补丁信息', True))
 
-                        os.remove(file)
-
-                        zipfilename = self.get_xml_zipfile(file)
-
-                        if zipfilename:
-                            if os.path.isfile(zipfilename):
-                                os.remove(zipfilename)
+                        clean_env(file);
 
                         continue
 
-                    tempdir = os.path.join(builtin_os.gettempdir(),
+                    tmpdir = os.path.join(builtin_os.gettempdir(),
                         '%s%04d' % (datetime.datetime.now().strftime('%Y%m%d%H%M%S'), int(random.random() * 1000)))
 
                     index = -1
                     current = []
 
-                    to_addrs, cc_addrs = self.get_addrs(info_list[0])
+                    to_addrs, cc_addrs = self.get_addrs(infoes[0])
 
-                    for info in info_list:
+                    for info in infoes:
                         index += 1
 
-                        print(info)
-
-                        if info.get('os'):
-                            if builtin_os.osname() not in info['os']:
-                                continue
+                        if not self.build_permit(info):
+                            continue
 
                         current.append([os.path.basename(file), index, False])
 
-                        if info.get('delete'):
-                            if not self.build_delete(info['name'], info['delete']):
-                                status = False
+                        if not self.build_delete(info):
+                            status = False
 
-                                continue
+                            continue
 
-                        if info.get('source'):
-                            if not self.build_source(info['name'], info['source']):
-                                status = False
+                        if not self.build_source(info):
+                            status = False
 
-                                continue
+                            continue
 
-                        if info.get('compile'):
-                            if not self.build_compile(info['name'], info['compile']):
-                                status = False
+                        if not self.build_compile(info):
+                            status = False
 
-                                continue
+                            continue
 
-                        if info.get('deploy'):
-                            if not self.build_deploy(info['name'], info['deploy'], os.path.join(tempdir, str(index))):
-                                status = False
+                        if not self.build_deploy(info, os.path.join(tmpdir, str(index))):
+                            status = False
 
-                                continue
+                            continue
 
-                        if info.get('script'):
-                            if not self.build_deploy_script(info['script'], info['zip'], os.path.join(tempdir, str(index))):
-                                status = False
-
-                                continue
-
-                        if not self.build_check(os.path.join(tempdir, str(index))):
+                        if not self.build_check(os.path.join(tmpdir, str(index))):
                             status = False
 
                             continue
@@ -368,14 +319,14 @@ class patch():
                             output = os.path.join(self.output, 'patch', id)
                             cur_status = True
 
-                            with builtin_os.chdir(os.path.join(tempdir, str(index)), True) as _chdir:
-                                for filename in glob.iglob('**/*', recursive = True):
-                                    if os.path.isfile(filename):
+                            with builtin_os.chdir(os.path.join(tmpdir, str(index)), True) as _chdir:
+                                for name in glob.iglob('**/*', recursive = True):
+                                    if os.path.isfile(name):
                                         try:
-                                            dest_file = os.path.join(output, 'patch', filename)
+                                            dest_file = os.path.join(output, 'patch', name)
                                             os.makedirs(os.path.dirname(dest_file), exist_ok = True)
 
-                                            shutil.copyfile(filename, dest_file)
+                                            shutil.copyfile(name, dest_file)
                                         except Exception as e:
                                             print(e)
 
@@ -394,7 +345,7 @@ class patch():
                                     message.append(('%s(%s)' % (filename, index), '补丁制作成功(补丁号: %s)' % id, True))
                                     self.sendmail('%s 补丁制作成功, 请验证(补丁号: %s)' % (self.notification, id), to_addrs, cc_addrs, None, file)
 
-                                self.to_xml(info_list[index], os.path.join(output, self.get_xml_filename(info_list[index])))
+                                self.to_xml(infoes[index], os.path.join(output, self.get_xml_filename(infoes[index])))
                             else:
                                 message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但输出补丁失败', True))
                                 self.sendmail('%s 补丁制作成功, 但输出补丁失败' % self.notification, to_addrs, cc_addrs, None, file)
@@ -407,27 +358,43 @@ class patch():
                                 message.append(('%s(%s)' % (filename, index), '补丁制作失败', False))
                                 self.sendmail('%s 补丁制作失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
 
-                    os.remove(file)
-                    shutil.rmtree(tempdir, ignore_errors = True)
-
-                    zipfilename = self.get_xml_zipfile(file)
-
-                    if zipfilename:
-                        if os.path.isfile(zipfilename):
-                            os.remove(zipfilename)
+                    clean_env(file, tmpdir);
 
         return status
 
-    def installation(self, version, type = None):
-        return True
-
     # ------------------------------------------------------
 
+    def build_permit(self, info):
+        return True
+
+    def build_delete(self, info):
+        return True
+
+    def build_source(self, info):
+        return True
+
+    def build_compile(self, info):
+        return True
+
+    def build_deploy(self, info, path):
+        return True
+
+    def build_check(self, path):
+        with builtin_os.chdir(path) as chdir:
+            for file in glob.iglob('**/*.xml', recursive = True):
+                try:
+                    etree.parse(file)
+                except Exception as e:
+                    print(e)
+
+                return False
+
+        return True
+
     # info:
-    #   name    : ''
-    #   delete  : []
-    #   source  : []
-    #   info    : {}
+    #   name            : ''
+    #   source          : []
+    #   info            : {}
     def load_xml(self, file):
         try:
             tree = etree.parse(file)
@@ -441,7 +408,7 @@ class patch():
 
             return None
 
-        info_list = []
+        infoes = []
 
         status = True
         index = -1
@@ -449,9 +416,20 @@ class patch():
         for e in tree.findall('patch'):
             index += 1
 
+            name = e.get('name', '').strip()
+
+            if name:
+                if name not in self.modules:
+                    print('patch[%s]: patch节点的name属性不是合法的模块名称 - %s' % (index, name))
+
+                    status = False
+            else:
+                print('patch[%s]: patch节点的name属性不能为空' % index)
+
+                status = False
+
             info = {
-                'name'      : e.get('name', '').strip(),
-                'delete'    : [],
+                'name'      : name,
                 'source'    : [],
                 'info'      : collections.OrderedDict({
                     '提交人员'  : None,
@@ -469,27 +447,6 @@ class patch():
                     '抄送人员'  : None
                 })
             }
-
-            if info['name']:
-                if info['name'] not in self.modules:
-                    print('patch[%s]: patch节点的name属性不是合法的模块名称 - %s' % (index, info['name']))
-
-                    status = False
-            else:
-                print('patch[%s]: patch节点的name属性不能为空' % index)
-
-                status = False
-
-            for e_delete in e.findall('delete/attr'):
-                name = builtin_os.normpath(e_delete.get('name', '').strip())
-
-                if name:
-                    if name not in info['delete']:
-                        info['delete'].append(name)
-                else:
-                    print('patch[%s]/delete/attr: delete下attr节点的name属性不能为空' % index)
-
-                    status = False
 
             for e_source in e.findall('source/attr'):
                 name = builtin_os.normpath(e_source.get('name', '').strip())
@@ -564,37 +521,16 @@ class patch():
 
                     continue
 
-            if not self.load_xml_extend(info, e):
+            if not self.__load_xml__(info, e, file):
                 status = False
                 continue
 
-            info_list.append(info)
+            infoes.append(info)
 
         if status:
-            return info_list
+            return infoes
         else:
             return None
-
-    def load_xml_extend(self, info, e):
-        status = True
-
-        info['compile'] = collections.OrderedDict()
-        info['deploy'] = collections.OrderedDict()
-
-        dirname = os.path.join(self.path, 'build', self.name)
-
-        if os.path.isdir(dirname):
-            with builtin_os.chdir(dirname) as chdir:
-                if info.get('source'):
-                    for dir in info['source']:
-                        info['compile'][os.path.join(dir, 'build')] = True
-                        info['deploy'][':'.join((os.path.join(dir, 'build/output'), ''))] = [self.type]
-        else:
-            print('no such directory: %s' % os.path.normpath(dirname))
-
-            status = False
-
-        return status
 
     def to_xml(self, info, file):
         tree = etree.ElementTree(etree.XML("<patches version='2.0'/>"))
@@ -604,91 +540,22 @@ class patch():
 
         tree.getroot().append(element)
 
-        if info.get('delete'):
-            delete_element = etree.Element('delete')
-            element.append(delete_element)
-
-            for x in info['delete']:
-                e = etree.Element('attr')
-                e.set('name', x)
-
-                delete_element.append(e)
-
-        if info.get('source'):
-            source_element = etree.Element('source')
-            element.append(source_element)
-
-            for x in info['source']:
-                e = etree.Element('attr')
-                e.set('name', x)
-
-                source_element.append(e)
-
-        if info.get('compile'):
-            compile_element = etree.Element('compile')
-            element.append(compile_element)
-
-            for x in info['compile']:
-                e = etree.Element('attr')
-                e.set('name', x)
-                e.set('clean', str(info['compile'][x]).lower())
-
-                compile_element.append(e)
-
-        if info.get('deploy') or info.get('deploy_delete'):
-            deploy_element = etree.Element('deploy')
-            element.append(deploy_element)
-
-            if info.get('deploy'):
-                deploy_deploy_element = etree.Element('deploy')
-                deploy_element.append(deploy_deploy_element)
-
-                for x in info['deploy']:
-                    name, *dest = x.split(':', 1)
-
-                    e = etree.Element('attr')
-                    e.set('name', name)
-                    e.text = ''.join(dest)
-
-                    types = info['deploy'][x]
-
-                    if types != [self.type]:
-                        e.set('type', ', '.join(types))
-
-                    deploy_deploy_element.append(e)
-
-            if info.get('deploy_delete'):
-                deploy_delete_element = etree.Element('delete')
-                deploy_element.append(deploy_delete_element)
-
-                for x in info['deploy_delete']:
-                    e = etree.Element('attr')
-                    e.set('name', x)
-
-                    types = info['deploy_delete'][x]
-
-                    if types != [self.type]:
-                        e.set('type', ', '.join(types))
-
-                    deploy_delete_element.append(e)
-
-        if info.get('info'):
-            info_element = etree.Element('info')
-            element.append(info_element)
-
-            for x in info['info']:
-                e = etree.Element('attr')
-                e.set('name', x)
-
-                if isinstance(info['info'][x], str):
-                    e.text = info['info'][x]
-                else:
-                    e.text = ', '.join(info['info'][x])
-
-                info_element.append(e)
-
-        if not self.to_xml_extend(info, element):
+        if not self.__to_xml__(info, element):
             return False
+
+        info_element = etree.Element('info')
+        element.append(info_element)
+
+        for x in info['info']:
+            e = etree.Element('attr')
+            e.set('name', x)
+
+            if isinstance(info['info'][x], str):
+                e.text = info['info'][x]
+            else:
+                e.text = ', '.join(info['info'][x])
+
+            info_element.append(e)
 
         os.makedirs(os.path.dirname(file), exist_ok = True)
 
@@ -701,202 +568,19 @@ class patch():
 
             return False
 
-    def to_xml_extend(self, info, e):
-        return True
-
-    def build_delete(self, name, deletes):
-        if not os.path.isdir(os.path.join('build', name)):
-            return False
-
-        with builtin_os.chdir(os.path.join('build', name)) as chdir:
-            for file in deletes:
-                if os.path.isfile(file):
-                    os.remove(file)
-                else:
-                    shutil.rmtree(file, ignore_errors = True)
-
-        return True
-
-    def build_source(self, name, sources):
-        if not os.path.isdir(os.path.join('code', name)):
-            return False
-
-        if not self.build_update_source(os.path.join('code', name), sources):
-            return False
-
-        with builtin_os.chdir('code') as chdir:
-            for file in sources:
-                if os.path.isfile(os.path.join(name, file)):
-                    dest = os.path.join('../build', name, file)
-                    os.makedirs(os.path.dirname(dest), exist_ok = True)
-
-                    try:
-                        shutil.copyfile(os.path.join(name, file), dest)
-                    except Exception as e:
-                        print(e)
-
-                        return False
-                elif os.path.isdir(os.path.join(name, file)):
-                    for filename in glob.iglob(os.path.join(name, file, '**/*'), recursive = True):
-                        if os.path.isfile(filename):
-                            dest = os.path.join('../build', filename)
-                            os.makedirs(os.path.dirname(dest), exist_ok = True)
-
-                            try:
-                                shutil.copyfile(filename, dest)
-                            except Exception as e:
-                                print(e)
-
-                                return False
-                else:
-                    return False
-
-        return True
-
-    def build_update_source(self, path, sources):
-        if not git.pull(path, revert = True):
-            return False
-
-        return True
-
-    def build_compile(self, name, compile_info):
-        if not os.path.isdir(os.path.join('build', name)):
-            print('no such directory: %s' % os.path.normpath(os.path.join('build', name)))
-
-            return False
-
-        with builtin_os.chdir(os.path.join('build', name)) as chdir:
-            for path, clean in compile_info.items():
-                if os.path.isdir(path):
-                    with builtin_os.chdir(path) as _chdir:
-                        mvn = maven.maven()
-                        mvn.notification = '%s 编译失败, 请尽快处理' % self.notification
-
-                        if clean:
-                            mvn.clean()
-
-                        if re.search(r'code_c\/', path):
-                            if not mvn.compile('mvn deploy -fn -U -Djobs=10', 'mvn deploy -fn -U', 'cpp'):
-                                return False
-                        else:
-                            if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U'):
-                                return False
-                else:
-                    print('no such directory: %s' % os.path.normpath(path))
-
-                    return False
-
-        return True
-
-    def build_deploy(self, name, deploy_info, tmpdir = None):
-        if tmpdir:
-            tmpdir = os.path.abspath(tmpdir)
-        else:
-            tmpdir = os.getcwd()
-
-        if not os.path.isdir(os.path.join('build', name)):
-            return False
-
-        with builtin_os.chdir(os.path.join('build', name)) as chdir:
-            for src_and_dest, types in deploy_info.items():
-                src, dest = src_and_dest.split(':', 1)
-
-                if os.path.isfile(src):
-                    filename = self.expand_filename(src)
-
-                    if filename:
-                        for type in types:
-                            if not self.build_deploy_file(filename, os.path.join(tmpdir, type, dest)):
-                                return False
-                elif os.path.isdir(src):
-                    with builtin_os.chdir(src) as _chdir:
-                        for filename in glob.iglob('**/*', recursive = True):
-                            if os.path.isfile(filename):
-                                filename = self.expand_filename(filename)
-
-                                if filename:
-                                    for type in types:
-                                        if not self.build_deploy_file(filename, os.path.join(tmpdir, type, dest, filename)):
-                                            return False
-                else:
-                    return False
-
-        return True
-
-    def build_deploy_file(self, src_file, dest_file):
+    def clean_env(self, file, tmpdir = None):
         try:
-            os.makedirs(os.path.dirname(dest_file), exist_ok = True)
+            if os.path.isfile(file):
+                os.remove(file)
 
-            shutil.copyfile(src_file, dest_file)
+            for name in glob.iglob('%s.%s' % (os.path.splitext(file)[0], '*')):
+                if os.path.isfile(name):
+                    os.remove(name)
 
-            pathname, extname = os.path.splitext(src_file)
-
-            if extname.lower() in ('.dll'):
-                if os.path.isfile('%s.pdb' % pathname):
-                    shutil.copyfile('%s.pdb' % pathname, '%s.pdb' % os.path.splitext(dest_file)[0])
-            elif extname.lower() in ('.so'):
-                if os.path.isfile('%s.debuginfo' % pathname):
-                    shutil.copyfile('%s.debuginfo' % pathname, '%s.debuginfo' % os.path.splitext(dest_file)[0])
-            else:
-                pass
-
-            return True
-        except Exception as e:
-            print(e)
-
-            return False
-
-    def build_deploy_script(self, types, zipfilename, tmpdir = None):
-        return True
-
-    def build_check(self, path):
-        with builtin_os.chdir(path) as chdir:
-            for file in glob.iglob('**/*.xml', recursive = True):
-                try:
-                    etree.parse(file)
-                except Exception as e:
-                    print(e)
-
-                return False
-
-        return True
-
-    def sendmail(self, notification, to_addrs, cc_addrs = None, lines = None, file = None):
-        if lines is None:
-            lines = []
-
-        if os.environ.get('BUILD_URL'):
-            console_url = builtin_os.join(os.environ['BUILD_URL'], 'console')
-
-            lines.append('')
-            lines.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
-            lines.append('')
-
-        smtp.sendmail(notification, to_addrs, cc_addrs, '<br>\n'.join(lines))
-
-    def get_git_dirs(self, paths):
-        dirs = []
-
-        for path in paths:
-            dir = self.get_git_home(path)
-
-            if dir is not None:
-                if not dir in dirs:
-                    dirs.append(dir)
-
-        return dirs
-
-    def get_git_home(self, path):
-        if os.path.isfile(path):
-            path = os.path.dirname(path)
-
-        if os.path.isdir(os.path.join(path, '.git')):
-            return path
-
-        if os.path.abspath(path) == os.getcwd() or path == '/':
-            return None
-
-        return self.get_git_home(os.path.dirname(path))
+            if tmpdir:
+                shutil.rmtree(tmpdir)
+        except:
+            pass
 
     def get_addrs(self, info):
         to_addrs = '%s@zte.com.cn' % info['info']['提交人员'].replace('\\', '/').split('/', 1)[-1]
@@ -943,31 +627,6 @@ class patch():
 
         return (to_addrs, cc_addrs)
 
-    def expand_filename(self, file):
-        pathname, extname = os.path.splitext(file)
-
-        if builtin_os.osname() in ('windows', 'windows-x64'):
-            if extname.lower() in ('.sh'):
-                return '%s.bat' % pathname
-            elif extname.lower() in ('.so'):
-                m = re.search(r'^lib(.*)$', os.path.basename(pathname))
-
-                if m:
-                    return os.path.join(os.path.dirname(pathname), '%s.dll' % m.group(1))
-                else:
-                    return '%s.dll' % pathname
-            else:
-                return file
-        else:
-            if extname.lower() in ('.bat'):
-                return '%s.sh' % pathname
-            elif extname.lower() in ('.dll', '.lib'):
-                return os.path.join(os.path.dirname(pathname), 'lib%s.so' % os.path.basename(pathname))
-            elif extname.lower() in ('.exe'):
-                return pathname
-            else:
-                return file
-
     def get_id(self):
         prefix = datetime.datetime.now().strftime('%Y%m%d')
         id = 0
@@ -984,309 +643,28 @@ class patch():
         return '%s_%04d' % (prefix, id + 1)
 
     def get_xml_filename(self, info):
-        name, employee_id = info['info']['提交人员'].replace('\\', '/').split('/', 1)
+        name, id = info['info']['提交人员'].replace('\\', '/').split('/', 1)
 
-        return '%s_%s_%s.xml' % (datetime.datetime.now().strftime('%Y%m%d'), employee_id, name)
+        return '%s_%s_%s.xml' % (datetime.datetime.now().strftime('%Y%m%d'), id, name)
 
-    def get_xml_zipfile(self, file):
-        return None
+    def sendmail(self, notification, to_addrs, cc_addrs = None, lines = None, file = None):
+        if lines is None:
+            lines = []
 
-class umebn_patch(patch):
-    def __init__(self, path):
-        super().__init__(path)
+        if os.environ.get('BUILD_URL'):
+            console_url = builtin_os.join(os.environ['BUILD_URL'], 'console')
 
-        self.name = 'umebn'
-        self.type = 'umebn'
-        self.notification = '<UMEBN_PATCH 通知>'
-        self.modules = {
-            'umebn' : app_build.umebn_build().repos
-        }
+            lines.append('')
+            lines.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
+            lines.append('')
 
-    def init(self, branch):
-        return super().init(branch, False)
+        smtp.sendmail(notification, to_addrs, cc_addrs, '<br>\n'.join(lines))
 
-    # ------------------------------------------------------
-
-    def build_source(self, name, sources):
-        if not os.path.isdir(os.path.join('build', name)):
-            return False
-
-        if not self.build_update_source(os.path.join('build', name), sources):
-            return False
-
-    def build_update_source(self, path, sources):
-        status = True
-
-        with builtin_os.chdir(path) as chdir:
-            for dir in sources:
-                if not git.pull(dir, revert = True):
-                    status = False
-
-        return status
-
-    def build_check(self, path):
-        with builtin_os.chdir(path) as chdir:
-            for appname in glob.iglob('*'):
-                if os.path.isdir(appname):
-                    with builtin_os.chdir(appname) as _chdir:
-                        # commonservice-instance-config.xml
-                        # *.spd
-                        # *.tar.gz
-
-                        if not os.path.isfile('commonservice-instance-config.xml'):
-                            print('no such file: %s' % os.path.abspath('commonservice-instance-config.xml'))
-
-                            return False
-
-                        if not os.path.isfile('%s.spd' % appname):
-                            print('no such file: %s' % os.path.abspath('%s.spd' % appname))
-
-                            return False
-
-                        for tarname in glob.iglob('%s*.tar.gz' % appname):
-                            with tarfile.open(tarname) as tar:
-                                try:
-                                    tar.getmember(os.path.join(appname, 'install.sh'))
-                                except Exception as e:
-                                    print('no such file: %s(%s)' % (os.path.join(appname, 'install.sh'), os.path.abspath(tarname)))
-
-                                    return False
-
-        return super().build_check(path)
-
-class bn_patch(patch):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.name = 'bn'
-        self.type = 'ems'
-        self.notification = '<BN_PATCH 通知>'
-
-        for name, url in app_build.bn_build().repos.items():
-            self.modules[os.path.basename(url)] = url
-
-    # ------------------------------------------------------
-
-    # info:
-    #   name            : ''
-    #   delete          : []
-    #   source          : []
-    #   compile         : {}
-    #   deploy          : {}
-    #   deploy_delete   : {}
-    #   info            : {}
-    def load_xml_extend(self, info, e):
-        status = True
-
-        info['compile'] = collections.OrderedDict()
-        info['deploy'] = collections.OrderedDict()
-        info['deploy_delete'] = collections.OrderedDict()
-
-        osname = e.get('os', '').strip()
-
-        if osname:
-            info['os'] = tuple(string.split(osname))
-
-            if not set(info['os']) - set(('windows', 'linux', 'solaris')):
-                print('patch[%s]: patch节点的os属性值错误, 只能包含windows, linux, solaris' % index)
-
-                status = False
-
-        script = e.get('script', '').strip()
-
-        if script:
-            zipfilename = self.get_xml_zipfile(file)
-
-            if zipfilename:
-                info['script'] = self.types(script)
-                info['zip'] = zipfilename
-
-                if not os.path.isfile(info['zip']):
-                    print('patch[%s]: 找不到增量脚本对应的zip文件 - %s' % (index, info['zip']))
-
-                    status = False
-
-        for e_compile in e.findall('compile/attr'):
-                name = builtin_os.normpath(e_compile.get('name', '').strip())
-                clean = e_compile.get('clean', '').strip().lower()
-
-                if name:
-                    if clean:
-                        if clean == 'true':
-                            clean = True
-                        else:
-                            clean = False
-                    else:
-                        if re.search(r'^code\/', name):
-                            clean = True
-                        else:
-                            clean = False
-
-                    info['compile'][name] = clean
-                else:
-                    print('patch[%s]/compile/attr: compile下attr节点的name属性不能为空' % index)
-
-                    status = False
-
-        for e_deploy in e.findall('deploy/deploy/attr'):
-            name = builtin_os.normpath(e_deploy.get('name', '').strip())
-            dest = e_deploy.text
-            type = e_deploy.get('type', '').strip()
-
-            if dest is not None:
-                dest = builtin_os.normpath(dest.strip())
-
-            types = self.types(type)
-
-            if name:
-                m = re.search(r'^(code|code_c|sdn)\/build\/output\/', name)
-
-                if m:
-                    if not dest:
-                        dest = m.string[m.end():]
-
-                    m = re.search(r'^ums-(\w+)', dest)
-
-                    if m:
-                        if m.group(1) in ('nms', 'lct'):
-                            types = [m.group(1)]
-
-                            dest = dest.replace(m.string[m.start():m.end()], 'ums-client')
-
-                    info['deploy'][':'.join((name, dest))] = types
-                elif re.search(r'^installdisk\/', name):
-                    if dest:
-                        info['deploy'][':'.join((name, dest))] = types
-                    else:
-                        print('patch[%s]/deploy/deploy/attr: installdisk目录下的文件, 必须提供输出路径' % index)
-
-                        status = False
-                else:
-                    print('patch[%s]/deploy/deploy/attr: 源文件必须以code/build/output, code_c/build/output, sdn/build/output或installdisk开始' % index)
-
-                    status = False
-            else:
-                print('patch[%s]/deploy/deploy/attr: deploy/deploy下attr节点的name属性不能为空' % index)
-
-                status = False
-
-        for e_deploy_delete in e.findall('deploy/delete/attr'):
-            name = builtin_os.normpath(e_deploy_delete.get('name', '').strip())
-            type = e_deploy_delete.get('type', '').strip()
-
-            types = self.types(type)
-
-            if name:
-                m = re.search(r'^ums-(\w+)', name)
-
-                if m:
-                    if not m.group(1) in ('client', 'server'):
-                        print('patch[%s]/deploy/delete/attr: deploy/delete下attr节点的name属性错误, 根目录应该为ums-client或ums-server' % index)
-
-                        status = False
-
-                info['deploy_delete'][name] = types
-            else:
-                print('patch[%s]/deploy/delete/attr: deploy/delete下attr节点的name属性不能为空' % index)
-
-                status = False
-
-        return status
-
-    def to_xml_extend(self, info, e):
-        if info.get('os'):
-            e.set('os', ', '.join(info['os']))
-
-        if info.get('script'):
-            e.set('script', ', '.join(info['script']))
-
+    def __load_xml__(self, info, element, file):
         return True
 
-    def build_compile(self, name, compile_info):
-        if os.path.isdir('build'):
-            with builtin_os.chdir('build') as chdir:
-                bn.environ('cpp')
-
-        return super().build_compile(name, compile_info)
-
-    def build_deploy_script(self, types, zipfilename, tmpdir = None):
-        if zipfilename:
-            zipfilename = os.path.abspath(zipfilename)
-
-            if not os.path.isfile(zipfilename):
-                print('找不到增量补丁包对应的zip文件: %s' % os.path.normpath(zipfilename))
-
-                return False
-
-            if tmpdir:
-                tmpdir = os.path.abspath(tmpdir)
-            else:
-                tmpdir = os.getcwd()
-
-            with builtin_os.tmpdir(os.path.join(tmpdir, '../zip', os.path.basename(tmpdir))) as _tmpdir:
-                try:
-                    with zipfile.ZipFile(zipfilename) as zip:
-                        zip.extractall()
-                except Exception as e:
-                    print(e)
-
-                    return False
-
-                install = None
-
-                for file in glob.iglob('**/install/dbscript-patch/ums-db-update-info.xml'):
-                    install = os.path.dirname(os.path.dirname(file))
-
-                    break
-
-                if not install:
-                    print('增量补丁包中找不到install/dbscript-patch/ums-db-update-info.xml')
-
-                    return False
-
-                prefix = 'install'
-
-                m = re.search(r'\/(pmu|ppu)\/', install)
-
-                if m:
-                    prefix = os.path.join(m.group(1), m.string[m.end():])
-
-                with builtin_os.chdir(install) as chdir:
-                    for file in glob.iglob('dbscript-patch/**/*', recursive = True):
-                        if os.path.isfile(file):
-                            for type in types:
-                                try:
-                                    shutil.copyfile(file, os.path.join(tmpdir, type, prefix, file))
-                                except Exception as e:
-                                    print(e)
-
-                                    return False
-
+    def __to_xml__(self, info, element):
         return True
-
-    def get_xml_zipfile(self, file):
-        return '%s.zip' % file[0:-4]
-
-    def types(self, type):
-        types = []
-
-        if not type:
-            type = self.type
-
-        for x in type.split(','):
-            x = x.strip()
-
-            if x in ('ems', 'nms', 'upgrade', 'lct', 'su31', 'su31nm', 'su31-e2e', 'su31-nme2e', 'service'):
-                if x not in types:
-                    types.append(x)
-            else:
-                return None
-
-        if 'service' in types:
-            if 'ems' not in types:
-                types.append('ems')
-
-        return types
 
 # ******************************************************** #
 #                    PATCH INSTALLATION                    #
@@ -1306,7 +684,7 @@ class installation():
         self.name = 'none'
         self.type = 'none'
 
-    def install(self, version, display_version = None, sp_next = False, type = None):
+    def build(self, version, display_version = None, sp_next = False, type = None):
         if not os.path.isdir(self.output):
             print('no such directory: %s' % os.path.normpath(self.output))
 
@@ -1346,21 +724,19 @@ class installation():
 
             with builtin_os.tmpdir(builtin_os.tmpfilename()) as _tmpdir:
                 for file in info:
-                    if os.path.splitext(file)[1] in ['.pdb', '.exp', '.lib', '.debuginfo']:
-                        continue
+                    filename = self.expand_filename(file)
 
-                    os.makedirs(os.path.dirname(file), exist_ok = True)
+                    if filename:
+                        os.makedirs(os.path.dirname(filename), exist_ok = True)
 
-                    try:
-                        shutil.copyfile(info[file], file)
-                    except Exception as e:
-                        print(e)
+                        try:
+                            shutil.copyfile(info[file], filename)
+                        except Exception as e:
+                            print(e)
 
-                        return False
+                            return False
 
-                suffix = self.patchname(version, sorted(id_info.keys())[-1], sp_next, type)
-
-                if not self.process(suffix, version, display_version, id_info, sp_next, type):
+                if not self.process(version, display_version, id_info, sp_next, type):
                     return False
 
         return True
@@ -1370,768 +746,8 @@ class installation():
     def installation(self, version, type):
         return os.path.join(self.output, 'installation', version, 'installation/patch')
 
-    def process(self, suffix, version, display_version, id_info, sp_next, type):
-        zip_filename = os.path.join(self.installation(version, type), '%s%s.zip' % (self.name, suffix))
-
-        try:
-            if not os.path.isdir(os.path.dirname(zip_filename)):
-                os.makedirs(os.path.dirname(zip_filename), exist_ok = True)
-
-            with zipfile.ZipFile(zip_filename, 'w', compression=zipfile.ZIP_DEFLATED) as zip:
-                for line in ('$ zipfile: %s' % zip.filename, '  in (' + os.getcwd() + ')'):
-                    print(line)
-
-                for filename in glob.iglob('**/*', recursive = True):
-                    if os.path.isfile(filename):
-                        zip.write(filename)
-        except Exception as e:
-            print(e)
-
-            return False
-
+    def process(self, version, display_version, id_info, sp_next, type):
         return True
 
-    def patchname(self, version, id, sp_next, type):
-        prefix = '-%s-SP' % version
-        last_sp = 0
-        last_index = 0
-
-        installation_home = self.installation(version, type)
-
-        if os.path.isdir(installation_home):
-            with builtin_os.chdir(installation_home) as chdir:
-                for filename in glob.iglob('*%s*.zip' % prefix):
-                    m = re.search(r'-SP(\d+)\(001-(\d+)\)', filename)
-
-                    if m:
-                        last_sp = max(last_sp, int(m.group(1)))
-                        last_index = max(last_index, int(m.group(2)))
-                    else:
-                        m = re.search(r'-SP(\d+)\((\d+)\)', filename)
-
-                        if m:
-                            last_sp = max(last_sp, int(m.group(1)))
-                            last_index = max(last_index, int(m.group(2)))
-
-        if sp_next or last_sp == 0:
-            last_sp += 1
-
-        return '%s%03d(%03d)-%s' % (prefix, last_sp, last_index + 1, id)
-
-class umebn_installation(installation):
-    def __init__(self, path):
-        super().__init__(path)
-
-        self.name = 'umebn'
-        self.type = 'umebn'
-
-class bn_installation(installation):
-    def __init__(self, path):
-        super().__init__(path)
-
-        if not os.path.isdir(self.output):
-            if os.path.isdir(os.path.join(self.path, 'build/patch')):
-                self.output = os.path.join(self.path, 'build/patch')
-
-        self.name = 'bn'
-        self.type = 'ems'
-
-    # ------------------------------------------------------
-
-    def installation(self, version, type):
-        osname = builtin_os.osname()
-
-        if type not in ('ems'):
-            osname += "(%s)" % type
-
-        return os.path.join(self.output, 'installation', version, 'installation', osname, 'patch')
-
-    def process(self, suffix, version, display_version, id_info, sp_next, type):
-        patchsets = self.patchset_names(version, type)
-
-        # pmu
-
-        if os.path.isdir('pmu'):
-            for dirname in glob.iglob('pmu/*'):
-                with builtin_os.chdir(dirname) as chdir:
-                    self.name = os.path.basename(dirname)
-                    ppuname = self.name.split('-')[0]
-                    pmuname = self.name
-
-                    tmp_id_info = {}
-
-                    for id, value in id_info.items():
-                        if os.path.isdir(os.path.join(value, 'pmu', self.name)):
-                            tmp_id_info[id] = os.path.join(value, 'pmu', self.name)
-
-                    if not self.inner_process(suffix, patchsets, version, display_version, tmp_id_info, sp_next, type, ppuname, pmuname):
-                        return False
-
-            try:
-                shutil.rmtree('pmu')
-            except:
-                pass
-
-        # bn
-
-        if not self.ppuinfo(version, display_version):
-            return False
-
-        self.name = 'bn'
-        ppuname = 'bn'
-
-        tmp_id_info = {}
-
-        for id, value in id_info.items():
-            if os.path.isdir(os.path.join(value, 'pmu')):
-                if len(glob.glob(os.path.join(value, '*'))) > 1:
-                    tmp_id_info[id] = value
-            else:
-                tmp_id_info[id] = value
-
-        if not self.inner_process(suffix, patchsets, version, display_version, tmp_id_info, sp_next, type, ppuname):
-            return False
-
-        return True
-
-    def ppuinfo(self, version, display_version):
-        # ums-client/procs/ppus/bn.ppu/ppuinfo.xml
-        # ums-server/procs/ppus/bn.ppu/ppuinfo.xml
-
-        tree = etree.ElementTree(etree.XML("<ppu/>"))
-
-        display_element = etree.Element('display-name')
-        display_element.set('en_US', 'BN-xTN')
-        display_element.set('zh_CN', 'BN-xTN')
-
-        tree.getroot().append(display_element)
-
-        info_element = etree.Element('info')
-        info_element.set('version', version)
-        info_element.set('display-version', display_version)
-        info_element.set('en_US', 'Bearer Network Transport Common Module')
-        info_element.set('zh_CN', '承载传输公用组件')
-
-        tree.getroot().append(info_element)
-
-        for filename in ('ums-client/procs/ppus/bn.ppu/ppuinfo.xml', 'ums-server/procs/ppus/bn.ppu/ppuinfo.xml'):
-            os.makedirs(os.path.dirname(filename), exist_ok = True)
-
-            try:
-                tree.write(filename, encoding='gb2312', pretty_print=True, xml_declaration=True)
-            except Exception as e:
-                print(e)
-
-                return False
-
-        # ums-client/procs/ppus/e2e.ppu/ppuinfo.xml
-        # ums-server/procs/ppus/e2e.ppu/ppuinfo.xml
-
-        display_element.set('en_US', 'E2E')
-        display_element.set('zh_CN', 'E2E')
-
-        info_element.set('en_US', 'End-To-End Module')
-        info_element.set('zh_CN', '端到端组件')
-
-        for filename in ('ums-client/procs/ppus/e2e.ppu/ppuinfo.xml', 'ums-server/procs/ppus/e2e.ppu/ppuinfo.xml'):
-            os.makedirs(os.path.dirname(filename), exist_ok = True)
-
-            try:
-                tree.write(filename, encoding='gb2312', pretty_print=True, xml_declaration=True)
-            except Exception as e:
-                print(e)
-
-                return False
-
-        return True
-
-    def inner_process(self, suffix, patchsets, version, display_version, id_info, sp_next, type, ppuname, pmuname = None):
-        zipname = '%s%s' % (self.name, suffix)
-
-        if not self.process_extend(zipname, type):
-            return False
-
-        if not self.dbscript_patch(sorted(id_info.values()), patchsets, version, type):
-            return False
-
-        if not self.update_patchinfo(sorted(id_info.keys()), type):
-            return False
-
-        if not self.patchset_update_info(zipname, patchsets, sorted(id_info.keys()), version, display_version, type, ppuname, pmuname):
-            return False
-
-        if builtin_os.osname() in ('linux', 'solaris'):
-            for filename in glob.iglob('**/*.dll', recursive = True):
-                os.remove(filename)
-
-        if not super().process(suffix, version, display_version, id_info, sp_next, type):
-            return False
-
-        if not self.change_info(zipname, id_info, version, type):
-            return False
-
-        return True
-
-    def process_extend(self, zipname, type):
-        path = os.path.join(self.path, 'build')
-
-        if os.path.isdir(os.path.join(path, 'code')):
-            path = os.path.join(path, 'code')
-
-        cwd = os.getcwd()
-        vars = {
-            'zipname': zipname
-        }
-
-        with builtin_os.chdir(path) as chdir:
-            for file in glob.iglob('*/installdisk/extends.xml'):
-                try:
-                    tree = etree.parse(file)
-                except Exception as e:
-                    print(e)
-
-                    return False
-
-                for e in tree.findall(os.path.join(type, 'patch')):
-                    dirname = e.get('dirname')
-
-                    if dirname:
-                        dirname = builtin_os.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
-
-                        if os.path.isdir(dirname):
-                            with builtin_os.chdir(dirname) as _chdir:
-                                copies = collections.OrderedDict()
-
-                                for element in e.findall('file'):
-                                    name = element.get('name')
-                                    dest = element.get('dest')
-
-                                    if name and dest:
-                                        name = builtin_os.normpath(string.vars_expand(name.strip(), vars))
-                                        dest = builtin_os.normpath(string.vars_expand(dest.strip(), vars))
-
-                                        if os.path.isfile(name):
-                                            copies[dest] = name
-                                        elif os.path.isdir(name):
-                                            with builtin_os.chdir(name) as tmp_chdir:
-                                                for filename in glob.iglob('**/*', recursive = True):
-                                                    if os.path.isfile(filename):
-                                                        copies[os.path.join(dest, filename)] = os.path.join(name, filename)
-                                        else:
-                                            print('no such file or directory: %s' % os.path.abspath(name))
-
-                                for element in e.findall('ignore'):
-                                    name = element.get('name')
-
-                                    if name:
-                                        name = builtin_os.normpath(string.vars_expand(name.strip(), vars))
-
-                                        if os.path.isfile(name):
-                                            if name in copies:
-                                                del copies[name]
-                                        elif os.path.isdir(name):
-                                            for filename in glob.iglob(os.path.join(name, '**/*'), recursive = True):
-                                                if os.path.isfile(filename):
-                                                    if filename in copies:
-                                                        del copies[filename]
-                                        else:
-                                            print('no such file or directory: %s' % os.path.abspath(name))
-
-                                for dest, name in copies.items():
-                                    try:
-                                        dst = os.path.join(cwd, dest)
-
-                                        if not os.path.isdir(os.path.dirname(dst)):
-                                            os.makedirs(os.path.dirname(dst), exist_ok = True)
-
-                                        shutil.copyfile(name, dst)
-                                    except Exception as e:
-                                        print(e)
-
-                                        return False
-                        else:
-                            print('no such directory: %s' % dirname)
-
-        return True
-
-    def dbscript_patch(self, paths, patchsets, version, type):
-        dirname = os.path.join('scripts', patchsets[-1])
-
-        if os.path.isdir('install/dbscript-patch'):
-            filenames = []
-
-            for dir in glob.iglob('install/dbscript-patch/*'):
-                if os.path.isdir(dir):
-                    with builtin_os.chdir(dir) as chdir:
-                        for file in glob.iglob('**/*', recursive = True):
-                            if os.path.isfile(file):
-                                filenames.append(os.path.join(os.path.basename(dir), file))
-
-            if filenames:
-                for file in filenames:
-                    os.makedirs(os.path.dirname(os.path.join(dirname, file)), exist_ok = True)
-
-                    try:
-                        shutil.copyfile(os.path.join('install/dbscript-patch', file), os.path.join(dirname, file))
-                    except Exception as e:
-                        print(e)
-
-                        return False
-
-            try:
-                shutil.rmtree('install/dbscript-patch')
-            except:
-                pass
-
-        dbs = {}
-        name = 'install/dbscript-patch/ums-db-update-info.xml'
-
-        for path in paths:
-            file = os.path.join(path, name)
-
-            if os.path.isfile(file):
-                try:
-                    tree = etree.parse(file)
-                except Exception as e:
-                    print(e)
-
-                    return False
-
-                for e in tree.findall('data-source'):
-                    data_source = e.get('key', '').strip()
-
-                    if data_source:
-                        if data_source not in dbs:
-                            dbs[data_source] = {}
-
-                        for element in e.findall('*//item'):
-                            xpath = '/'.join(re.sub(r'[\[\]\d]+', '', tree.getelementpath(element)).split('/')[1:-1])
-
-                            filename = builtin_os.normpath(element.get('filename', '').strip())
-                            rollback = builtin_os.normpath(element.get('rollback', '').strip())
-
-                            if not filename or not rollback:
-                                print('%s: filename or rollback is empty' % file)
-
-                                return False
-
-                            if xpath not in dbs[data_source]:
-                                dbs[data_source][xpath] = {}
-
-                            dbs[data_source][xpath][filename] = element.items()
-
-        tree = etree.ElementTree(etree.XML("<install-db/>"))
-
-        for data_source in dbs:
-            element = etree.Element('data-source')
-            element.set('key', data_source)
-
-            for xpath in dbs[data_source]:
-                lang, dbname, normal, *_ = xpath.split('/')
-
-                lang_element = etree.Element(lang)
-                element.append(lang_element)
-
-                dbname_element = etree.Element(dbname)
-                lang_element.append(dbname_element)
-
-                normal_element = etree.Element(normal)
-                dbname_element.append(normal_element)
-
-                for filename in sorted(dbs[data_source][xpath]):
-                    item_element = etree.Element('item')
-                    normal_element.append(item_element)
-
-                    rollback = ''
-                    attrs = []
-
-                    for key, value in sorted(dbs[data_source][xpath][filename]):
-                        if key == 'filename':
-                            pass
-                        elif key == 'rollback':
-                            rollback = value
-                        else:
-                            attrs.append((key, value))
-
-                    item_element.set('filename', filename)
-                    item_element.set('rollback', rollback)
-
-                    for key, value in attrs:
-                        item_element.set(key, value)
-
-            tree.getroot().append(element)
-
-        os.makedirs(dirname, exist_ok = True)
-
-        try:
-            tree.write(os.path.join(dirname, 'ums-db-update-info.xml'), encoding='utf-8', pretty_print=True, xml_declaration=True)
-        except Exception as e:
-            print(e)
-
-            return False
-
-        return True
-
-    def update_patchinfo(self, ids, type):
-        tree = etree.ElementTree(etree.XML("<update/>"))
-        tree_defect = etree.ElementTree(etree.XML("<update/>"))
-
-        with builtin_os.chdir(self.output) as chdir:
-            for id in ids:
-                if os.path.isdir(os.path.join('patch', id, 'ids')):
-                    for file in glob.iglob(os.path.join('patch', id, 'ids/*.xml')):
-                        info = self.get_patch_info(file)
-
-                        if info:
-                            element = etree.Element('info')
-                            element.set('name', id)
-
-                            attr_element = etree.Element('attr')
-                            attr_element.set('name', '提交人员')
-                            attr_element.text = info['info']['提交人员']
-                            element.append(attr_element)
-
-                            attr_element = etree.Element('attr')
-                            attr_element.set('name', '开发经理')
-                            attr_element.text = info['info']['开发经理']
-                            element.append(attr_element)
-
-                            attr_element = etree.Element('attr')
-                            attr_element.set('name', '变更描述')
-                            attr_element.text = info['info']['变更描述']
-                            element.append(attr_element)
-
-                            if info['info']['变更类型'] in ('故障', ):
-                                tree_defect.getroot().append(element)
-                            else:
-                                tree.getroot().append(element)
-                else:
-                    for file in glob.iglob(os.path.join('patch', id, '*.xml')):
-                        info = self.get_patch_info(file)
-
-                        if info:
-                            element = etree.Element('info')
-                            element.set('name', id)
-
-                            attr_element = etree.Element('attr')
-                            attr_element.set('name', '提交人员')
-                            attr_element.text = info['info']['提交人员']
-                            element.append(attr_element)
-
-                            attr_element = etree.Element('attr')
-                            attr_element.set('name', '开发经理')
-                            attr_element.text = info['info']['开发经理']
-                            element.append(attr_element)
-
-                            attr_element = etree.Element('attr')
-                            attr_element.set('name', '变更描述')
-                            attr_element.text = info['info']['变更描述']
-                            element.append(attr_element)
-
-                            if info['info']['变更类型'] in ('故障', ):
-                                tree_defect.getroot().append(element)
-                            else:
-                                tree.getroot().append(element)
-
-                        break
-
-        dirname = os.path.join('update/patchinfo', datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
-        os.makedirs(dirname, exist_ok = True)
-
-        try:
-            tree.write(os.path.join(dirname, 'update.xml'), encoding='utf-8', pretty_print=True, xml_declaration=True)
-            tree_defect.write(os.path.join(dirname, 'update_defect.xml'), encoding='utf-8', pretty_print=True, xml_declaration=True)
-        except Exception as e:
-            print(e)
-
-            return False
-
-        return True
-
-    def patchset_update_info(self, zipname, patchsets, ids, version, display_version, type, ppuname, pmuname):
-        tree = etree.ElementTree(etree.XML("<update-info/>"))
-
-        if ppuname == 'bn-ip':
-            ppuname = 'bn'
-            pmuname = 'bn-ip'
-        elif ppuname == 'bn':
-            if type == 'ems':
-                ppuname = 'e2e'
-        else:
-            pass
-
-        tree.getroot().set('ppuname', ppuname)
-
-        if pmuname:
-            tree.getroot().set('pmuname', pmuname)
-
-        if type == 'service':
-            tree.getroot().set('ppuname', 'bn')
-            tree.getroot().set('pmuname', 'bn-servicetools')
-            tree.getroot().set('hotpatch', 'true')
-
-        element = etree.Element('description')
-
-        e = etree.Element('zh_cn')
-        e.text = 'NetNumen U31统一网管系统%s' % display_version
-        element.append(e)
-
-        e = etree.Element('en_us')
-        e.text = 'NetNumen U31 Unified Network Management System %s' % display_version
-        element.append(e)
-
-        tree.getroot().append(element)
-
-        if type == 'service':
-            element = etree.Element('hotpatch')
-            element.set('restart-client', 'true')
-            element.set('run-operation', 'true')
-            tree.getroot().append(element)
-
-            element = etree.Element('pmus')
-            e = etree.Element('pmu')
-            e.set('name', 'bn-servicetools')
-            element.append(e)
-            tree.getroot().append(element)
-
-        element = etree.Element('src-version')
-        e = etree.Element('version')
-        e.set('main', version)
-        element.append(e)
-        tree.getroot().append(element)
-
-        element = etree.Element('patchs')
-
-        for name in patchsets:
-            e = etree.Element('patch')
-            e.text = name
-            element.append(e)
-
-        tree.getroot().append(element)
-
-        delete_files = []
-
-        with builtin_os.chdir(self.output) as chdir:
-            for id in ids:
-                if os.path.isdir(os.path.join('patch', id, 'ids')):
-                    for file in glob.iglob(os.path.join('patch', id, 'ids/*.xml')):
-                        deletes = self.get_patch_deletes(file, type)
-
-                        for delete_file in deletes:
-                            if delete_file not in delete_files:
-                                delete_files.append(delete_file)
-                else:
-                    for file in glob.iglob(os.path.join('patch', id, '*.xml')):
-                        deletes = self.get_patch_deletes(file, type)
-
-                        for delete_file in deletes:
-                            if delete_file not in delete_files:
-                                delete_files.append(delete_file)
-
-                        break
-
-        if delete_files:
-            element = etree.Element('delete-file-list')
-
-            for file in delete_files:
-                e = etree.Element('file-item')
-                e.set('delfile', file)
-                element.append(e)
-
-            tree.getroot().append(element)
-
-        dirname = os.path.join('update-info', zipname)
-        os.makedirs(dirname, exist_ok = True)
-
-        try:
-            tree.write(os.path.join(dirname, 'patchset-update-info.xml'), encoding='utf-8', pretty_print=True, xml_declaration=True)
-        except Exception as e:
-            print(e)
-
-            return False
-
-        return True
-
-    def change_info(self, zipname, id_info, version, type):
-        changes = [
-            [
-                '变更来源',
-                '变更类型',
-                '开发经理',
-                '提交人员',
-                '故障/需求ID',
-                '变更描述',
-                '变更分析和测试建议',
-                '集成测试人员',
-                '集成测试结果',
-                '补丁编号',
-                '变更文件',
-                '补丁文件',
-                '系统测试人员',
-                '系统测试方法',
-                '系统测试结果',
-                '走查人员',
-                '走查结果'
-            ]
-        ]
-
-        with builtin_os.chdir(self.output) as chdir:
-            for id in id_info:
-                for file in glob.iglob(os.path.join('patch', id, '*.xml')):
-                    info = self.get_patch_info(file)
-
-                    if info:
-                        filenames = []
-
-                        with builtin_os.chdir(id_info[id]) as chdir:
-                            for file in glob.iglob('**/*', recursive = True):
-                                if os.path.isfile(file):
-                                    filenames.append(builtin_os.normpath(file))
-
-                        changes.append(
-                            [
-                                info['info']['变更来源'],           # '变更来源'
-                                info['info']['变更类型'],           # '变更类型'
-                                info['info']['开发经理'],           # '开发经理'
-                                info['info']['提交人员'],           # '提交人员'
-                                info['info']['关联故障'],           # '故障/需求ID'
-                                info['info']['变更描述'],           # '变更描述'
-                                info['info']['影响分析'],           # '变更分析和测试建议'
-                                '',                                 # '集成测试人员'
-                                '',                                 # '集成测试结果'
-                                id,                                 # '补丁编号'
-                                '\n'.join(info['source']),          # '变更文件'
-                                '\n'.join(filenames),               # '补丁文件'
-                                '',                                 # '系统测试人员'
-                                '',                                 # '系统测试方法'
-                                '',                                 # '系统测试结果'
-                                info['info'].get('走查人员', ''),   # '走查人员'
-                                info['info'].get('走查结果', ''),   # '走查结果'
-                            ]
-                        )
-
-                    break
-
-        filename = os.path.join(self.installation(version, type), '%s.csv' % zipname)
-
-        os.makedirs(os.path.dirname(filename), exist_ok = True)
-
-        try:
-            with open(filename, 'w', encoding='utf-8', newline='') as f:
-                writer = csv.writer(f)
-
-                for change in changes:
-                    writer.writerow(change)
-        except Exception as e:
-            print(e)
-
-            return False
-
-        return True
-
-    def patchset_names(self, version, type):
-        prefix = '-%s-SP' % version
-        last_index = 0
-
-        installation_home = self.installation(version, type)
-
-        if os.path.isdir(installation_home):
-            with builtin_os.chdir(installation_home) as chdir:
-                for filename in glob.iglob('*%s*.zip' % prefix):
-                    m = re.search(r'-SP(\d+)\(001-(\d+)\)', filename)
-
-                    if m:
-                        last_index = max(last_index, int(m.group(2)))
-                    else:
-                        m = re.search(r'-SP(\d+)\((\d+)\)', filename)
-
-                        if m:
-                            last_index = max(last_index, int(m.group(2)))
-
-        last_index += 1
-
-        names = []
-
-        for i in range(last_index):
-            names.append('%s-%s-%03d' % (self.name, version, i + 1))
-
-        return names
-
-    def get_patch_info(self, file):
-        try:
-            tree = etree.parse(file)
-        except Exception as e:
-            print(e)
-
-            return None
-
-        info = {
-            'source': [],
-            'info'  : {
-                '提交人员': '',
-                '变更版本': '',
-                '变更类型': '',
-                '变更描述': '',
-                '关联故障': '',
-                '影响分析': '',
-                '依赖变更': '',
-                '走查人员': '',
-                '走查结果': '',
-                '自测结果': '',
-                '变更来源': '',
-                '开发经理': '',
-                '抄送人员': ''
-            }
-        }
-
-        for e in tree.findall('patch'):
-            home = e.get('name', '').strip()
-
-            for element in e.findall('source/attr'):
-                name = element.get('name', '').strip()
-
-                if name:
-                    info['source'].append(builtin_os.join(home, name))
-
-            if len(info['info']) == 0:
-                for element in e.findall('info/attr'):
-                    name = element.get('name', '').strip()
-
-                    if element.text:
-                        value = element.text.strip()
-                    else:
-                        value = ''
-
-                    info['info'][name] = value
-
-        return info
-
-    def get_patch_deletes(self, file, type):
-        try:
-            tree = etree.parse(file)
-        except Exception as e:
-            print(e)
-
-            return []
-
-        deletes = []
-
-        for e in tree.findall('patch/deploy/delete/attr'):
-            name = builtin_os.normpath(e.get('name', '').strip())
-            cur_type = e.get('type', '').strip()
-
-            if not cur_type:
-                cur_type = self.type
-
-            types = []
-
-            for x in cur_type.split(','):
-                types.append(x.strip())
-
-            if 'service' in types:
-                types.append('ems')
-
-            if type in types:
-                deletes.append(name)
-
-        return deletes
+    def expand_filename(self, filename):
+        return filename

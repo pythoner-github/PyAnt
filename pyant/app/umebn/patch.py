@@ -1,5 +1,17 @@
 from pyant.app import const, patch
 
+import glob
+import os
+import os.path
+import shutil
+import tarfile
+
+from lxml import etree
+
+from pyant import git, maven
+from pyant.app import const
+from pyant.builtin import os as builtin_os
+
 __all__ = ('patch', 'installation')
 
 # ******************************************************** #

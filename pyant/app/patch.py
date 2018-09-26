@@ -1,5 +1,4 @@
 import collections
-import csv
 import datetime
 import glob
 import os
@@ -7,15 +6,11 @@ import os.path
 import random
 import re
 import shutil
-import tarfile
-import tempfile
-import zipfile
 
 from lxml import etree
 
-from pyant import command, daemon, git, maven, password, smtp, string
+from pyant import command, daemon, password, smtp, string
 from pyant.app import const
-from pyant.app import build as app_build
 from pyant.builtin import os as builtin_os
 
 __all__ = ('auto', 'patch', 'installation')

@@ -2,7 +2,7 @@ import collections
 import os
 import os.path
 
-from pyant.builtin import os as builtin_os
+from pyant.builtin import __os__
 
 if os.environ.get('SSH_GIT'):
     SSH_GIT = os.environ['SSH_GIT']
@@ -13,22 +13,22 @@ else:
 # REPOS
 
 BN_REPOS = collections.OrderedDict([
-    ('interface', builtin_os.join(SSH_GIT, 'U31R22_INTERFACE')),
-    ('platform' , builtin_os.join(SSH_GIT, 'U31R22_PLATFORM')),
-    ('necommon' , builtin_os.join(SSH_GIT, 'U31R22_NECOMMON')),
-    ('e2e'      , builtin_os.join(SSH_GIT, 'U31R22_E2E')),
-    ('uca'      , builtin_os.join(SSH_GIT, 'U31R22_UCA')),
-    ('xmlfile'  , builtin_os.join(SSH_GIT, 'U31R22_NBI_XMLFILE')),
-    ('nbi'      , builtin_os.join(SSH_GIT, 'U31R22_NBI')),
-    ('sdh'      , builtin_os.join(SSH_GIT, 'U31R22_SDH')),
-    ('wdm'      , builtin_os.join(SSH_GIT, 'U31R22_WDM')),
-    ('ptn'      , builtin_os.join(SSH_GIT, 'U31R22_PTN')),
-    ('ptn2'     , builtin_os.join(SSH_GIT, 'U31R22_PTN2')),
-    ('ip'       , builtin_os.join(SSH_GIT, 'U31R22_IP')),
-    ('inventory', builtin_os.join(SSH_GIT, 'U31R22_Inventory'))
+    ('interface', __os__.join(SSH_GIT, 'U31R22_INTERFACE')),
+    ('platform' , __os__.join(SSH_GIT, 'U31R22_PLATFORM')),
+    ('necommon' , __os__.join(SSH_GIT, 'U31R22_NECOMMON')),
+    ('e2e'      , __os__.join(SSH_GIT, 'U31R22_E2E')),
+    ('uca'      , __os__.join(SSH_GIT, 'U31R22_UCA')),
+    ('xmlfile'  , __os__.join(SSH_GIT, 'U31R22_NBI_XMLFILE')),
+    ('nbi'      , __os__.join(SSH_GIT, 'U31R22_NBI')),
+    ('sdh'      , __os__.join(SSH_GIT, 'U31R22_SDH')),
+    ('wdm'      , __os__.join(SSH_GIT, 'U31R22_WDM')),
+    ('ptn'      , __os__.join(SSH_GIT, 'U31R22_PTN')),
+    ('ptn2'     , __os__.join(SSH_GIT, 'U31R22_PTN2')),
+    ('ip'       , __os__.join(SSH_GIT, 'U31R22_IP')),
+    ('inventory', __os__.join(SSH_GIT, 'U31R22_Inventory'))
 ])
 
-UMEBN_REPO = builtin_os.join(SSH_GIT, 'umebn')
+UMEBN_REPOS = __os__.join(SSH_GIT, 'umebn')
 
 # ARTIFACT
 

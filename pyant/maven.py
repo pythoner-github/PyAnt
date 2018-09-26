@@ -6,8 +6,8 @@ import tempfile
 
 from lxml import etree
 
-from pyant import command, git, smtp, string
-from pyant.builtin import os as builtin_os
+from pyant import command, git, smtp
+from pyant.builtin import __os__, __string__
 
 __all__ = ('maven',)
 
@@ -76,7 +76,7 @@ class maven:
                 modules = self.retry_modules()
 
                 if modules:
-                    with builtin_os.tmpdir('tmp') as tmpdir:
+                    with __os__.tmpdir('tmp') as tmpdir:
                         self.retry_pom(modules, '../pom.xml')
 
                         return self.retry_compile(retry_cmd, lang)
@@ -268,7 +268,7 @@ class maven:
                 if file:
                     found = False
 
-                    tmp_file = builtin_os.normpath(file)
+                    tmp_file = __os__.normpath(file)
 
                     for name in ('target/', 'output/'):
                         if name in tmp_file:
@@ -310,7 +310,7 @@ class maven:
 
         if m:
             if self.module_home and os.path.isdir(self.module_home):
-                with builtin_os.chdir(self.module_home) as chdir:
+                with __os__.chdir(self.module_home) as chdir:
                     file = os.path.abspath(m.group(1))
                     lineno = int(m.group(2))
                     message = [line]
@@ -356,7 +356,7 @@ class maven:
 
         if m:
             if self.module_home and os.path.isdir(self.module_home):
-                with builtin_os.chdir(self.module_home) as chdir:
+                with __os__.chdir(self.module_home) as chdir:
                     if int(m.group(2)) > 0 or int(m.group(3)):
                         filename = '%s.java' % m.string[m.end():].replace('.', '/')
                         file = None
@@ -367,7 +367,7 @@ class maven:
                             for name in glob.iglob(os.path.join('**', filename), recursive = True):
                                 file = os.path.abspath(name)
 
-                                if builtin_os.normpath(name).startswith('src/'):
+                                if __os__.normpath(name).startswith('src/'):
                                     break
 
                         if file:
@@ -441,7 +441,7 @@ class maven:
 
         if m:
             if self.module_home and os.path.isdir(self.module_home):
-                with builtin_os.chdir(self.module_home) as chdir:
+                with __os__.chdir(self.module_home) as chdir:
                     file = m.string[:m.start()].strip()
                     lineno = int(m.group(1))
                     message = [line]
@@ -489,7 +489,7 @@ class maven:
                 osname = None
 
             if self.module_home and os.path.isdir(self.module_home):
-                with builtin_os.chdir(self.module_home) as chdir:
+                with __os__.chdir(self.module_home) as chdir:
                     file = os.getcwd()
                     lineno = None
                     message = []
@@ -571,7 +571,7 @@ class maven:
             admin_addrs = None
 
             if os.environ.get('SENDMAIL.ADMIN'):
-                admin_addrs = string.split(os.environ.get('SENDMAIL.ADMIN'))
+                admin_addrs = __string__.split(os.environ.get('SENDMAIL.ADMIN'))
 
             for file in self.errors:
                 if file:
@@ -601,7 +601,7 @@ class maven:
                         errors[email].append([message, self.errors[file]['logs']])
 
             for email, info in errors.items():
-                with builtin_os.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
+                with __os__.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
                     lines = []
                     logs = []
 
@@ -627,7 +627,7 @@ class maven:
                             print(e)
 
                     if os.environ.get('BUILD_URL'):
-                        console_url = builtin_os.join(os.environ['BUILD_URL'], 'console')
+                        console_url = __os__.join(os.environ['BUILD_URL'], 'console')
 
                         lines.append('')
                         lines.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
@@ -669,7 +669,7 @@ class maven:
         map = {}
 
         if os.path.isfile(os.path.join(dirname, 'pom.xml')):
-            with builtin_os.chdir(dirname) as chdir:
+            with __os__.chdir(dirname) as chdir:
                 try:
                     tree = etree.parse('pom.xml')
                     namespace = tree.getroot().nsmap
@@ -692,7 +692,7 @@ class maven:
 
     def artifactid_prefix(self, artifactid):
         if '${prefix}' in artifactid:
-            if builtin_os.osname() in ('windows', 'windows-x64'):
+            if __os__.osname() in ('windows', 'windows-x64'):
                 return artifactid.replace('${prefix}', '')
             else:
                 return artifactid.replace('${prefix}', 'lib')
@@ -783,7 +783,7 @@ class maven:
 
             for module, path in modules.items():
                 element = etree.Element('module')
-                element.text = builtin_os.join('..', path)
+                element.text = __os__.join('..', path)
                 e.append(element)
 
             tree.write('pom.xml', encoding='utf-8', pretty_print=True, xml_declaration=True)

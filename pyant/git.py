@@ -6,7 +6,7 @@ import re
 import subprocess
 
 from pyant import command
-from pyant.builtin import os as builtin_os
+from pyant.builtin import __os__
 
 __all__ = ('clone', 'pull', 'log', 'info', 'config', 'home')
 
@@ -37,7 +37,7 @@ def clone(url, path = None, branch = None, arg = None):
             if not branch:
                 branch = 'master'
 
-            with builtin_os.chdir(path) as chdir:
+            with __os__.chdir(path) as chdir:
                 cmds = (
                     'git submodule init',
                     'git submodule update',
@@ -66,7 +66,7 @@ def pull(path = None, arg = None, revert = False):
         if arg:
             cmdline += ' %s' % arg
 
-        with builtin_os.chdir(path) as chdir:
+        with __os__.chdir(path) as chdir:
             if revert:
                 cmd = command.command()
 
@@ -135,7 +135,7 @@ def log(path = None, arg = None, display = False):
 
         cmdline += ' -- %s' % subprocess.list2cmdline([name]).strip()
 
-        with builtin_os.chdir(path) as chdir:
+        with __os__.chdir(path) as chdir:
             lines = []
 
             cmd = command.command()
@@ -210,7 +210,7 @@ def log(path = None, arg = None, display = False):
                         tmp_m = re.search(r'^\.{3}\/', name)
 
                         if tmp_m:
-                            with builtin_os.chdir(git_home) as chdir:
+                            with __os__.chdir(git_home) as chdir:
                                 for file in glob.iglob(os.path.join('**', tmp_m.string[tmp_m.end():]), recursive = True):
                                     name = file
 
@@ -320,7 +320,7 @@ def info(path = None):
                     git_home = home(path)
 
                     if git_home:
-                        map['url'] = builtin_os.join(url, os.path.relpath(path, git_home))
+                        map['url'] = __os__.join(url, os.path.relpath(path, git_home))
                 else:
                     map['url'] = url
 
@@ -334,7 +334,7 @@ def reset(path = None, branch = None):
         branch = 'master'
 
     if os.path.isdir(path):
-        with builtin_os.chdir(path) as chdir:
+        with __os__.chdir(path) as chdir:
             cmd = command.command()
 
             for line in cmd.command('git checkout -f -B %s' % branch):
@@ -372,7 +372,7 @@ def config(path = None, arg = None):
 
         cmdline += ' --list'
 
-        with builtin_os.chdir(path) as chdir:
+        with __os__.chdir(path) as chdir:
             lines = []
 
             cmd = command.command()

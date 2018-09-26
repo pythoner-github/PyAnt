@@ -6,7 +6,7 @@ import shutil
 import Pyro4
 
 from pyant import command, smtp
-from pyant.builtin import os as builtin_os
+from pyant.builtin import __os__
 
 __all__ = ('PyroCommandProxy', 'PyroFileProxy', 'daemon')
 
@@ -170,7 +170,7 @@ class PyroFileProxy():
             if os.path.isfile(path):
                 return self.copy_file(path, name)
             elif os.path.isdir(path):
-                with builtin_os.chdir(path) as chdir:
+                with __os__.chdir(path) as chdir:
                     for file in glob.iglob('**/*', recursive = True):
                         if os.path.isfile(file):
                             if not self.copy_file(file, os.path.join(name, file)):

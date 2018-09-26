@@ -8,7 +8,7 @@ import zipfile
 
 from lxml import etree
 
-from pyant.builtin import os as builtin_os
+from pyant.builtin import __os__
 
 __all__ = ('bn_cut_upgrade_installation', )
 
@@ -16,7 +16,7 @@ def bn_cut_upgrade_installation(installation_home):
     if os.path.isdir(installation_home):
         installation_upgrade = os.path.abspath('installation_upgrade')
 
-        with builtin_os.chdir(installation_home) as chdir:
+        with __os__.chdir(installation_home) as chdir:
             for file in glob.iglob('**/*', recursive = True):
                 if os.path.isfile(file):
                     dst = os.path.join(installation_upgrade, file)
@@ -26,7 +26,7 @@ def bn_cut_upgrade_installation(installation_home):
 
                     shutil.copyfile(file, dst)
 
-        with builtin_os.chdir(installation_upgrade) as chdir:
+        with __os__.chdir(installation_upgrade) as chdir:
             zipfiles = []
 
             zipfiles += glob.glob('uca*.zip')
@@ -63,7 +63,7 @@ def bn_cut_upgrade_installation(installation_home):
             ]
 
             for file in zipfiles:
-                with builtin_os.tmpdir(tempfile.mkdtemp()) as tmpdir:
+                with __os__.tmpdir(tempfile.mkdtemp()) as tmpdir:
                     try:
                         with zipfile.ZipFile(os.path.join(chdir.path, file)) as zip:
                             zip.extractall(tmpdir.path)

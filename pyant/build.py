@@ -5,10 +5,10 @@ import re
 import shutil
 import sys
 
-from pyant import check, string
+from pyant import check
 from pyant.app import const, patch
 from pyant.app import build as app_build
-from pyant.builtin import os as builtin_os
+from pyant.builtin import __os__, __string__
 
 __build_name__ = ('bn', 'umebn')
 __all__ = ('build',)
@@ -55,7 +55,7 @@ def build(argv = None):
         os.makedirs(home, exist_ok = True)
         pwd = os.getcwd()
 
-        with builtin_os.chdir(home) as chdir:
+        with __os__.chdir(home) as chdir:
             version = None
 
             POM_VERSION = '%s_POM_VERSION' % name.upper()
@@ -159,7 +159,7 @@ def build(argv = None):
             elif command == 'kw_compile':
                 output, module, cmd, lang, *_ = arg
 
-                with builtin_os.chdir(pwd) as _chdir:
+                with __os__.chdir(pwd) as _chdir:
                     output = os.path.abspath(output)
 
                 if name in ('bn',):
@@ -224,7 +224,7 @@ def build(argv = None):
                 module, paths, branch, *_ = arg
 
                 if paths:
-                    paths = string.split(paths)
+                    paths = __string__.split(paths)
                 else:
                     paths = []
 
@@ -239,7 +239,7 @@ def build(argv = None):
 
                 return status
             elif command == 'dashboard_gerrit':
-                repos = builtin_os.join(const.SSH_GIT, os.environ.get('GERRIT_PROJECT'))
+                repos = __os__.join(const.SSH_GIT, os.environ.get('GERRIT_PROJECT'))
                 revision = os.environ.get('GERRIT_PATCHSET_REVISION')
                 branch = os.environ.get('GERRIT_BRANCH')
 

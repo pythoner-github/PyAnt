@@ -13,9 +13,9 @@ import zipfile
 
 from lxml import etree
 
-from pyant import check, command, git, maven, password, smtp, string
+from pyant import check, command, git, maven, password, smtp
 from pyant.app import const
-from pyant.builtin import os as builtin_os
+from pyant.builtin import __os__, __string__
 
 __all__ = ('umebn_build', 'bn_build')
 
@@ -44,7 +44,7 @@ class build():
             file = os.path.join(self.path, 'pom/pom.xml')
 
         if os.path.isfile(file):
-            with builtin_os.chdir(os.path.dirname(file)) as chdir:
+            with __os__.chdir(os.path.dirname(file)) as chdir:
                 mvn = maven.maven()
 
                 return mvn.compile(cmd)
@@ -60,7 +60,7 @@ class build():
         path = os.path.join(self.path, dirname)
 
         if os.path.isdir(path):
-            with builtin_os.chdir(path) as chdir:
+            with __os__.chdir(path) as chdir:
                 mvn = maven.maven()
                 mvn.notification = '<%s_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
 
@@ -98,7 +98,7 @@ class build():
             return False
 
         if os.path.isdir(self.path):
-            with builtin_os.chdir(self.path) as chdir:
+            with __os__.chdir(self.path) as chdir:
                 return self.inner_dashboard(paths)
         else:
             print('no such directory: %s' % os.path.normpath(self.path))
@@ -116,7 +116,7 @@ class build():
         status = True
 
         if os.path.isdir(self.path):
-            with builtin_os.chdir(self.path) as chdir:
+            with __os__.chdir(self.path) as chdir:
                 cmd = command.command()
 
                 for line in cmd.command('git fetch %s +refs/changes/*:refs/changes/*' % repos):
@@ -155,10 +155,10 @@ class build():
                         if os.path.isdir(path):
                             lang = None
 
-                            if builtin_os.normpath(path).startswith('code_c/'):
+                            if __os__.normpath(path).startswith('code_c/'):
                                 lang = 'cpp'
 
-                            with builtin_os.chdir(path) as chdir:
+                            with __os__.chdir(path) as chdir:
                                 # mvn = maven.maven()
                                 # mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
                                 #
@@ -197,7 +197,7 @@ class build():
             path = '.'
 
         if os.path.isdir(path):
-            with builtin_os.chdir(path) as chdir:
+            with __os__.chdir(path) as chdir:
                 if os.path.isfile('kwinject/kwinject.out'):
                     basename = os.path.basename(os.getcwd())
 
@@ -270,7 +270,7 @@ class build():
             path = '.'
 
         if os.path.isdir(path):
-            with builtin_os.chdir(path) as chdir:
+            with __os__.chdir(path) as chdir:
                 kwinject = 'target/kwinject.out'
 
                 mvn = maven.maven()
@@ -292,7 +292,7 @@ class build():
                 if os.path.isfile(kwinject):
                     defect = {}
 
-                    with builtin_os.chdir(os.path.dirname(kwinject)) as _chdir:
+                    with __os__.chdir(os.path.dirname(kwinject)) as _chdir:
                         kwreport = 'kwreport.xml'
 
                         cmd = command.command()
@@ -369,7 +369,7 @@ class build():
                             admin_addrs = None
 
                             if os.environ.get('SENDMAIL.ADMIN'):
-                                admin_addrs = string.split(os.environ.get('SENDMAIL.ADMIN'))
+                                admin_addrs = __string__.split(os.environ.get('SENDMAIL.ADMIN'))
 
                             smtp.sendmail(
                                 '<%s_DASHBOARD_GERRIT_BUILD 通知> KW检查失败, 请尽快处理' % self.name.upper(),
@@ -462,13 +462,13 @@ class build():
 
         for path in paths:
             if os.path.isdir(path):
-                with builtin_os.chdir(path) as chdir:
+                with __os__.chdir(path) as chdir:
                     mvn = maven.maven()
                     mvn.notification = '<%s_DASHBOARD_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
 
                     mvn.clean()
 
-                    if 'code_c/' in builtin_os.normpath(path):
+                    if 'code_c/' in __os__.normpath(path):
                         cmdline = 'mvn deploy -fn -U -Djobs=5'
                         lang = 'cpp'
                     else:
@@ -550,7 +550,7 @@ class build():
 
         for path in paths:
             if os.path.isdir(os.path.join(path, '.git')):
-                with builtin_os.chdir(path) as chdir:
+                with __os__.chdir(path) as chdir:
                     if path in rev.keys():
                         arg = '--stat=256 %s..HEAD' % rev[path][:6]
 
@@ -619,12 +619,12 @@ class build():
             artifact_filenames = [artifact_filenames]
 
         if os.path.isdir(path):
-            with builtin_os.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
+            with __os__.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
                 if artifact_filenames:
                     # download
 
                     for file in artifact_filenames:
-                        filename = builtin_os.join(const.ARTIFACT_HTTP, file)
+                        filename = __os__.join(const.ARTIFACT_HTTP, file)
 
                         cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (const.ARTIFACT_APIKEY, filename)
                         display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -O "%s"' % (password.password(const.ARTIFACT_APIKEY), filename)
@@ -647,7 +647,7 @@ class build():
 
                 dst = os.path.join(os.getcwd(), 'installation')
 
-                with builtin_os.chdir(path) as chdir:
+                with __os__.chdir(path) as chdir:
                     try:
                         for file in glob.iglob('**/*', recursive = True):
                             filename = os.path.join(dst, file)
@@ -692,7 +692,7 @@ class build():
 
                 # upload
 
-                file = builtin_os.join(const.ARTIFACT_HTTP, artifact_path, zipname)
+                file = __os__.join(const.ARTIFACT_HTTP, artifact_path, zipname)
 
                 cmdline = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (const.ARTIFACT_APIKEY, zipname, file)
                 display_cmd = 'curl -k -H "X-JFrog-Art-Api: %s" -T "%s" "%s"' % (password.password(const.ARTIFACT_APIKEY), zipname, file)
@@ -766,7 +766,7 @@ class umebn_build(build):
 
         super().__init__(
             'umebn',
-            builtin_os.join(const.SSH_GIT, 'umebn'),
+            __os__.join(const.SSH_GIT, 'umebn'),
             artifact_repos
         )
 
@@ -789,19 +789,19 @@ class bn_build(build):
         }
 
         repos = collections.OrderedDict([
-            ('interface', builtin_os.join(const.SSH_GIT, 'U31R22_INTERFACE')),
-            ('platform' , builtin_os.join(const.SSH_GIT, 'U31R22_PLATFORM')),
-            ('necommon' , builtin_os.join(const.SSH_GIT, 'U31R22_NECOMMON')),
-            ('e2e'      , builtin_os.join(const.SSH_GIT, 'U31R22_E2E')),
-            ('uca'      , builtin_os.join(const.SSH_GIT, 'U31R22_UCA')),
-            ('xmlfile'  , builtin_os.join(const.SSH_GIT, 'U31R22_NBI_XMLFILE')),
-            ('nbi'      , builtin_os.join(const.SSH_GIT, 'U31R22_NBI')),
-            ('sdh'      , builtin_os.join(const.SSH_GIT, 'U31R22_SDH')),
-            ('wdm'      , builtin_os.join(const.SSH_GIT, 'U31R22_WDM')),
-            ('ptn'      , builtin_os.join(const.SSH_GIT, 'U31R22_PTN')),
-            ('ptn2'     , builtin_os.join(const.SSH_GIT, 'U31R22_PTN2')),
-            ('ip'       , builtin_os.join(const.SSH_GIT, 'U31R22_IP')),
-            ('inventory', builtin_os.join(const.SSH_GIT, 'U31R22_Inventory'))
+            ('interface', __os__.join(const.SSH_GIT, 'U31R22_INTERFACE')),
+            ('platform' , __os__.join(const.SSH_GIT, 'U31R22_PLATFORM')),
+            ('necommon' , __os__.join(const.SSH_GIT, 'U31R22_NECOMMON')),
+            ('e2e'      , __os__.join(const.SSH_GIT, 'U31R22_E2E')),
+            ('uca'      , __os__.join(const.SSH_GIT, 'U31R22_UCA')),
+            ('xmlfile'  , __os__.join(const.SSH_GIT, 'U31R22_NBI_XMLFILE')),
+            ('nbi'      , __os__.join(const.SSH_GIT, 'U31R22_NBI')),
+            ('sdh'      , __os__.join(const.SSH_GIT, 'U31R22_SDH')),
+            ('wdm'      , __os__.join(const.SSH_GIT, 'U31R22_WDM')),
+            ('ptn'      , __os__.join(const.SSH_GIT, 'U31R22_PTN')),
+            ('ptn2'     , __os__.join(const.SSH_GIT, 'U31R22_PTN2')),
+            ('ip'       , __os__.join(const.SSH_GIT, 'U31R22_IP')),
+            ('inventory', __os__.join(const.SSH_GIT, 'U31R22_Inventory'))
         ])
 
         super().__init__(
@@ -892,7 +892,7 @@ class bn_build(build):
             else:
                 artifact = self.artifact_repos['alpha']
 
-            suffix = '-%s' % builtin_os.osname()
+            suffix = '-%s' % __os__.osname()
 
             if type not in ('ems',):
                 suffix += '_%s' % type
@@ -933,7 +933,7 @@ class bn_build(build):
             else:
                 artifact = self.artifact_repos['alpha']
 
-            suffix = '-update-%s' % builtin_os.osname()
+            suffix = '-update-%s' % __os__.osname()
 
             if type not in ('ems',):
                 suffix += '_%s' % type
@@ -977,7 +977,7 @@ class bn_build(build):
         self.path = os.path.basename(self.repos[module])
 
         if os.path.isdir(self.path):
-            with builtin_os.chdir(self.path) as chdir:
+            with __os__.chdir(self.path) as chdir:
                 return self.inner_dashboard(paths)
         else:
             print('no such directory: %s' % os.path.normpath(self.path))
@@ -1013,7 +1013,7 @@ class bn_build(build):
         module_path = os.path.basename(self.repos[module])
 
         if os.path.isdir(module_path):
-            with builtin_os.chdir(module_path) as chdir:
+            with __os__.chdir(module_path) as chdir:
                 cmd = command.command()
 
                 for line in cmd.command('git fetch %s +refs/changes/*:refs/changes/*' % repos):
@@ -1083,10 +1083,10 @@ class bn_build(build):
                         if os.path.isdir(path):
                             lang = None
 
-                            if builtin_os.normpath(path).startswith('code_c/'):
+                            if __os__.normpath(path).startswith('code_c/'):
                                 lang = 'cpp'
 
-                            with builtin_os.chdir(path) as chdir:
+                            with __os__.chdir(path) as chdir:
                                 if module in ('interface',):
                                     mvn = maven.maven()
                                     mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
@@ -1183,7 +1183,7 @@ class bn_build(build):
                 return False
 
             vars[file] = {
-                'os': builtin_os.osname()
+                'os': __os__.osname()
             }
 
             for e in tree.findall('%s/opts/attr' % type):
@@ -1219,7 +1219,7 @@ class bn_build(build):
                     vars[filename][name] = value
 
             for hash, _xpath in ((packages, 'packages/package'), (copies, 'copies/copy')):
-                for e in tree.findall(builtin_os.join(type, _xpath)):
+                for e in tree.findall(__os__.join(type, _xpath)):
                     name = e.get('name')
                     dirname = e.get('dirname')
                     dest = e.get('dest', '')
@@ -1231,10 +1231,10 @@ class bn_build(build):
                     if name and dirname:
                         _vars = vars.get(file)
 
-                        name = builtin_os.normpath(string.vars_expand(name.strip(), _vars))
-                        dirname = builtin_os.normpath(os.path.join(os.path.dirname(file), string.vars_expand(dirname.strip(), _vars)))
-                        dest = builtin_os.normpath(string.vars_expand(dest.strip(), _vars))
-                        ver = builtin_os.normpath(string.vars_expand(ver.strip(), _vars))
+                        name = __os__.normpath(__string__.vars_expand(name.strip(), _vars))
+                        dirname = __os__.normpath(os.path.join(os.path.dirname(file), __string__.vars_expand(dirname.strip(), _vars)))
+                        dest = __os__.normpath(__string__.vars_expand(dest.strip(), _vars))
+                        ver = __os__.normpath(__string__.vars_expand(ver.strip(), _vars))
 
                         if _xpath == 'packages/package':
                             name = '%s_%s' % (name, ver.replace(' ', ''))
@@ -1243,14 +1243,14 @@ class bn_build(build):
                             if name not in hash:
                                 hash[name] = collections.OrderedDict()
 
-                            with builtin_os.chdir(dirname) as chdir:
+                            with __os__.chdir(dirname) as chdir:
                                 for element in e.findall('file'):
                                     element_name = element.get('name')
                                     element_dest = element.get('dest', '')
 
                                     if element_name:
-                                        element_name = os.path.normpath(string.vars_expand(element_name.strip(), _vars))
-                                        element_dest = os.path.normpath(string.vars_expand(element_dest.strip(), _vars))
+                                        element_name = os.path.normpath(__string__.vars_expand(element_name.strip(), _vars))
+                                        element_dest = os.path.normpath(__string__.vars_expand(element_dest.strip(), _vars))
 
                                         if element_dest in ('', '.'):
                                             element_dest = element_name
@@ -1270,7 +1270,7 @@ class bn_build(build):
                                         elif os.path.isdir(element_name):
                                             found = True
 
-                                            with builtin_os.chdir(element_name) as _chdir:
+                                            with __os__.chdir(element_name) as _chdir:
                                                 for filename in glob.iglob('**/*', recursive = True):
                                                     if os.path.isfile(filename):
                                                         hash[name][dirname][dest][os.path.join(element_dest, filename)] = os.path.join(element_name, filename)
@@ -1281,7 +1281,7 @@ class bn_build(build):
                                                 if os.path.isfile(path):
                                                     hash[name][dirname][dest][path] = path
                                                 elif os.path.isdir(path):
-                                                    with builtin_os.chdir(path) as _chdir:
+                                                    with __os__.chdir(path) as _chdir:
                                                         for filename in glob.iglob('**/*', recursive = True):
                                                             if os.path.isfile(filename):
                                                                 hash[name][dirname][dest][os.path.join(path, filename)] = os.path.join(path, filename)
@@ -1330,10 +1330,10 @@ class bn_build(build):
                             continue
 
                         if not cross_platform:
-                            if builtin_os.osname() in ('windows', 'windows-x64'):
+                            if __os__.osname() in ('windows', 'windows-x64'):
                                 if os.path.splitext(filename)[-1] in ('.so', '.sh'):
                                     if os.path.splitext(filename)[-1] in ('.so', ):
-                                        if 'ruby/' not in builtin_os.normpath(filename):
+                                        if 'ruby/' not in __os__.normpath(filename):
                                             continue
                                     else:
                                         continue
@@ -1352,7 +1352,7 @@ class bn_build(build):
                             if type in ('upgrade', ):
                                 srcname = self.upgrade_expand_filename(srcname, tmpdir)
 
-                            zipinfo[builtin_os.normpath(os.path.join(dest, arcname))] = srcname
+                            zipinfo[__os__.normpath(os.path.join(dest, arcname))] = srcname
 
             try:
                 zipname = os.path.join(zipfile_home, '%s.zip' % name)
@@ -1386,10 +1386,10 @@ class bn_build(build):
                                 continue
 
                             if not cross_platform:
-                                if builtin_os.osname() in ('windows', 'windows-x64'):
+                                if __os__.osname() in ('windows', 'windows-x64'):
                                     if os.path.splitext(filename)[-1] in ('.so', '.sh'):
                                         if os.path.splitext(filename)[-1] in ('.so',):
-                                            if 'ruby/' not in builtin_os.normpath(filename):
+                                            if 'ruby/' not in __os__.normpath(filename):
                                                 continue
                                         else:
                                             continue
@@ -1438,14 +1438,14 @@ class bn_build(build):
             return None
 
     def update_devtools(self, branch = None):
-        if builtin_os.osname() == 'linux':
-            url = builtin_os.join(self.repos_devtools, 'U31R22_DEVTOOLS_LINUX')
-        elif builtin_os.osname() == 'solaris':
-            url = builtin_os.join(self.repos_devtools, 'U31R22_DEVTOOLS_SOLARIS')
-        elif builtin_os.osname() == 'windows-x64':
-            url = builtin_os.join(self.repos_devtools, 'U31R22_DEVTOOLS_WINDOWS-x64')
+        if __os__.osname() == 'linux':
+            url = __os__.join(self.repos_devtools, 'U31R22_DEVTOOLS_LINUX')
+        elif __os__.osname() == 'solaris':
+            url = __os__.join(self.repos_devtools, 'U31R22_DEVTOOLS_SOLARIS')
+        elif __os__.osname() == 'windows-x64':
+            url = __os__.join(self.repos_devtools, 'U31R22_DEVTOOLS_WINDOWS-x64')
         else:
-            url = builtin_os.join(self.repos_devtools, 'U31R22_DEVTOOLS_WINDOWS')
+            url = __os__.join(self.repos_devtools, 'U31R22_DEVTOOLS_WINDOWS')
 
         path = 'DEVTOOLS'
 
@@ -1468,60 +1468,60 @@ class bn_build(build):
 
         if not os.environ.get('DEVTOOLS_ROOT'):
             if os.path.isdir('DEVTOOLS'):
-                os.environ['DEVTOOLS_ROOT'] = builtin_os.abspath('DEVTOOLS')
+                os.environ['DEVTOOLS_ROOT'] = __os__.abspath('DEVTOOLS')
 
         if lang == 'cpp':
             if os.environ.get('DEVTOOLS_ROOT'):
                 if os.path.isdir(os.path.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin')):
-                    os.environ['PATH'] = ';'.join((builtin_os.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin'), os.environ['PATH']))
+                    os.environ['PATH'] = ';'.join((__os__.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin'), os.environ['PATH']))
 
             if not os.environ.get('INTERFACE_OUTPUT_HOME'):
                 path = os.path.basename(self.repos['interface'])
 
                 if os.path.isdir(path):
-                    os.environ['INTERFACE_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                    os.environ['INTERFACE_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('PLATFORM_OUTPUT_HOME'):
                 path = os.path.basename(self.repos['platform'])
 
                 if os.path.isdir(path):
-                    os.environ['PLATFORM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                    os.environ['PLATFORM_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('NECOMMON_OUTPUT_HOME'):
                 path = os.path.basename(self.repos['necommon'])
 
                 if os.path.isdir(path):
-                    os.environ['NECOMMON_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                    os.environ['NECOMMON_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('E2E_OUTPUT_HOME'):
                 path = os.path.basename(self.repos['e2e'])
 
                 if os.path.isdir(path):
-                    os.environ['E2E_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                    os.environ['E2E_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('UCA_OUTPUT_HOME'):
                 path = os.path.basename(self.repos['uca'])
 
                 if os.path.isdir(path):
-                    os.environ['UCA_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                    os.environ['UCA_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('NAF_OUTPUT_HOME'):
                 path = os.path.basename(self.repos['nbi'])
 
                 if os.path.isdir(path):
-                    os.environ['NAF_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                    os.environ['NAF_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('SDH_OUTPUT_HOME'):
                 path = os.path.basename(self.repos['sdh'])
 
                 if os.path.isdir(path):
-                    os.environ['SDH_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                    os.environ['SDH_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
 
             if not os.environ.get('WDM_OUTPUT_HOME'):
                 path = os.path.basename(self.repos['wdm'])
 
                 if os.path.isdir(path):
-                    os.environ['WDM_OUTPUT_HOME'] = builtin_os.join(os.path.abspath(path), 'code_c/build/output')
+                    os.environ['WDM_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
 
     def expand_filename(self, version, dirname, filename, destname, type, tmpdir, vars = None):
         dst = destname
@@ -1532,9 +1532,9 @@ class bn_build(build):
 
             with open(name, encoding = 'utf-8') as f:
                 for line in f.readlines():
-                    lines.append(string.vars_expand(line.rstrip(), vars))
+                    lines.append(__string__.vars_expand(line.rstrip(), vars))
 
-            name = os.path.join(tmpdir, builtin_os.tmpfilename())
+            name = os.path.join(tmpdir, __os__.tmpfilename())
 
             with open(name, 'w', encoding = 'utf-8') as f:
                 f.write('\n'.join(lines))
@@ -1692,7 +1692,7 @@ class bn_build(build):
                     else:
                         pass
 
-                name = os.path.join(tmpdir, builtin_os.tmpfilename())
+                name = os.path.join(tmpdir, __os__.tmpfilename())
                 tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration=True)
             except:
                 pass
@@ -1724,7 +1724,7 @@ class bn_build(build):
                     else:
                         pass
 
-                name = os.path.join(tmpdir, builtin_os.tmpfilename())
+                name = os.path.join(tmpdir, __os__.tmpfilename())
                 tree.write(name, encoding='utf-8', pretty_print=True, xml_declaration=True)
             except:
                 pass
@@ -1734,7 +1734,7 @@ class bn_build(build):
         return name
 
     def expand_dashboard(self, path, file):
-        file = builtin_os.normpath(file)
+        file = __os__.normpath(file)
 
         if path in ('U31R22_INTERFACE',):
             if file.startswith('code/asn/'):
@@ -1909,7 +1909,7 @@ class bn_build(build):
             m = re.search(r'^diff\s+--git\s+a\/(.*)\s+b/.*$', line)
 
             if m:
-                with builtin_os.chdir(git_home) as chdir:
+                with __os__.chdir(git_home) as chdir:
                     filename = os.path.abspath(m.group(1))
 
                 continue

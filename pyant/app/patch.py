@@ -9,9 +9,9 @@ import shutil
 
 from lxml import etree
 
-from pyant import command, daemon, password, smtp, string
+from pyant import command, daemon, password, smtp
 from pyant.app import const
-from pyant.builtin import os as builtin_os
+from pyant.builtin import __os__, __string__
 
 __all__ = ('auto', 'patch', 'installation')
 
@@ -19,7 +19,7 @@ def auto():
     status = True
 
     if os.path.isdir(const.PATCH_XML_HOME):
-        with builtin_os.chdir(const.PATCH_XML_HOME) as chdir:
+        with __os__.chdir(const.PATCH_XML_HOME) as chdir:
             print('===== 拷贝补丁申请单 =====')
 
             for dir in glob.iglob('*', recursive = True):
@@ -50,7 +50,7 @@ def auto():
                 else:
                     deploy_homes = [os.path.join(const.PATCH_TEMPLATE_HOME, module, 'none', name)]
 
-                with builtin_os.chdir(dir) as _chdir:
+                with __os__.chdir(dir) as _chdir:
                     for file in glob.iglob('**/*.xml', recursive = True):
                         try:
                             for deploy_home in deploy_homes:
@@ -73,7 +73,7 @@ def auto():
     auto_info = []
 
     if os.path.isdir(const.PATCH_TEMPLATE_HOME):
-        with builtin_os.chdir(const.PATCH_TEMPLATE_HOME) as chdir:
+        with __os__.chdir(const.PATCH_TEMPLATE_HOME) as chdir:
             print('===== 分发补丁申请单 =====')
 
             for dir in glob.iglob('*/*', recursive = True):
@@ -86,13 +86,13 @@ def auto():
                     except:
                         continue
 
-                    with builtin_os.chdir(dir) as _chdir:
+                    with __os__.chdir(dir) as _chdir:
                         for name in glob.iglob('*', recursive = True):
                             try:
-                                if proxy.isdir(builtin_os.join(home, 'patch/build', 'dev', name)):
-                                    build_home = builtin_os.join(home, 'patch/build', 'dev', name)
-                                elif proxy.isdir(builtin_os.join(home, 'patch/build', 'release', name)):
-                                    build_home = builtin_os.join(home, 'patch/build', 'release', name)
+                                if proxy.isdir(__os__.join(home, 'patch/build', 'dev', name)):
+                                    build_home = __os__.join(home, 'patch/build', 'dev', name)
+                                elif proxy.isdir(__os__.join(home, 'patch/build', 'release', name)):
+                                    build_home = __os__.join(home, 'patch/build', 'release', name)
                                 else:
                                     build_home = None
 
@@ -106,7 +106,7 @@ def auto():
                                             tree = etree.parse(file)
 
                                             if not proxy.write(
-                                                builtin_os.join(build_home, 'xml', os.path.basename(file)),
+                                                __os__.join(build_home, 'xml', os.path.basename(file)),
                                                 etree.tostring(tree, encoding='utf-8', pretty_print=True, xml_declaration='utf-8')
                                             ):
                                                 continue
@@ -114,7 +114,7 @@ def auto():
                                             if os.path.isfile(zipname):
                                                 if not proxy.copy_file(
                                                     zipname,
-                                                    builtin_os.join(build_home, 'xml', os.path.basename(zipname))
+                                                    __os__.join(build_home, 'xml', os.path.basename(zipname))
                                                 ):
                                                     continue
 
@@ -197,12 +197,12 @@ def auto():
 #                   patch
 class patch():
     def __init__(self, path):
-        self.path = builtin_os.abspath(path)
+        self.path = __os__.abspath(path)
 
         m = re.search(r'\/build\/(dev|release)\/', self.path)
 
         if m:
-            self.output = builtin_os.join(m.string[:m.start()], 'patch', m.group(1), m.string[m.end():])
+            self.output = __os__.join(m.string[:m.start()], 'patch', m.group(1), m.string[m.end():])
         else:
             self.output = self.path
 
@@ -215,11 +215,11 @@ class patch():
         os.makedirs(self.path, exist_ok = True)
         os.makedirs(self.output, exist_ok = True)
 
-        with builtin_os.chdir(self.path) as chdir:
+        with __os__.chdir(self.path) as chdir:
             os.makedirs('build', exist_ok = True)
             os.makedirs('xml', exist_ok = True)
 
-        with builtin_os.chdir(self.output) as chdir:
+        with __os__.chdir(self.output) as chdir:
             os.makedirs('installation', exist_ok = True)
             os.makedirs('patch', exist_ok = True)
 
@@ -231,7 +231,7 @@ class patch():
         message = []
 
         if os.path.isdir(self.path):
-            with builtin_os.chdir(self.path) as chdir:
+            with __os__.chdir(self.path) as chdir:
                 for file in glob.iglob('xml/*.xml', recursive = True):
                     if not os.path.isfile(file):
                         continue
@@ -256,7 +256,7 @@ class patch():
 
                         continue
 
-                    tmpdir = os.path.join(builtin_os.gettempdir(),
+                    tmpdir = os.path.join(__os__.gettempdir(),
                         '%s%04d' % (datetime.datetime.now().strftime('%Y%m%d%H%M%S'), int(random.random() * 1000)))
 
                     index = -1
@@ -314,7 +314,7 @@ class patch():
                             output = os.path.join(self.output, 'patch', id)
                             cur_status = True
 
-                            with builtin_os.chdir(os.path.join(tmpdir, str(index)), True) as _chdir:
+                            with __os__.chdir(os.path.join(tmpdir, str(index)), True) as _chdir:
                                 for name in glob.iglob('**/*', recursive = True):
                                     if os.path.isfile(name):
                                         try:
@@ -375,7 +375,7 @@ class patch():
         return True
 
     def build_check(self, path):
-        with builtin_os.chdir(path) as chdir:
+        with __os__.chdir(path) as chdir:
             for file in glob.iglob('**/*.xml', recursive = True):
                 try:
                     etree.parse(file)
@@ -444,7 +444,7 @@ class patch():
             }
 
             for e_source in e.findall('source/attr'):
-                name = builtin_os.normpath(e_source.get('name', '').strip())
+                name = __os__.normpath(e_source.get('name', '').strip())
 
                 if name:
                     if name not in info['source']:
@@ -512,7 +512,7 @@ class patch():
                     continue
 
                 if x in ('走查人员', '抄送人员'):
-                    info['info'][x] = string.split(info['info'][x])
+                    info['info'][x] = __string__.split(info['info'][x])
 
                     continue
 
@@ -627,7 +627,7 @@ class patch():
         id = 0
 
         if os.path.isdir(os.path.join(self.output, 'patch')):
-            with builtin_os.chdir(os.path.join(self.output, 'patch')) as chdir:
+            with __os__.chdir(os.path.join(self.output, 'patch')) as chdir:
                 for x in glob.iglob('%s_*' % prefix):
                     m = re.search(r'^\d{8}_(\d{4})$', x)
 
@@ -647,7 +647,7 @@ class patch():
             lines = []
 
         if os.environ.get('BUILD_URL'):
-            console_url = builtin_os.join(os.environ['BUILD_URL'], 'console')
+            console_url = __os__.join(os.environ['BUILD_URL'], 'console')
 
             lines.append('')
             lines.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
@@ -667,12 +667,12 @@ class patch():
 
 class installation():
     def __init__(self, path):
-        self.path = builtin_os.abspath(path)
+        self.path = __os__.abspath(path)
 
         m = re.search(r'\/build\/(dev|release)\/', self.path)
 
         if m:
-            self.output = builtin_os.join(m.string[:m.start()], 'patch', m.group(1), m.string[m.end():])
+            self.output = __os__.join(m.string[:m.start()], 'patch', m.group(1), m.string[m.end():])
         else:
             self.output = self.path
 
@@ -691,7 +691,7 @@ class installation():
         if type is None:
             type = self.type
 
-        with builtin_os.chdir(self.output) as chdir:
+        with __os__.chdir(self.output) as chdir:
             id_info = {}
 
             for dir in glob.iglob('patch/*', recursive = True):
@@ -712,12 +712,12 @@ class installation():
             info = {}
 
             for id in sorted(id_info.keys()):
-                with builtin_os.chdir(id_info[id]) as _chdir:
+                with __os__.chdir(id_info[id]) as _chdir:
                     for file in glob.iglob('**/*', recursive = True):
                         if os.path.isfile(file):
                             info[file] = os.path.abspath(file)
 
-            with builtin_os.tmpdir(builtin_os.tmpfilename()) as _tmpdir:
+            with __os__.tmpdir(__os__.tmpfilename()) as _tmpdir:
                 for file in info:
                     filename = self.expand_filename(file)
 

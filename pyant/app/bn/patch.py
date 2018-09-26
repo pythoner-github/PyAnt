@@ -11,8 +11,9 @@ import zipfile
 from lxml import etree
 
 from pyant import git, maven, string
-from pyant.app import const, patch
-from pyant.builtin import os as builtin_os
+from pyant.app import const
+from pyant.app import patch as __patch__
+from pyant.builtin import __os__
 
 __all__ = ('patch', 'installation')
 
@@ -35,7 +36,7 @@ __all__ = ('patch', 'installation')
 #               20171203
 #                   installation
 #                   patch
-class patch(patch.patch):
+class patch(__patch__.patch):
     def __init__(self, path):
         super().__init__(path)
 
@@ -52,10 +53,10 @@ class patch(patch.patch):
 
         status = True
 
-        with builtin_os.chdir(self.path) as chdir:
+        with __os__.chdir(self.path) as chdir:
             os.makedirs('code', exist_ok = True)
 
-            with builtin_os.chdir('code') as _chdir:
+            with __os__.chdir('code') as _chdir:
                 for module in self.modules:
                     if os.path.isdir(module):
                         if not git.pull(module, revert = True):
@@ -73,7 +74,7 @@ class patch(patch.patch):
 
     def build_permit(self, info):
         if info.get('os'):
-            if builtin_os.osname() not in info['os']:
+            if __os__.osname() not in info['os']:
                 return False
 
         return True
@@ -83,7 +84,7 @@ class patch(patch.patch):
 
         if info['delete']:
             if os.path.isdir(path):
-                with builtin_os.chdir(path) as chdir:
+                with __os__.chdir(path) as chdir:
                     for file in info['delete']:
                         try:
                             if os.path.isfile(file):
@@ -107,7 +108,7 @@ class patch(patch.patch):
             if not git.pull(path, revert = True):
                 return False
 
-            with builtin_os.chdir(path) as chdir:
+            with __os__.chdir(path) as chdir:
                 for file in info['source']:
                     if os.path.isfile(file):
                         dest = os.path.join('../../build', info['name'], file)
@@ -145,13 +146,13 @@ class patch(patch.patch):
 
                 return False
 
-            with builtin_os.chdir('build') as chdir:
+            with __os__.chdir('build') as chdir:
                 bn.environ('cpp')
 
-            with builtin_os.chdir(path) as chdir:
+            with __os__.chdir(path) as chdir:
                 for build_path, clean in info['compile'].items():
                     if os.path.isdir(build_path):
-                        with builtin_os.chdir(build_path) as _chdir:
+                        with __os__.chdir(build_path) as _chdir:
                             mvn = maven.maven()
                             mvn.notification = '%s 编译失败, 请尽快处理' % self.notification
 
@@ -180,7 +181,7 @@ class patch(patch.patch):
 
                 return False
 
-            with builtin_os.chdir(build_path) as chdir:
+            with __os__.chdir(build_path) as chdir:
                 for src_and_dest, types in info['deploy'].items():
                     src, dest = src_and_dest.split(':', 1)
 
@@ -192,7 +193,7 @@ class patch(patch.patch):
                                 if not self.build_deploy_file(filename, os.path.join(path, type, dest)):
                                     return False
                     elif os.path.isdir(src):
-                        with builtin_os.chdir(src) as _chdir:
+                        with __os__.chdir(src) as _chdir:
                             for filename in glob.iglob('**/*', recursive = True):
                                 if os.path.isfile(filename):
                                     filename = self.expand_filename(filename)
@@ -244,7 +245,7 @@ class patch(patch.patch):
 
                 return False
 
-            with builtin_os.tmpdir(os.path.join(path, '../zip', os.path.basename(path))) as tmpdir:
+            with __os__.tmpdir(os.path.join(path, '../zip', os.path.basename(path))) as tmpdir:
                 try:
                     with zipfile.ZipFile(zipfilename) as zip:
                         zip.extractall()
@@ -272,7 +273,7 @@ class patch(patch.patch):
                 if m:
                     prefix = os.path.join(m.group(1), m.string[m.end():])
 
-                with builtin_os.chdir(install) as chdir:
+                with __os__.chdir(install) as chdir:
                     for file in glob.iglob('dbscript-patch/**/*', recursive = True):
                         if os.path.isfile(file):
                             for type in types:
@@ -288,7 +289,7 @@ class patch(patch.patch):
     def expand_filename(self, file):
         pathname, extname = os.path.splitext(file)
 
-        if builtin_os.osname() in ('windows', 'windows-x64'):
+        if __os__.osname() in ('windows', 'windows-x64'):
             if extname.lower() in ('.sh'):
                 return '%s.bat' % pathname
             elif extname.lower() in ('.so'):
@@ -329,7 +330,7 @@ class patch(patch.patch):
         osname = element.get('os', '').strip()
 
         if osname:
-            info['os'] = string.split(osname)
+            info['os'] = __string__.split(osname)
 
             if not set(info['os']) - set(('windows', 'linux', 'solaris')):
                 print('patch[%s]: patch节点的os属性值错误, 只能包含windows, linux, solaris' % index)
@@ -356,7 +357,7 @@ class patch(patch.patch):
         info['deploy_delete'] = collections.OrderedDict()
 
         for e_delete in element.findall('delete/attr'):
-            name = builtin_os.normpath(e_delete.get('name', '').strip())
+            name = __os__.normpath(e_delete.get('name', '').strip())
 
             if name:
                 if name not in info['delete']:
@@ -367,7 +368,7 @@ class patch(patch.patch):
                 status = False
 
         for e_compile in element.findall('compile/attr'):
-            name = builtin_os.normpath(e_compile.get('name', '').strip())
+            name = __os__.normpath(e_compile.get('name', '').strip())
             clean = e_compile.get('clean', '').strip().lower()
 
             if name:
@@ -389,12 +390,12 @@ class patch(patch.patch):
                 status = False
 
         for e_deploy in element.findall('deploy/deploy/attr'):
-            name = builtin_os.normpath(e_deploy.get('name', '').strip())
+            name = __os__.normpath(e_deploy.get('name', '').strip())
             dest = e_deploy.text
             type = e_deploy.get('type', '').strip()
 
             if dest is not None:
-                dest = builtin_os.normpath(dest.strip())
+                dest = __os__.normpath(dest.strip())
 
             types = self.types(type)
 
@@ -431,7 +432,7 @@ class patch(patch.patch):
                 status = False
 
         for e_deploy_delete in element.findall('deploy/delete/attr'):
-            name = builtin_os.normpath(e_deploy_delete.get('name', '').strip())
+            name = __os__.normpath(e_deploy_delete.get('name', '').strip())
             type = e_deploy_delete.get('type', '').strip()
 
             types = self.types(type)
@@ -540,7 +541,7 @@ class patch(patch.patch):
         if not type:
             type = self.type
 
-        for x in string.split(type):
+        for x in __string__.split(type):
             if x in ('ems', 'nms', 'upgrade', 'lct', 'su31', 'su31nm', 'su31-e2e', 'su31-nme2e', 'service'):
                 if x not in types:
                     types.append(x)
@@ -557,7 +558,7 @@ class patch(patch.patch):
 #                    PATCH INSTALLATION                    #
 # ******************************************************** #
 
-class installation(patch.installation):
+class installation(__patch__.installation):
     def __init__(self, path):
         super().__init__(path)
 
@@ -578,7 +579,7 @@ class installation(patch.installation):
 
         if os.path.isdir('pmu'):
             for dirname in glob.iglob('pmu/*'):
-                with builtin_os.chdir(dirname) as chdir:
+                with __os__.chdir(dirname) as chdir:
                     self.name = os.path.basename(dirname)
                     ppuname = self.name.split('-')[0]
                     pmuname = self.name
@@ -619,7 +620,7 @@ class installation(patch.installation):
         return True
 
     def installation(self, version, type):
-        osname = builtin_os.osname()
+        osname = __os__.osname()
 
         if type not in ('ems'):
             osname += "(%s)" % type
@@ -642,7 +643,7 @@ class installation(patch.installation):
         installation = self.installation(version, type)
 
         if os.path.isdir(installation):
-            with builtin_os.chdir(installation) as chdir:
+            with __os__.chdir(installation) as chdir:
                 for filename in glob.iglob('*%s*.zip' % prefix):
                     m = re.search(r'-SP(\d+)\(001-(\d+)\)', filename)
 
@@ -668,7 +669,7 @@ class installation(patch.installation):
         installation = self.installation(version, type)
 
         if os.path.isdir(installation):
-            with builtin_os.chdir(installation) as chdir:
+            with __os__.chdir(installation) as chdir:
                 for filename in glob.iglob('*%s*.zip' % prefix):
                     m = re.search(r'-SP(\d+)\(001-(\d+)\)', filename)
 
@@ -756,7 +757,7 @@ class installation(patch.installation):
         if not self.patchset_update_info(zipname, patchsets, sorted(id_info.keys()), version, display_version, type, ppuname, pmuname):
             return False
 
-        if builtin_os.osname() in ('linux', 'solaris'):
+        if __os__.osname() in ('linux', 'solaris'):
             for filename in glob.iglob('**/*.dll', recursive = True):
                 os.remove(filename)
 
@@ -794,7 +795,7 @@ class installation(patch.installation):
             'zipname': zipname
         }
 
-        with builtin_os.chdir(path) as chdir:
+        with __os__.chdir(path) as chdir:
             for file in glob.iglob('*/installdisk/extends.xml'):
                 try:
                     tree = etree.parse(file)
@@ -807,10 +808,10 @@ class installation(patch.installation):
                     dirname = e.get('dirname')
 
                     if dirname:
-                        dirname = builtin_os.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
+                        dirname = __os__.normpath(os.path.join(os.path.dirname(file), dirname.strip()))
 
                         if os.path.isdir(dirname):
-                            with builtin_os.chdir(dirname) as _chdir:
+                            with __os__.chdir(dirname) as _chdir:
                                 copies = collections.OrderedDict()
 
                                 for element in e.findall('file'):
@@ -818,13 +819,13 @@ class installation(patch.installation):
                                     dest = element.get('dest')
 
                                     if name and dest:
-                                        name = builtin_os.normpath(string.vars_expand(name.strip(), vars))
-                                        dest = builtin_os.normpath(string.vars_expand(dest.strip(), vars))
+                                        name = __os__.normpath(__string__.vars_expand(name.strip(), vars))
+                                        dest = __os__.normpath(__string__.vars_expand(dest.strip(), vars))
 
                                         if os.path.isfile(name):
                                             copies[dest] = name
                                         elif os.path.isdir(name):
-                                            with builtin_os.chdir(name) as tmp_chdir:
+                                            with __os__.chdir(name) as tmp_chdir:
                                                 for filename in glob.iglob('**/*', recursive = True):
                                                     if os.path.isfile(filename):
                                                         copies[os.path.join(dest, filename)] = os.path.join(name, filename)
@@ -835,7 +836,7 @@ class installation(patch.installation):
                                     name = element.get('name')
 
                                     if name:
-                                        name = builtin_os.normpath(string.vars_expand(name.strip(), vars))
+                                        name = __os__.normpath(__string__.vars_expand(name.strip(), vars))
 
                                         if os.path.isfile(name):
                                             if name in copies:
@@ -873,7 +874,7 @@ class installation(patch.installation):
 
             for dir in glob.iglob('install/dbscript-patch/*'):
                 if os.path.isdir(dir):
-                    with builtin_os.chdir(dir) as chdir:
+                    with __os__.chdir(dir) as chdir:
                         for file in glob.iglob('**/*', recursive = True):
                             if os.path.isfile(file):
                                 filenames.append(os.path.join(os.path.basename(dir), file))
@@ -918,8 +919,8 @@ class installation(patch.installation):
                         for element in e.findall('*//item'):
                             xpath = '/'.join(re.sub(r'[\[\]\d]+', '', tree.getelementpath(element)).split('/')[1:-1])
 
-                            filename = builtin_os.normpath(element.get('filename', '').strip())
-                            rollback = builtin_os.normpath(element.get('rollback', '').strip())
+                            filename = __os__.normpath(element.get('filename', '').strip())
+                            rollback = __os__.normpath(element.get('rollback', '').strip())
 
                             if not filename or not rollback:
                                 print('%s: filename or rollback is empty' % file)
@@ -987,7 +988,7 @@ class installation(patch.installation):
         tree = etree.ElementTree(etree.XML("<update/>"))
         tree_defect = etree.ElementTree(etree.XML("<update/>"))
 
-        with builtin_os.chdir(self.output) as chdir:
+        with __os__.chdir(self.output) as chdir:
             for id in ids:
                 if os.path.isdir(os.path.join('patch', id, 'ids')):
                     for file in glob.iglob(os.path.join('patch', id, 'ids/*.xml')):
@@ -1122,7 +1123,7 @@ class installation(patch.installation):
 
         delete_files = []
 
-        with builtin_os.chdir(self.output) as chdir:
+        with __os__.chdir(self.output) as chdir:
             for id in ids:
                 if os.path.isdir(os.path.join('patch', id, 'ids')):
                     for file in glob.iglob(os.path.join('patch', id, 'ids/*.xml')):
@@ -1186,7 +1187,7 @@ class installation(patch.installation):
             ]
         ]
 
-        with builtin_os.chdir(self.output) as chdir:
+        with __os__.chdir(self.output) as chdir:
             for id in id_info:
                 for file in glob.iglob(os.path.join('patch', id, '*.xml')):
                     info = self.get_patch_info(file)
@@ -1194,10 +1195,10 @@ class installation(patch.installation):
                     if info:
                         filenames = []
 
-                        with builtin_os.chdir(id_info[id]) as chdir:
+                        with __os__.chdir(id_info[id]) as chdir:
                             for file in glob.iglob('**/*', recursive = True):
                                 if os.path.isfile(file):
-                                    filenames.append(builtin_os.normpath(file))
+                                    filenames.append(__os__.normpath(file))
 
                         changes.append(
                             [
@@ -1274,7 +1275,7 @@ class installation(patch.installation):
                 name = element.get('name', '').strip()
 
                 if name:
-                    info['source'].append(builtin_os.join(home, name))
+                    info['source'].append(__os__.join(home, name))
 
             if len(info['info']) == 0:
                 for element in e.findall('info/attr'):
@@ -1300,7 +1301,7 @@ class installation(patch.installation):
         deletes = []
 
         for e in tree.findall('patch/deploy/delete/attr'):
-            name = builtin_os.normpath(e.get('name', '').strip())
+            name = __os__.normpath(e.get('name', '').strip())
             cur_type = e.get('type', '').strip()
 
             if not cur_type:

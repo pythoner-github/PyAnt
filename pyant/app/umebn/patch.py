@@ -7,8 +7,9 @@ import tarfile
 from lxml import etree
 
 from pyant import git, maven
-from pyant.app import const, patch
-from pyant.builtin import os as builtin_os
+from pyant.app import const
+from pyant.app import patch as __patch__
+from pyant.builtin import __os__
 
 __all__ = ('patch', 'installation')
 
@@ -30,7 +31,7 @@ __all__ = ('patch', 'installation')
 #               20171203
 #                   installation
 #                   patch
-class patch(patch.patch):
+class patch(__patch__.patch):
     def __init__(self, path):
         super().__init__(path)
 
@@ -66,12 +67,12 @@ class patch(patch.patch):
 
                 return False
 
-            with builtin_os.chdir(path) as chdir:
+            with __os__.chdir(path) as chdir:
                 for dir in info['source']:
                     build_path = os.path.join(dir, 'build')
 
                     if os.path.isdir(build_path):
-                        with builtin_os.chdir(build_path) as _chdir:
+                        with __os__.chdir(build_path) as _chdir:
                             mvn = maven.maven()
                             mvn.notification = '%s 编译失败, 请尽快处理' % self.notification
 
@@ -95,12 +96,12 @@ class patch(patch.patch):
 
                 return False
 
-            with builtin_os.chdir(build_path) as chdir:
+            with __os__.chdir(build_path) as chdir:
                 for dir in info['source']:
                     deploy_path = os.path.join(dir, 'build/output')
 
                     if os.path.isdir(deploy_path):
-                        with builtin_os.chdir(deploy_path) as _chdir:
+                        with __os__.chdir(deploy_path) as _chdir:
                             for filename in glob.iglob('**/*', recursive = True):
                                 if os.path.isfile(filename):
                                     filename = self.expand_filename(filename)
@@ -126,10 +127,10 @@ class patch(patch.patch):
         if not super().build_check(path):
             return False
 
-        with builtin_os.chdir(path) as chdir:
+        with __os__.chdir(path) as chdir:
             for appname in glob.iglob('*'):
                 if os.path.isdir(appname):
-                    with builtin_os.chdir(appname) as _chdir:
+                    with __os__.chdir(appname) as _chdir:
                         # commonservice-instance-config.xml
                         # *.spd
                         # *.tar.gz
@@ -178,7 +179,7 @@ class patch(patch.patch):
 #                    PATCH INSTALLATION                    #
 # ******************************************************** #
 
-class installation(patch.installation):
+class installation(__patch__.installation):
     def __init__(self, path):
         super().__init__(path)
 

@@ -6,7 +6,7 @@ import re
 from lxml import etree
 
 from pyant import git, smtp
-from pyant.builtin import os as builtin_os
+from pyant.builtin import __os__
 
 __all__ = ('check')
 
@@ -54,7 +54,7 @@ class check:
         for file in glob.iglob(os.path.join(self.xpath, '**/*.java'), recursive = True):
             found = False
 
-            file = builtin_os.normpath(file)
+            file = __os__.normpath(file)
 
             for name in ('target/', 'output/'):
                 if name in file:
@@ -86,7 +86,7 @@ class check:
         for file in glob.iglob(os.path.join(self.xpath, '**/*.xml'), recursive = True):
             found = False
 
-            file = builtin_os.normpath(file)
+            file = __os__.normpath(file)
 
             for name in ('target/', 'output/'):
                 if name in file:
@@ -169,7 +169,7 @@ class check:
                     message.append('')
 
                 if os.environ.get('BUILD_URL'):
-                    console_url = builtin_os.join(os.environ['BUILD_URL'], 'console')
+                    console_url = __os__.join(os.environ['BUILD_URL'], 'console')
 
                     message.append('详细信息: <a href="%s">%s</a>' % (console_url, console_url))
                     message.append('')

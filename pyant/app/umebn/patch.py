@@ -7,8 +7,7 @@ import tarfile
 from lxml import etree
 
 from pyant import git, maven
-from pyant.app import const
-from pyant.app import patch as __patch__
+from pyant.app import const, __patch__, __installation__
 from pyant.builtin import __os__
 
 __all__ = ('patch', 'installation')
@@ -31,7 +30,7 @@ __all__ = ('patch', 'installation')
 #               20171203
 #                   installation
 #                   patch
-class patch(__patch__.patch):
+class patch(__patch__):
     def __init__(self, path):
         super().__init__(path)
 
@@ -179,7 +178,7 @@ class patch(__patch__.patch):
 #                    PATCH INSTALLATION                    #
 # ******************************************************** #
 
-class installation(__patch__.installation):
+class installation(__installation__):
     def __init__(self, path):
         super().__init__(path)
 

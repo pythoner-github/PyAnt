@@ -1,5 +1,3 @@
-from pyant.app import const, patch
-
 import glob
 import os
 import os.path
@@ -9,7 +7,7 @@ import tarfile
 from lxml import etree
 
 from pyant import git, maven
-from pyant.app import const
+from pyant.app import const, patch
 from pyant.builtin import os as builtin_os
 
 __all__ = ('patch', 'installation')
@@ -204,3 +202,6 @@ class installation(patch.installation):
             return False
 
         return True
+
+    def installation(self, version, type):
+        return os.path.join(self.output, 'installation', version, 'installation/app')

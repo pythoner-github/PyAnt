@@ -738,11 +738,11 @@ class installation():
 
     # ------------------------------------------------------
 
-    def installation(self, version, type):
-        return os.path.join(self.output, 'installation', version, 'installation/patch')
-
     def process(self, version, display_version, id_info, sp_next, type):
         return True
+
+    def installation(self, version, type):
+        return os.path.join(self.output, 'installation', version, 'installation')
 
     def expand_filename(self, filename):
         return filename

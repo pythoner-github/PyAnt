@@ -8,9 +8,60 @@ import zipfile
 
 from lxml import etree
 
+from pyant.app import const
 from pyant.builtin import __os__
 
-__all__ = ('bn_cut_upgrade_installation', )
+__all__ = ('metric_start', 'metric_end', 'bn_cut_upgrade_installation', )
+
+def metric_start(id, module = None):
+    if not os.environ.get('METRIC'):
+        return None
+
+    if os.environ.get('METRIC_IGNORE'):
+        return None
+
+    if not id:
+        return None
+
+    if not module:
+        module = ''
+
+    cmdline = None
+
+    if night:
+        hour = datetime.datetime.now().hour
+
+        if 0 <= hour <= 8 or hour >= 22:
+            cmdline = 'curl --data "action=buildstart&project=%s&buildtype=night&item=%s" %s' % (id, module, const.METRIC_HTTP)
+    else:
+        cmdline = 'curl --data "action=buildstart&project=%s&buildtype=CI&item=%s" %s' % (id, module, const.METRIC_HTTP)
+
+    if cmdline:
+        lines = []
+
+        for line in ('$ ' + cmdline, '  in (' + os.getcwd() + ')'):
+            print(line)
+
+        try:
+            return os.popen(cmdline).read().strip()
+        except:
+            return None
+    else:
+        return None
+
+def metric_end(id, status):
+    if id:
+        if status:
+            success = 'success'
+        else:
+            success = 'failed'
+
+        cmdline = 'curl --data "action=buildend&buildid=%s&buildresult=%s" %s' % (id, success, const.METRIC_HTTP)
+
+        cmd = command.command()
+
+        for line in cmd.command(cmdline):
+            print(line)
 
 def bn_cut_upgrade_installation(installation_home):
     if os.path.isdir(installation_home):

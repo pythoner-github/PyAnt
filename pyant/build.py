@@ -84,7 +84,7 @@ def build(argv = None):
                 print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
 
         if command in (
-            'update', 'updateall', 'compile_pom', 'compile_base', 'compile', 'check',
+            'update', 'updateall', 'compile_pom', 'compile', 'check',
             'package', 'update_package', 'kw_compile', 'kw_build'
         ):
             # build
@@ -108,7 +108,7 @@ def build(argv = None):
                     return build.update(None, branch)
                 else:
                     return build.update(branch)
-            elif command in ('compile_pom', 'compile_base'):
+            elif command == 'compile_pom':
                 cmd = arg[0]
 
                 return build.compile_pom(cmd)

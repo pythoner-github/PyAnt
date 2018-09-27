@@ -28,7 +28,7 @@ class build():
         self.path = self.name
         self.type = 'none'
 
-    def update(self, dirname = None, branch = None):
+    def update(self, module = None, branch = None):
         return True
 
     def compile_pom(self, cmd = None, file = None):

@@ -1,3 +1,16 @@
+import collections
+import json
+import os
+import os.path
+
+from lxml import etree
+
+from pyant import check, command, git, maven, password, smtp
+from pyant.app import const
+from pyant.builtin import __os__, __string__
+
+__all__ = ('dashboard',)
+
 class dashboard:
     def __init__(self, name, repos):
         self.name = name
@@ -7,7 +20,7 @@ class dashboard:
         self.type = 'none'
 
     def dashboard_monitor(self, branch = None):
-        if not self.update(branch):
+        if not self.update(None, branch):
             return False
 
         if os.environ.get('JOB_NAME'):
@@ -15,24 +28,22 @@ class dashboard:
         else:
             job_home = os.path.join(self.path, 'dashboard')
 
-        for path, (authors, paths) in self.inner_dashboard_monitor([self.path], self.expand_dashboard).items():
+        for path, (authors, paths) in self.__dashboard_monitor__([self.path], self.expand_dashboard).items():
             self.dashboard_jenkins_cli(os.path.join(job_home, '%s_dashboard' % self.name), authors, paths)
 
         return True
 
-
-
-def dashboard(self, paths, branch = None):
+    def dashboard(self, paths, branch = None):
         if os.path.isdir(self.path):
             if not git.reset(self.path, branch):
                 return False
 
-        if not self.update(branch):
+        if not self.update(None, branch):
             return False
 
         if os.path.isdir(self.path):
             with __os__.chdir(self.path) as chdir:
-                return self.inner_dashboard(paths)
+                return self.__dashboard__(paths)
         else:
             print('no such directory: %s' % os.path.normpath(self.path))
 
@@ -43,7 +54,7 @@ def dashboard(self, paths, branch = None):
             if not git.reset(self.path, branch):
                 return False
 
-        if not self.update(branch):
+        if not self.update(None, branch):
             return False
 
         status = True
@@ -111,8 +122,90 @@ def dashboard(self, paths, branch = None):
 
         return status
 
+    # ------------------------------------------------------
 
-    def inner_dashboard(self, paths, ignores = None):
+    # path:
+    #   (authors, paths)
+    def __dashboard_monitor__(self, paths, expand_dashboard = None):
+        rev = {}
+
+        if os.path.isfile('change.rev'):
+            try:
+                with open('change.rev', encoding = 'utf8') as f:
+                    rev = json.load(f)
+            except Exception as e:
+                print(e)
+
+        changes = collections.OrderedDict()
+        changes_rev = collections.OrderedDict()
+
+        for path in paths:
+            if os.path.isdir(os.path.join(path, '.git')):
+                with __os__.chdir(path) as chdir:
+                    if path in rev.keys():
+                        arg = '--stat=256 %s..HEAD' % rev[path][:6]
+
+                        logs = git.log(None, arg)
+
+                        if logs:
+                            authors = []
+                            tmp_paths = []
+
+                            for log in logs:
+                                if log['changes']:
+                                    if log['author'] not in authors:
+                                        authors.append(log['author'])
+
+                                    for k, v in log['changes'].items():
+                                        for file in v:
+                                            if expand_dashboard:
+                                                filenames = expand_dashboard(path, file)
+
+                                                if filenames:
+                                                    if isinstance(filenames, str):
+                                                        filenames = (filenames,)
+                                                else:
+                                                    filenames = ()
+                                            else:
+                                                filenames = (file,)
+
+                                            for filename in filenames:
+                                                dir = self.pom_path(filename)
+
+                                                if dir:
+                                                    if dir not in tmp_paths:
+                                                        tmp_paths.append(dir)
+
+                            if tmp_paths:
+                                changes[path] = (authors, tmp_paths)
+
+                            changes_rev[path] = logs[-1]['revision']
+                        else:
+                            changes_rev[path] = rev[path]
+                    else:
+                        info = git.info()
+
+                        if info:
+                            changes_rev[path] = info['revision']
+
+        try:
+            with open('change.rev', 'w', encoding = 'utf8') as f:
+                json.dump(changes_rev, f)
+        except Exception as e:
+            print(e)
+
+        print()
+        print('*' * 40)
+
+        for path, (authors, paths) in changes.items():
+            print(path, (authors, paths))
+
+        print('*' * 40)
+        print()
+
+        return changes
+
+    def __dashboard__(self, paths, ignores = None):
         filename = os.path.abspath(os.path.join('../errors', '%s.json' % os.path.basename(os.getcwd())))
 
         if os.path.isfile(filename):
@@ -208,88 +301,6 @@ def dashboard(self, paths, branch = None):
 
             return True
 
-    # path:
-    #   (authors, paths)
-    def inner_dashboard_monitor(self, paths, expand_dashboard = None):
-        rev = {}
-
-        if os.path.isfile('change.rev'):
-            try:
-                with open('change.rev', encoding = 'utf8') as f:
-                    rev = json.load(f)
-            except Exception as e:
-                print(e)
-
-        changes = collections.OrderedDict()
-        changes_rev = collections.OrderedDict()
-
-        for path in paths:
-            if os.path.isdir(os.path.join(path, '.git')):
-                with __os__.chdir(path) as chdir:
-                    if path in rev.keys():
-                        arg = '--stat=256 %s..HEAD' % rev[path][:6]
-
-                        logs = git.log(None, arg)
-
-                        if logs:
-                            authors = []
-                            tmp_paths = []
-
-                            for log in logs:
-                                if log['changes']:
-                                    if log['author'] not in authors:
-                                        authors.append(log['author'])
-
-                                    for k, v in log['changes'].items():
-                                        for file in v:
-                                            if expand_dashboard:
-                                                filenames = expand_dashboard(path, file)
-
-                                                if filenames:
-                                                    if isinstance(filenames, str):
-                                                        filenames = (filenames,)
-                                                else:
-                                                    filenames = ()
-                                            else:
-                                                filenames = (file,)
-
-                                            for filename in filenames:
-                                                dir = self.pom_path(filename)
-
-                                                if dir:
-                                                    if dir not in tmp_paths:
-                                                        tmp_paths.append(dir)
-
-                            if tmp_paths:
-                                changes[path] = (authors, tmp_paths)
-
-                            changes_rev[path] = logs[-1]['revision']
-                        else:
-                            changes_rev[path] = rev[path]
-                    else:
-                        info = git.info()
-
-                        if info:
-                            changes_rev[path] = info['revision']
-
-        try:
-            with open('change.rev', 'w', encoding = 'utf8') as f:
-                json.dump(changes_rev, f)
-        except Exception as e:
-            print(e)
-
-        print()
-        print('*' * 40)
-
-        for path, (authors, paths) in changes.items():
-            print(path, (authors, paths))
-
-        print('*' * 40)
-        print()
-
-        return changes
-
-
     def dashboard_jenkins_cli(self, jobname, authors, paths):
         cmdline = 'java -jar "%s" -s %s build --username %s --password %s "%s" -p authors="%s" -p paths="%s"' % (
             const.JENKINS_CLI, const.JENKINS_URL, const.JENKINS_USERNAME, const.JENKINS_PASSWORD,
@@ -304,11 +315,10 @@ def dashboard(self, paths, branch = None):
         for line in cmd.command(cmdline, display_cmd = display_cmd):
             print(line)
 
+    def update(self, module = None, branch = None):
+        return True
 
-    def expand_dashboard(self, path, file):
-        return file
-
-def kw_check(self, path = None, lang = None):
+    def kw_check(self, path = None, lang = None):
         if not path:
             path = '.'
 
@@ -430,7 +440,20 @@ def kw_check(self, path = None, lang = None):
     def kw_check_fixed(self, defect):
         return defect
 
-def head(self, string):
+    def expand_dashboard(self, path, file):
+        return file
+
+    def pom_path(self, path):
+        if not path:
+            return None
+
+        if os.path.isdir(path):
+            if os.path.isfile(os.path.join(path, 'pom.xml')):
+                return path
+
+        return self.pom_path(os.path.dirname(path))
+
+    def head(self, string):
         print()
         print('*' * 60)
 
@@ -443,14 +466,3 @@ def head(self, string):
 
         print('*' * 60)
         print()
-
-    def pom_path(self, path):
-        if not path:
-            return None
-
-        if os.path.isdir(path):
-            if os.path.isfile(os.path.join(path, 'pom.xml')):
-                return path
-
-        return self.pom_path(os.path.dirname(path))
-

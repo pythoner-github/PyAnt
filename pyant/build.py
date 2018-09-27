@@ -6,9 +6,10 @@ import shutil
 import sys
 
 from pyant import check
-from pyant.app import const, patch
-from pyant.app import build as app_build
 from pyant.builtin import __os__, __string__
+
+from pyant.app.bn import *
+from pyant.app.umebn import *
 
 __build_name__ = ('bn', 'umebn')
 __all__ = ('build',)

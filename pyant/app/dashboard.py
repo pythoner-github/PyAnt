@@ -9,6 +9,8 @@ from pyant import check, command, git, maven, password, smtp
 from pyant.app import const
 from pyant.builtin import __os__, __string__
 
+from pyant.app import build
+
 __all__ = ('dashboard',)
 
 class dashboard:
@@ -314,7 +316,7 @@ class dashboard:
             print(line)
 
     def update(self, branch = None):
-        return True
+        return build.build().update(branch)
 
     def kw_check(self, path = None, lang = None):
         if not path:

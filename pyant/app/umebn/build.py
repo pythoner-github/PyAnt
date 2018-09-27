@@ -18,19 +18,14 @@ class build(__build__):
 
         self.type = 'umebn'
 
-    def update(self, dirname = None, branch = None):
-        if dirname:
-            path = os.path.join(self.path, dirname)
-        else:
-            path = self.path
-
-        if os.path.isdir(path):
-            if os.path.isfile(os.path.join(path, '.git/index.lock')):
+    def update(self, branch = None):
+        if os.path.isdir(self.path):
+            if os.path.isfile(os.path.join(self.path, '.git/index.lock')):
                 time.sleep(30)
 
                 return True
             else:
-                return git.pull(path, revert = True)
+                return git.pull(self.path, revert = True)
         else:
             return git.clone(self.repos, self.path, branch)
 

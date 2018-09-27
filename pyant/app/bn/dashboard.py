@@ -1,12 +1,32 @@
 from pyant.app import __dashboard__
+from pyant.app.bn import build
 
 __all__ = ('dashboard',)
 
 class dashboard(__dashboard__):
-    pass
+    def __init__(self):
+        super().__init__('bn', build.build().repos)
 
+    def dashboard_monitor(self, branch = None):
+        if not self.update(None, branch):
+            return False
 
-def dashboard(self, module, paths, branch = None):
+        path_info = collections.OrderedDict()
+
+        for module in self.repos:
+            path_info[os.path.basename(self.repos[module])] = module
+
+        if os.environ.get('JOB_NAME'):
+            job_home = os.path.dirname(os.environ['JOB_NAME'])
+        else:
+            job_home = os.path.join(self.path, 'dashboard')
+
+        for path, (authors, paths) in self.__dashboard_monitor__(path_info.keys(), self.expand_dashboard).items():
+            self.dashboard_jenkins_cli(os.path.join(job_home, '%s_dashboard_%s' % (self.name, path_info[path])), authors, paths)
+
+        return True
+
+    def dashboard(self, module, paths, branch = None):
         modules = []
 
         if module in ('ptn', 'ptn2'):
@@ -34,7 +54,7 @@ def dashboard(self, module, paths, branch = None):
 
         if os.path.isdir(self.path):
             with __os__.chdir(self.path) as chdir:
-                return self.inner_dashboard(paths)
+                return self.__dashboard__(paths)
         else:
             print('no such directory: %s' % os.path.normpath(self.path))
 
@@ -163,35 +183,13 @@ def dashboard(self, module, paths, branch = None):
 
         return status
 
-    def dashboard_monitor(self, branch = None):
-        if not self.update(None, branch):
-            return False
+    # ------------------------------------------------------
 
-        path_info = collections.OrderedDict()
+    def update(self, module, branch = None):
+        return build.build().update(module, branch)
 
-        for module in self.repos:
-            path_info[os.path.basename(self.repos[module])] = module
-
-        if os.environ.get('JOB_NAME'):
-            job_home = os.path.dirname(os.environ['JOB_NAME'])
-        else:
-            job_home = os.path.join(self.path, 'dashboard')
-
-        for path, (authors, paths) in self.inner_dashboard_monitor(path_info.keys(), self.expand_dashboard).items():
-            self.dashboard_jenkins_cli(os.path.join(job_home, '%s_dashboard_%s' % (self.name, path_info[path])), authors, paths)
-
-        return True
-
-
-
-
-
-
-
-
-
-
-
+    def environ(self, lang = None):
+        return build.build().environ(lang)
 
     def expand_dashboard(self, path, file):
         file = __os__.normpath(file)

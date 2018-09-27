@@ -15,12 +15,10 @@ class dashboard:
     def __init__(self, name, repos):
         self.name = name
         self.repos = repos
-
         self.path = self.name
-        self.type = 'none'
 
     def dashboard_monitor(self, branch = None):
-        if not self.update(None, branch):
+        if not self.update(branch):
             return False
 
         if os.environ.get('JOB_NAME'):
@@ -38,7 +36,7 @@ class dashboard:
             if not git.reset(self.path, branch):
                 return False
 
-        if not self.update(None, branch):
+        if not self.update(branch):
             return False
 
         if os.path.isdir(self.path):
@@ -54,7 +52,7 @@ class dashboard:
             if not git.reset(self.path, branch):
                 return False
 
-        if not self.update(None, branch):
+        if not self.update(branch):
             return False
 
         status = True
@@ -315,7 +313,7 @@ class dashboard:
         for line in cmd.command(cmdline, display_cmd = display_cmd):
             print(line)
 
-    def update(self, module = None, branch = None):
+    def update(self, branch = None):
         return True
 
     def kw_check(self, path = None, lang = None):

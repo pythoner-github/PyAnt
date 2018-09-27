@@ -189,6 +189,70 @@ class build(__build__):
 
         return False
 
+    def environ(self, lang = None):
+        if os.environ.get('UEP_VERSION'):
+            if not os.environ.get('POM_UEP_VERSION'):
+                os.environ['POM_UEP_VERSION'] = os.environ['UEP_VERSION'].upper()
+
+                print('export POM_UEP_VERSION=%s' % os.environ['POM_UEP_VERSION'])
+
+        if not os.environ.get('DEVTOOLS_ROOT'):
+            if os.path.isdir('DEVTOOLS'):
+                os.environ['DEVTOOLS_ROOT'] = __os__.abspath('DEVTOOLS')
+
+        if lang == 'cpp':
+            if os.environ.get('DEVTOOLS_ROOT'):
+                if os.path.isdir(os.path.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin')):
+                    os.environ['PATH'] = ';'.join((__os__.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin'), os.environ['PATH']))
+
+            if not os.environ.get('INTERFACE_OUTPUT_HOME'):
+                path = os.path.basename(self.repos['interface'])
+
+                if os.path.isdir(path):
+                    os.environ['INTERFACE_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('PLATFORM_OUTPUT_HOME'):
+                path = os.path.basename(self.repos['platform'])
+
+                if os.path.isdir(path):
+                    os.environ['PLATFORM_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('NECOMMON_OUTPUT_HOME'):
+                path = os.path.basename(self.repos['necommon'])
+
+                if os.path.isdir(path):
+                    os.environ['NECOMMON_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('E2E_OUTPUT_HOME'):
+                path = os.path.basename(self.repos['e2e'])
+
+                if os.path.isdir(path):
+                    os.environ['E2E_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('UCA_OUTPUT_HOME'):
+                path = os.path.basename(self.repos['uca'])
+
+                if os.path.isdir(path):
+                    os.environ['UCA_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('NAF_OUTPUT_HOME'):
+                path = os.path.basename(self.repos['nbi'])
+
+                if os.path.isdir(path):
+                    os.environ['NAF_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('SDH_OUTPUT_HOME'):
+                path = os.path.basename(self.repos['sdh'])
+
+                if os.path.isdir(path):
+                    os.environ['SDH_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
+
+            if not os.environ.get('WDM_OUTPUT_HOME'):
+                path = os.path.basename(self.repos['wdm'])
+
+                if os.path.isdir(path):
+                    os.environ['WDM_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
+
     # ------------------------------------------------------
 
     # installdisk.xml
@@ -711,70 +775,6 @@ class build(__build__):
             pass
 
         return name
-
-    def environ(self, lang = None):
-        if os.environ.get('UEP_VERSION'):
-            if not os.environ.get('POM_UEP_VERSION'):
-                os.environ['POM_UEP_VERSION'] = os.environ['UEP_VERSION'].upper()
-
-                print('export POM_UEP_VERSION=%s' % os.environ['POM_UEP_VERSION'])
-
-        if not os.environ.get('DEVTOOLS_ROOT'):
-            if os.path.isdir('DEVTOOLS'):
-                os.environ['DEVTOOLS_ROOT'] = __os__.abspath('DEVTOOLS')
-
-        if lang == 'cpp':
-            if os.environ.get('DEVTOOLS_ROOT'):
-                if os.path.isdir(os.path.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin')):
-                    os.environ['PATH'] = ';'.join((__os__.join(os.environ['DEVTOOLS_ROOT'], 'vc/bin'), os.environ['PATH']))
-
-            if not os.environ.get('INTERFACE_OUTPUT_HOME'):
-                path = os.path.basename(self.repos['interface'])
-
-                if os.path.isdir(path):
-                    os.environ['INTERFACE_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
-
-            if not os.environ.get('PLATFORM_OUTPUT_HOME'):
-                path = os.path.basename(self.repos['platform'])
-
-                if os.path.isdir(path):
-                    os.environ['PLATFORM_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
-
-            if not os.environ.get('NECOMMON_OUTPUT_HOME'):
-                path = os.path.basename(self.repos['necommon'])
-
-                if os.path.isdir(path):
-                    os.environ['NECOMMON_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
-
-            if not os.environ.get('E2E_OUTPUT_HOME'):
-                path = os.path.basename(self.repos['e2e'])
-
-                if os.path.isdir(path):
-                    os.environ['E2E_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
-
-            if not os.environ.get('UCA_OUTPUT_HOME'):
-                path = os.path.basename(self.repos['uca'])
-
-                if os.path.isdir(path):
-                    os.environ['UCA_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
-
-            if not os.environ.get('NAF_OUTPUT_HOME'):
-                path = os.path.basename(self.repos['nbi'])
-
-                if os.path.isdir(path):
-                    os.environ['NAF_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
-
-            if not os.environ.get('SDH_OUTPUT_HOME'):
-                path = os.path.basename(self.repos['sdh'])
-
-                if os.path.isdir(path):
-                    os.environ['SDH_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
-
-            if not os.environ.get('WDM_OUTPUT_HOME'):
-                path = os.path.basename(self.repos['wdm'])
-
-                if os.path.isdir(path):
-                    os.environ['WDM_OUTPUT_HOME'] = __os__.join(os.path.abspath(path), 'code_c/build/output')
 
     def metric_id(self, module_name = None):
         if module_name in ('interface', 'platform', 'necommon', 'uca', 'sdh', 'ptn'):

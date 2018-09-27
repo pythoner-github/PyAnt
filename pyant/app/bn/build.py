@@ -124,10 +124,16 @@ class build(__build__):
         type = type.strip().lower()
 
         if self.__package__(version, None, type, self.expand_filename):
-            if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
-                artifact = self.artifact_repos['snapshot']
+            if os.environ.get('ARTIFACT'):
+                artifact = __string__.vars_expand(
+                    os.environ['ARTIFACT'],
+                    {'datetime': datetime.datetime.now().strftime('%Y%m%d')}
+                )
             else:
-                artifact = self.artifact_repos['alpha']
+                if version.endswith(datetime.datetime.now().strftime('%Y%m%d')):
+                    artifact = self.artifact_repos['snapshot']
+                else:
+                    artifact = self.artifact_repos['alpha']
 
             suffix = '-%s' % __os__.osname()
 

@@ -13,7 +13,7 @@ from pyant.builtin import __os__
 
 __all__ = ('metric_start', 'metric_end', 'bn_cut_upgrade_installation', )
 
-def metric_start(id, module = None):
+def metric_start(id, module = None, night = True):
     if not os.environ.get('METRIC'):
         return None
 

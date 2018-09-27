@@ -6,10 +6,11 @@ import shutil
 import sys
 
 from pyant import check
+from pyant.app import patch, tools
 from pyant.builtin import __os__, __string__
 
-from pyant.app.bn import *
-from pyant.app.umebn import *
+from pyant.app.bn import bn_build, bn_dashboard, bn_patch, bn_installation
+from pyant.app.umebn import umebn_build, umebn_dashboard, umebn_patch, umebn_installation
 
 __build_name__ = ('bn', 'umebn')
 __all__ = ('build',)
@@ -19,18 +20,18 @@ Usage:
     name command home arg
 
     command:
-        updateall                   arg: branch
         update                      arg: module branch
-        compile_base                arg: cmd
+        updateall                   arg: branch
+        compile_pom                 arg: cmd
         compile                     arg: module cmd clean retry_cmd dirname lang
         package                     arg: branch type
         update_package              arg: branch type
         check                       arg:
         kw_compile                  arg: output module cmd lang
         kw_build                    arg: module lang
+        dashboard_monitor           arg: branch
         dashboard                   arg: module, paths, branch
         dashboard_gerrit            arg:
-        dashboard_monitor           arg: branch
         patch_auto                  arg:
         patch                       arg: path
         patch_init                  arg: path, branch
@@ -41,69 +42,76 @@ def build(argv = None):
     if not argv:
         argv = sys.argv[1:]
 
-    if len(argv) >= 3:
-        name = argv[0]
-        command = argv[1]
-        home = argv[2]
+    if len(argv) < 3:
+        print(usage.strip())
 
-        if not name in __build_name__:
-            print('name not found in (%s)' % ', '.join(__build_name__))
+        return False
 
-            return False
+    name = argv[0]
+    command = argv[1]
+    home = argv[2]
 
-        arg = expand_arg(argv[3:], 10)
+    if not name in __build_name__:
+        print('name not found in (%s)' % ', '.join(__build_name__))
 
-        os.makedirs(home, exist_ok = True)
-        pwd = os.getcwd()
+        return False
 
-        with __os__.chdir(home) as chdir:
-            version = None
+    arg = expand_arg(argv[3:], 10)
 
-            POM_VERSION = '%s_POM_VERSION' % name.upper()
+    os.makedirs(home, exist_ok = True)
+    pwd = os.getcwd()
 
-            if os.environ.get('VERSION'):
-                os.environ['VERSION'] = os.environ['VERSION'].strip()
+    with __os__.chdir(home) as chdir:
+        version = None
 
-                if os.environ['VERSION']:
-                    if not os.environ.get(POM_VERSION):
-                        os.environ[POM_VERSION] = os.environ['VERSION'].upper().replace('_${date}', '').replace(' ', '')
+        POM_VERSION = '%s_POM_VERSION' % name.upper()
 
-                        print('export %s=%s' % (POM_VERSION, os.environ[POM_VERSION]))
+        if os.environ.get('VERSION'):
+            os.environ['VERSION'] = os.environ['VERSION'].strip()
 
-                    version = os.environ['VERSION'].replace('_${date}', datetime.datetime.now().strftime('%Y%m%d'))
+            if os.environ['VERSION']:
+                if not os.environ.get(POM_VERSION):
+                    os.environ[POM_VERSION] = os.environ['VERSION'].upper().replace('_${date}', '').replace(' ', '')
+
+                    print('export %s=%s' % (POM_VERSION, os.environ[POM_VERSION]))
+
+                version = os.environ['VERSION'].replace('_${date}', datetime.datetime.now().strftime('%Y%m%d'))
+
+        if name in ('bn',):
+            if os.environ.get(POM_VERSION):
+                os.environ['POM_VERSION'] = os.environ[POM_VERSION]
+
+                print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
+
+        if command in (
+            'update', 'updateall', 'compile_pom', 'compile', 'check',
+            'package', 'update_package', 'kw_compile', 'kw_build'
+        ):
+            # build
 
             if name == 'bn':
-                if os.environ.get(POM_VERSION):
-                    os.environ['POM_VERSION'] = os.environ[POM_VERSION]
-
-                    print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
-
-                build = app_build.bn_build()
-                app_patch = patch.bn_patch
-                app_installation = patch.bn_installation
+                build = bn_build()
             else:
-                build = app_build.umebn_build()
-                app_patch = patch.umebn_patch
-                app_installation = patch.umebn_installation
+                build = umebn_build()
 
-            if command == 'updateall':
-                branch = arg[0]
-
-                if name in ('bn',):
-                    return build.update(None, branch)
-                else:
-                    return build.update(branch)
-            elif command == 'update':
+            if command == 'update':
                 module, branch, *_ = arg
 
                 if name in ('bn',):
                     return build.update(module, branch)
                 else:
                     return build.update(branch)
-            elif command == 'compile_base':
+            elif command == 'updateall':
+                branch = arg[0]
+
+                if name in ('bn',):
+                    return build.update(None, branch)
+                else:
+                    return build.update(branch)
+            elif command == 'compile_pom':
                 cmd = arg[0]
 
-                return build.compile_base(cmd)
+                return build.compile_pom(cmd)
             elif command == 'compile':
                 module, cmd, clean, retry_cmd, dirname, lang, *_ = arg
 
@@ -112,29 +120,16 @@ def build(argv = None):
                 else:
                     clean = False
 
-                id = build.metric_start(module)
+                id = tools.metric_start(build.metric_id(module), module)
 
                 if name in ('bn',):
                     status = build.compile(module, cmd, clean, retry_cmd, dirname, lang)
                 else:
                     status = build.compile(cmd, clean, retry_cmd, dirname)
 
-                build.metric_end(id, status)
+                tools.metric_end(id, status)
 
                 return status
-            elif command in ('package', 'update_package'):
-                branch, type, *_ = arg
-
-                if not version:
-                    if not branch:
-                        branch = 'master'
-
-                    version = '%s_%s' % (branch, datetime.datetime.now().strftime('%Y%m%d'))
-
-                if command == 'package':
-                    return build.package(version, type)
-                else:
-                    return build.update_package(version, type)
             elif command == 'check':
                 if name in ('bn',):
                     status = True
@@ -157,6 +152,22 @@ def build(argv = None):
                     chk.notification = '<%s_CHECK 通知> 文件检查失败, 请尽快处理' % name.upper()
 
                     return chk.check()
+            elif command in ('package', 'update_package'):
+                branch, type, *_ = arg
+
+                if not version:
+                    if not branch:
+                        branch = 'master'
+
+                    version = '%s_%s' % (branch, datetime.datetime.now().strftime('%Y%m%d'))
+
+                if command == 'package':
+                    return build.package(version, type)
+                else:
+                    if name == 'bn':
+                        return build.update_package(version, type)
+                    else:
+                        return True
             elif command == 'kw_compile':
                 output, module, cmd, lang, *_ = arg
 
@@ -221,6 +232,24 @@ def build(argv = None):
                     os.makedirs(os.path.join(path, 'kwbuild'), exist_ok = True)
 
                 return build.kw_build(path)
+            else:
+                pass
+
+            return True
+        elif command in ('dashboard_monitor', 'dashboard', 'dashboard_gerrit'):
+            # dashboard
+
+            if name == 'bn':
+                build = bn_build()
+                dashboard = bn_dashboard()
+            else:
+                build = umebn_build()
+                dashboard = umebn_dashboard()
+
+            if command == 'dashboard_monitor':
+                branch = arg[0]
+
+                return dashboard.dashboard_monitor(branch)
             elif command == 'dashboard':
                 module, paths, branch, *_ = arg
 
@@ -229,14 +258,14 @@ def build(argv = None):
                 else:
                     paths = []
 
-                id = build.metric_start(module, False)
+                id = tools.metric_start(build.metric_id(module), module, False)
 
                 if name in ('bn',):
-                    status = build.dashboard(module, paths, branch)
+                    status = dashboard.dashboard(module, paths, branch)
                 else:
-                    status = build.dashboard(paths, branch)
+                    status = dashboard.dashboard(paths, branch)
 
-                build.metric_end(id, status)
+                tools.metric_end(id, status)
 
                 return status
             elif command == 'dashboard_gerrit':
@@ -245,45 +274,59 @@ def build(argv = None):
                 branch = os.environ.get('GERRIT_BRANCH')
 
                 if name in ('bn',):
-                    return build.dashboard_gerrit(arg[0], repos, revision, branch)
+                    return dashboard.dashboard_gerrit(arg[0], repos, revision, branch)
                 else:
-                    return build.dashboard_gerrit(repos, revision, branch)
-            elif command == 'dashboard_monitor':
-                branch = arg[0]
+                    return dashboard.dashboard_gerrit(repos, revision, branch)
+            else:
+                pass
 
-                return build.dashboard_monitor(branch)
-            elif command == 'patch_auto':
-                return patch.auto()
-            elif command == 'patch':
+            return True
+        elif command in ('patch', 'patch_init', ):
+            # patch
+
+            if name == 'bn':
+                patch = bn_patch()
+            else:
+                patch = umebn_patch()
+
+            if command == 'patch':
                 path = arg[0]
 
-                return app_patch(path).build()
+                return patch(path).build()
             elif command == 'patch_init':
                 path, branch, *_ = arg
 
-                return app_patch(path).init(branch)
-            elif command == 'patch_install':
-                path, sp_next, type, *_ = arg
-
-                if str(sp_next).lower() == 'true':
-                    sp_next = True
-                else:
-                    sp_next = False
-
-                display_version = None
-
-                if os.environ.get('DISPLAY_VERSION'):
-                    display_version = os.environ['DISPLAY_VERSION'].strip()
-
-                return app_installation(path).install(version, display_version, sp_next, type)
+                return patch(path).init(branch)
             else:
-                print(usage.strip())
+                pass
+        elif command in ('patch_install', ):
+            # patch installation
 
-                return False
-    else:
-        print(usage.strip())
+            if name == 'bn':
+                installation = bn_installation()
+            else:
+                installation = umebn_installation()
 
-        return False
+            path, sp_next, type, *_ = arg
+
+            if str(sp_next).lower() == 'true':
+                sp_next = True
+            else:
+                sp_next = False
+
+            display_version = None
+
+            if os.environ.get('DISPLAY_VERSION'):
+                display_version = os.environ['DISPLAY_VERSION'].strip()
+
+            return installation(path).build(version, display_version, sp_next, type)
+        elif command in ('patch_auto',):
+            # patch auto
+            return patch.auto()
+        else:
+            print(usage.strip())
+
+            return False
 
 # ----------------------------------------------------------
 

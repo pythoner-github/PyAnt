@@ -239,9 +239,9 @@ class patch():
                     infoes = self.load_xml(file)
 
                     if infoes is None:
-                        to_addrs, cc_addrs = self.get_addrs_from_file(file)
+                        author, to_addrs, cc_addrs = self.get_addrs_from_file(file)
 
-                        message.append((os.path.basename(file), '解析XML文件失败', False))
+                        message.append(('%s(%s)' % (os.path.basename(file), author), '解析XML文件失败', False))
                         self.sendmail('%s 解析XML文件失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
 
                         self.clean_env(file);
@@ -262,7 +262,7 @@ class patch():
                     index = -1
                     current = []
 
-                    to_addrs, cc_addrs = self.get_addrs(infoes[0])
+                    author, to_addrs, cc_addrs = self.get_addrs(infoes[0])
 
                     for info in infoes:
                         index += 1
@@ -334,34 +334,34 @@ class patch():
 
                             if cur_status:
                                 if len(glob.glob(os.path.join(output, '*'), recursive = True)) == 0:
-                                    message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但没有输出文件(补丁号: %s)' % id, True))
+                                    message.append(('%s(%s:%s)' % (filename, author, index), '补丁制作成功, 但没有输出文件(补丁号: %s)' % id, True))
                                     self.sendmail('%s 补丁制作成功, 但没有输出文件(补丁号: %s)'  % (self.notification, id), to_addrs, cc_addrs, None, file)
                                 else:
-                                    message.append(('%s(%s)' % (filename, index), '补丁制作成功(补丁号: %s)' % id, True))
+                                    message.append(('%s(%s:%s)' % (filename, author, index), '补丁制作成功(补丁号: %s)' % id, True))
                                     self.sendmail('%s 补丁制作成功, 请验证(补丁号: %s)' % (self.notification, id), to_addrs, cc_addrs, None, file)
 
                                 self.to_xml(infoes[index], os.path.join(output, self.get_xml_filename(infoes[index])))
                             else:
-                                message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但输出补丁失败', True))
+                                message.append(('%s(%s:%s)' % (filename, author, index), '补丁制作成功, 但输出补丁失败', True))
                                 self.sendmail('%s 补丁制作成功, 但输出补丁失败' % self.notification, to_addrs, cc_addrs, None, file)
                     else:
                         for filename, index, _status in current:
                             if _status:
-                                message.append(('%s(%s)' % (filename, index), '补丁制作成功, 但关联补丁制作失败', True))
+                                message.append(('%s(%s:%s)' % (filename, author, index), '补丁制作成功, 但关联补丁制作失败', True))
                                 self.sendmail('%s 补丁制作成功, 但关联补丁制作失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
                             else:
-                                message.append(('%s(%s)' % (filename, index), '补丁制作失败', False))
+                                message.append(('%s(%s:%s)' % (filename, author, index), '补丁制作失败', False))
                                 self.sendmail('%s 补丁制作失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
 
                     self.clean_env(file, tmpdir)
 
         print()
-        print('*' * 60)
+        print('-' * 60)
 
         for filename, msg, __status__ in message:
             print(filename, msg, __status__)
 
-        print('*' * 60)
+        print('-' * 60)
         print()
 
         return status
@@ -587,14 +587,16 @@ class patch():
             pass
 
     def get_addrs(self, info):
-        to_addrs = '%s@zte.com.cn' % info['info']['提交人员'].replace('\\', '/').split('/', 1)[-1]
+        author = info['info']['提交人员'].replace('\\', '/')
+        to_addrs = '%s@zte.com.cn' % author.split('/', 1)[-1]
 
         cc_addrs = ['%s@zte.com.cn' % x.replace('\\', '/').split('/', 1)[-1] for x in info['info']['走查人员'] + info['info']['抄送人员']]
         cc_addrs.append('%s@zte.com.cn' % info['info']['开发经理'].replace('\\', '/').split('/', 1)[-1])
 
-        return (to_addrs, cc_addrs)
+        return (author, to_addrs, cc_addrs)
 
     def get_addrs_from_file(self, file):
+        author = None
         to_addrs = None
         cc_addrs = []
 
@@ -607,7 +609,8 @@ class patch():
                     m = re.search(r'^<\s*attr\s+name\s*=.*提交人员.*>(.*)<\s*/\s*attr\s*>$', line)
 
                     if m:
-                        to_addrs = '%s@zte.com.cn' % m.group(1).replace('\\', '/').split('/', 1)[-1]
+                        author = m.group(1).replace('\\', '/')
+                        to_addrs = '%s@zte.com.cn' % author.split('/', 1)[-1]
 
                         continue
 
@@ -629,7 +632,7 @@ class patch():
             except:
                 pass
 
-        return (to_addrs, cc_addrs)
+        return (author, to_addrs, cc_addrs)
 
     def get_id(self):
         prefix = datetime.datetime.now().strftime('%Y%m%d')

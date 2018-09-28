@@ -244,7 +244,7 @@ class patch():
                         message.append((os.path.basename(file), '解析XML文件失败', False))
                         self.sendmail('%s 解析XML文件失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
 
-                        clean_env(file);
+                        self.clean_env(file);
 
                         status = False
                         continue
@@ -252,7 +252,7 @@ class patch():
                     if len(infoes) == 0:
                         message.append((os.path.basename(file), '未找到补丁信息', True))
 
-                        clean_env(file);
+                        self.clean_env(file);
 
                         continue
 
@@ -353,7 +353,7 @@ class patch():
                                 message.append(('%s(%s)' % (filename, index), '补丁制作失败', False))
                                 self.sendmail('%s 补丁制作失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
 
-                    clean_env(file, tmpdir);
+                    self.clean_env(file, tmpdir);
 
         return status
 

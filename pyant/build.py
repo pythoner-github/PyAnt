@@ -281,13 +281,16 @@ def build(argv = None):
                 pass
 
             return True
+        elif command in ('patch_auto',):
+            # patch auto
+            return patch.auto()
         elif command in ('patch', 'patch_init', ):
             # patch
 
             if name == 'bn':
-                patch = bn_patch()
+                patch = bn_patch
             else:
-                patch = umebn_patch()
+                patch = umebn_patch
 
             if command == 'patch':
                 path = arg[0]
@@ -303,9 +306,9 @@ def build(argv = None):
             # patch installation
 
             if name == 'bn':
-                installation = bn_installation()
+                installation = bn_installation
             else:
-                installation = umebn_installation()
+                installation = umebn_installation
 
             path, sp_next, type, *_ = arg
 
@@ -320,9 +323,6 @@ def build(argv = None):
                 display_version = os.environ['DISPLAY_VERSION'].strip()
 
             return installation(path).build(version, display_version, sp_next, type)
-        elif command in ('patch_auto',):
-            # patch auto
-            return patch.auto()
         else:
             print(usage.strip())
 

@@ -97,7 +97,7 @@ class patch(__patch__):
                             if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U'):
                                 return False
 
-                        if not self.oki(self, build_path, version):
+                        if not self.oki(self, build_path):
                             return False
                     else:
                         print('no such directory: %s' % os.path.normpath(build_path))
@@ -192,11 +192,11 @@ class patch(__patch__):
 
         return True
 
-    def oki(self, path, version):
+    def oki(self, path):
         oki_file = 'devops/parent/ci_scripts/docker/scripts/patch.py'
 
         cmd = command.command()
-        cmdline = 'python3 %s %s %s' % (oki_file, os.path.join(path, 'output'), version)
+        cmdline = 'python3 %s %s %s' % (oki_file, os.path.join(path, 'output'), os.environ.get('VERSION'))
 
         for line in cmd.command(cmdline):
             print(line)

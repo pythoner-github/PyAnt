@@ -295,11 +295,11 @@ def build(argv = None):
             if command == 'patch':
                 path = arg[0]
 
-                return patch(path).build()
+                return patch(path, version).build()
             elif command == 'patch_init':
                 path, branch, *_ = arg
 
-                return patch(path).init(branch)
+                return patch(path, version).init(branch)
             else:
                 pass
         elif command in ('patch_install', ):

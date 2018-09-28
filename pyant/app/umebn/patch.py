@@ -97,7 +97,7 @@ class patch(__patch__):
                             if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U'):
                                 return False
 
-                        if not self.oki(self, build_path):
+                        if not self.oki(build_path):
                             return False
                     else:
                         print('no such directory: %s' % os.path.normpath(build_path))

@@ -136,8 +136,6 @@ class patch(__patch__):
                     else:
                         print('no such directory: %s' % os.path.normpath(deploy_path))
 
-                        return False
-
         return True
 
     def build_check(self, path):

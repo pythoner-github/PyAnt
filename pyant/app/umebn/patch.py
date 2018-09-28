@@ -145,9 +145,11 @@ class patch(__patch__):
             return False
 
         with __os__.chdir(path) as chdir:
-            for appname in glob.iglob('*/*'):
-                if os.path.isdir(appname):
-                    with __os__.chdir(appname) as _chdir:
+            for dir in glob.iglob('app/*'):
+                if os.path.isdir(dir):
+                    with __os__.chdir(dir) as _chdir:
+                        appname = os.path.basename(dir)
+
                         # commonservice-instance-config.xml
                         # *.spd
                         # *.tar.gz
@@ -200,9 +202,6 @@ class patch(__patch__):
 
         for line in cmd.command(cmdline):
             print(line)
-
-        if not cmd.result():
-            return False
 
         return True
 

@@ -196,8 +196,9 @@ def auto():
 #                   installation
 #                   patch
 class patch():
-    def __init__(self, path):
+    def __init__(self, path, version = None):
         self.path = __os__.abspath(path)
+        self.version = version
 
         m = re.search(r'\/build\/(dev|release)\/', self.path)
 
@@ -207,7 +208,6 @@ class patch():
             self.output = self.path
 
         self.name = 'none'
-        self.type = 'none'
         self.notification = '<PATCH 通知>'
         self.modules = {}
 
@@ -677,7 +677,6 @@ class installation():
             self.output = self.path
 
         self.name = 'none'
-        self.type = 'none'
 
     def build(self, version, display_version = None, sp_next = False, type = None):
         if not os.path.isdir(self.output):
@@ -688,9 +687,6 @@ class installation():
         if display_version is None:
             display_version = version
 
-        if type is None:
-            type = self.type
-
         with __os__.chdir(self.output) as chdir:
             id_info = {}
 
@@ -700,11 +696,7 @@ class installation():
                 if not re.search(r'^\d{8}_\d{4}$', id):
                     continue
 
-                path = os.path.join(dir, 'patch', type)
-
-                if not os.path.isdir(path):
-                    for _dir in glob.iglob(os.path.join(dir, 'patch/*', type), recursive = True):
-                        path = _dir
+                path = self.get_patch_dirname(dir, type)
 
                 if os.path.isdir(path):
                     id_info[id] = os.path.abspath(path)
@@ -746,3 +738,6 @@ class installation():
 
     def expand_filename(self, filename):
         return filename
+
+    def get_patch_dirname(self, dirname, type = None):
+        return os.path.join(dirname, 'patch')

@@ -6,7 +6,7 @@ import tarfile
 
 from lxml import etree
 
-from pyant import git, maven
+from pyant import command, git, maven
 from pyant.app import const, __patch__, __installation__
 from pyant.builtin import __os__
 
@@ -31,11 +31,10 @@ __all__ = ('patch', 'installation')
 #                   installation
 #                   patch
 class patch(__patch__):
-    def __init__(self, path):
-        super().__init__(path)
+    def __init__(self, path, version = None):
+        super().__init__(path, version)
 
         self.name = 'umebn'
-        self.type = 'umebn'
         self.notification = '<UMEBN_PATCH 通知>'
         self.modules = {
             'umebn' : const.UMEBN_REPOS
@@ -97,6 +96,9 @@ class patch(__patch__):
 
                             if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U'):
                                 return False
+
+                        if not self.oki(self, build_path, version):
+                            return False
                     else:
                         print('no such directory: %s' % os.path.normpath(build_path))
 
@@ -119,12 +121,12 @@ class patch(__patch__):
 
                     if os.path.isdir(deploy_path):
                         with __os__.chdir(deploy_path) as _chdir:
-                            for filename in glob.iglob('**/*', recursive = True):
+                            for filename in glob.iglob('app/**/*', recursive = True):
                                 if os.path.isfile(filename):
                                     filename = self.expand_filename(filename)
 
                                     if filename:
-                                        dest = os.path.join(path, type, filename)
+                                        dest = os.path.join(path, filename)
 
                                         try:
                                             os.makedirs(os.path.dirname(dest), exist_ok = True)
@@ -143,7 +145,7 @@ class patch(__patch__):
             return False
 
         with __os__.chdir(path) as chdir:
-            for appname in glob.iglob('*'):
+            for appname in glob.iglob('*/*'):
                 if os.path.isdir(appname):
                     with __os__.chdir(appname) as _chdir:
                         # commonservice-instance-config.xml
@@ -190,6 +192,20 @@ class patch(__patch__):
 
         return True
 
+    def oki(self, path, version):
+        oki_file = 'devops/parent/ci_scripts/docker/scripts/patch.py'
+
+        cmd = command.command()
+        cmdline = 'python3 %s %s %s' % (oki_file, os.path.join(path, 'output'), version)
+
+        for line in cmd.command(cmdline):
+            print(line)
+
+        if not cmd.result():
+            return False
+
+        return True
+
 # ******************************************************** #
 #                    PATCH INSTALLATION                    #
 # ******************************************************** #
@@ -199,7 +215,6 @@ class installation(__installation__):
         super().__init__(path)
 
         self.name = 'umebn'
-        self.type = 'umebn'
 
     # ------------------------------------------------------
 

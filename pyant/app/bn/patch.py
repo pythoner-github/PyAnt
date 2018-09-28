@@ -36,8 +36,8 @@ __all__ = ('patch', 'installation')
 #                   installation
 #                   patch
 class patch(__patch__):
-    def __init__(self, path):
-        super().__init__(path)
+    def __init__(self, path, version = None):
+        super().__init__(path, version)
 
         self.name = 'bn'
         self.type = 'ems'
@@ -633,6 +633,18 @@ class installation(__installation__):
             return None
 
         return filename
+
+    def get_patch_dirname(self, dirname, type = None):
+        if not type:
+            type = self.type
+
+        path = os.path.join(dirname, 'patch', type)
+
+        if not os.path.isdir(path):
+            for _dir in glob.iglob(os.path.join(dirname, 'patch/*', type), recursive = True):
+                path = _dir
+
+        return path
 
     def patchname(self, version, id, sp_next, type):
         prefix = '-%s-SP' % version

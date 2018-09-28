@@ -41,6 +41,22 @@ class patch(__patch__):
             'umebn' : const.UMEBN_REPOS
         }
 
+    def init(self, branch = None):
+        if not super().init(branch):
+            return False
+
+        with __os__.chdir(self.path) as chdir:
+            dir = os.path.join('build', self.name)
+
+            if os.path.isdir(dir):
+                if not git.pull(dir, revert = True):
+                    return False
+            else:
+                if not git.clone(self.modules['umebn'], dir, branch):
+                    return False
+
+        return True
+
     # ------------------------------------------------------
 
     def build_source(self, info):
@@ -52,8 +68,10 @@ class patch(__patch__):
 
                 return False
 
-            if not git.pull(path, revert = True):
-                return False
+            with __os__.chdir(path) as chdir:
+                for dir in info['source']:
+                    if not git.pull(dir, revert = True):
+                        return False
 
         return True
 

@@ -6,7 +6,7 @@ import shutil
 import sys
 
 from pyant import check
-from pyant.app import patch, tools
+from pyant.app import const, patch, tools
 from pyant.builtin import __os__, __string__
 
 from pyant.app.bn import bn_build, bn_dashboard, bn_patch, bn_installation

@@ -225,7 +225,10 @@ class installation(__installation__):
                 os.makedirs(installation, exist_ok = True)
 
             for file in glob.iglob('**/*', recursive = True):
-                shutil.copyfile(file, os.path.join(installation, file))
+                if os.path.isfile(file):
+                    os.makedirs(os.path.dirname(os.path.join(installation, file)), exist_ok = True)
+
+                    shutil.copyfile(file, os.path.join(installation, file))
         except Exception as e:
             print(e)
 
@@ -234,4 +237,4 @@ class installation(__installation__):
         return True
 
     def installation(self, version, type):
-        return os.path.join(self.output, 'installation', version, 'installation/app')
+        return os.path.join(self.output, 'installation', version, 'installation')

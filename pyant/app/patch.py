@@ -301,14 +301,14 @@ class patch():
 
                     status_all = True
 
-                    for filename, index, _status in current:
-                        if not _status:
+                    for filename, index, __status__ in current:
+                        if not __status__:
                             status_all = False
 
                             break
 
                     if status_all:
-                        for filename, index, _status in current:
+                        for filename, index, *_ in current:
                             id = self.get_id()
 
                             output = os.path.join(self.output, 'patch', id)
@@ -353,7 +353,16 @@ class patch():
                                 message.append(('%s(%s)' % (filename, index), '补丁制作失败', False))
                                 self.sendmail('%s 补丁制作失败, 请尽快处理' % self.notification, to_addrs, cc_addrs, None, file)
 
-                    self.clean_env(file, tmpdir);
+                    self.clean_env(file, tmpdir)
+
+        print()
+        print('*' * 60)
+
+        for filename, msg, __status__ in message:
+            print(filename, msg, __status__)
+
+        print('*' * 60)
+        print()
 
         return status
 

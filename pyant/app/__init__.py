@@ -1,6 +1,6 @@
 from pyant.app import const, build, dashboard, patch
 
-__all__ = ('const', 'tools', '__build__', '__dashboard__', '__patch__', '__installation__')
+__all__ = ('const', 'utils', '__build__', '__dashboard__', '__patch__', '__installation__')
 
 class __build__(build.build):
     pass

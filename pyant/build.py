@@ -6,7 +6,7 @@ import shutil
 import sys
 
 from pyant import check
-from pyant.app import const, patch, tools
+from pyant.app import const, patch, utils
 from pyant.builtin import __os__, __string__
 
 from pyant.app.bn import bn_build, bn_dashboard, bn_patch, bn_installation
@@ -120,14 +120,14 @@ def build(argv = None):
                 else:
                     clean = False
 
-                id = tools.metric_start(build.metric_id(module), module)
+                id = utils.metric_start(build.metric_id(module), module)
 
                 if name in ('bn',):
                     status = build.compile(module, cmd, clean, retry_cmd, dirname, lang)
                 else:
                     status = build.compile(cmd, clean, retry_cmd, dirname)
 
-                tools.metric_end(id, status)
+                utils.metric_end(id, status)
 
                 return status
             elif command == 'check':
@@ -258,14 +258,14 @@ def build(argv = None):
                 else:
                     paths = []
 
-                id = tools.metric_start(build.metric_id(module), module, False)
+                id = utils.metric_start(build.metric_id(module), module, False)
 
                 if name in ('bn',):
                     status = dashboard.dashboard(module, paths, branch)
                 else:
                     status = dashboard.dashboard(paths, branch)
 
-                tools.metric_end(id, status)
+                utils.metric_end(id, status)
 
                 return status
             elif command == 'dashboard_gerrit':

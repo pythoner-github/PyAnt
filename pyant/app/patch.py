@@ -7,6 +7,7 @@ import random
 import re
 import shutil
 
+import openpyxl
 from lxml import etree
 
 from pyant import command, daemon, password, smtp
@@ -777,8 +778,8 @@ class installation():
                                 '集成测试人员'      : '',
                                 '集成测试结果'      : '',
                                 '补丁编号'          : id,
-                                '变更文件'          : info['source'],
-                                '补丁文件'          : filenames,
+                                '变更文件'          : '\n'.join(info['source']),
+                                '补丁文件'          : '\n'.join(filenames),
                                 '系统测试人员'      : '',
                                 '系统测试方法'      : '',
                                 '系统测试结果'      : '',
@@ -789,30 +790,38 @@ class installation():
 
                     break
 
-        file = os.path.join(installation, '%s.xml' % name)
+        file = os.path.join(installation, '%s.xlsx' % name)
         os.makedirs(os.path.dirname(file), exist_ok = True)
 
-        tree = etree.ElementTree(etree.XML("<changes/>"))
-
-        for change in changes:
-            element = etree.Element('info')
-            element.set('id', change['补丁编号'])
-
-            for k in change:
-                e = etree.Element('attr')
-                e.set('name', k)
-
-                if k in ('变更文件', '补丁文件'):
-                    e.text = '\n      '.join([''] + change[k]) + '\n    '
-                else:
-                    e.text = change[k]
-
-                element.append(e)
-
-            tree.getroot().append(element)
-
         try:
-            tree.write(file, encoding='utf-8', pretty_print=True, xml_declaration=True)
+            wb = openpyxl.load_workbook(const.CHANGES_TEMPLATE)
+            wb.active(1)
+
+            ws = wb.active
+            ws._current_row = 1
+
+            for change in changes:
+                ws.append([
+                    change['变更来源'],
+                    change['变更类型'],
+                    change['开发经理'],
+                    change['提交人员'],
+                    change['故障/需求ID'],
+                    change['变更描述'],
+                    change['变更分析和测试建议'],
+                    change['集成测试人员'],
+                    change['集成测试结果'],
+                    change['补丁编号'],
+                    change['变更文件'],
+                    change['补丁文件'],
+                    change['系统测试人员'],
+                    change['系统测试方法'],
+                    change['系统测试结果'],
+                    change['走查人员'],
+                    change['走查结果']
+                ])
+
+            wb.save(file)
 
             return True
         except Exception as e:

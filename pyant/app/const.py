@@ -1,6 +1,7 @@
 import collections
 import os
 import os.path
+import sys
 
 from pyant.builtin import __os__
 
@@ -160,3 +161,7 @@ else:
 # UMEBN
 
 OKI_FILE = 'devops/parent/ci_scripts/docker/scripts/patch.py'
+
+# TEMPLATE
+
+CHANGES_TEMPLATE = os.path.abspath(os.path.join(sys.prefix, 'tmpl/pyant/changes.xltm'))

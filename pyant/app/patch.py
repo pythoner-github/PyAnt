@@ -384,14 +384,15 @@ class patch():
         return True
 
     def build_check(self, path):
-        with __os__.chdir(path) as chdir:
-            for file in glob.iglob('**/*.xml', recursive = True):
-                try:
-                    etree.parse(file)
-                except Exception as e:
-                    print(e)
+        if os.path.isdir(path):
+            with __os__.chdir(path) as chdir:
+                for file in glob.iglob('**/*.xml', recursive = True):
+                    try:
+                        etree.parse(file)
+                    except Exception as e:
+                        print(e)
 
-                    return False
+                        return False
 
         return True
 

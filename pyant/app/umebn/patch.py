@@ -145,34 +145,35 @@ class patch(__patch__):
         if not super().build_check(path):
             return False
 
-        with __os__.chdir(path) as chdir:
-            for dir in glob.iglob('app/*'):
-                if os.path.isdir(dir):
-                    with __os__.chdir(dir) as _chdir:
-                        appname = os.path.basename(dir)
+        if os.path.isdir(path):
+            with __os__.chdir(path) as chdir:
+                for dir in glob.iglob('app/*'):
+                    if os.path.isdir(dir):
+                        with __os__.chdir(dir) as _chdir:
+                            appname = os.path.basename(dir)
 
-                        # commonservice-instance-config.xml
-                        # *.spd
-                        # *.tar.gz
+                            # commonservice-instance-config.xml
+                            # *.spd
+                            # *.tar.gz
 
-                        if not os.path.isfile('commonservice-instance-config.xml'):
-                            print('no such file: %s' % os.path.abspath('commonservice-instance-config.xml'))
+                            if not os.path.isfile('commonservice-instance-config.xml'):
+                                print('no such file: %s' % os.path.abspath('commonservice-instance-config.xml'))
 
-                            return False
+                                return False
 
-                        if not os.path.isfile('%s.spd' % appname):
-                            print('no such file: %s' % os.path.abspath('%s.spd' % appname))
+                            if not os.path.isfile('%s.spd' % appname):
+                                print('no such file: %s' % os.path.abspath('%s.spd' % appname))
 
-                            return False
+                                return False
 
-                        for tarname in glob.iglob('%s*.tar.gz' % appname):
-                            with tarfile.open(tarname) as tar:
-                                try:
-                                    tar.getmember(os.path.join(appname, 'install.sh'))
-                                except Exception as e:
-                                    print('no such file: %s(%s)' % (os.path.join(appname, 'install.sh'), os.path.abspath(tarname)))
+                            for tarname in glob.iglob('%s*.tar.gz' % appname):
+                                with tarfile.open(tarname) as tar:
+                                    try:
+                                        tar.getmember(os.path.join(appname, 'install.sh'))
+                                    except Exception as e:
+                                        print('no such file: %s(%s)' % (os.path.join(appname, 'install.sh'), os.path.abspath(tarname)))
 
-                                    return False
+                                        return False
 
         return True
 
@@ -196,7 +197,7 @@ class patch(__patch__):
         return True
 
     def oki(self, path, version):
-        return build().oki(path, version)
+        return build.build().oki(path, version)
 
 # ******************************************************** #
 #                    PATCH INSTALLATION                    #

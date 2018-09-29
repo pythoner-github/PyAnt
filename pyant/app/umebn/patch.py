@@ -233,6 +233,8 @@ class installation(__installation__):
         if not self.__change_info__(id_info, installation, os.path.basename(installation)):
             return False
 
+        print('installation:', installation)
+
         return True
 
     def installation(self, version, type):

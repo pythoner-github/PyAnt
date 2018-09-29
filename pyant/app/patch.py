@@ -750,8 +750,6 @@ class installation():
         return os.path.join(self.output, 'installation', version)
 
     def __change_info__(self, id_info, installation, name):
-        print('installation:', installation)
-
         changes = []
 
         with __os__.chdir(self.output) as chdir:

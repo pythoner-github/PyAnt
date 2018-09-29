@@ -792,6 +792,8 @@ class installation(__installation__):
         if not self.__change_info__(id_info, installation, zipname):
             return False
 
+        print('installation:', zip_filename)
+
         return True
 
     def process_extend(self, zipname, type):

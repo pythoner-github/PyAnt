@@ -750,6 +750,8 @@ class installation():
         return os.path.join(self.output, 'installation', version)
 
     def __change_info__(self, id_info, installation, name):
+        print('installation:', installation)
+
         changes = []
 
         with __os__.chdir(self.output) as chdir:
@@ -862,10 +864,10 @@ class installation():
                 if name:
                     info['source'].append(__os__.join(home, name))
 
-            if len(info['info']) == 0:
-                for element in e.findall('info/attr'):
-                    name = element.get('name', '').strip()
+            for element in e.findall('info/attr'):
+                name = element.get('name', '').strip()
 
+                if not info['info'][name]:
                     if element.text:
                         value = element.text.strip()
                     else:

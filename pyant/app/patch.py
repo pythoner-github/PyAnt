@@ -753,7 +753,7 @@ class installation():
         changes = []
 
         with __os__.chdir(self.output) as chdir:
-            for id in id_info:
+            for id in sorted(id_info.keys()):
                 for file in glob.iglob(os.path.join('patch', id, '*.xml')):
                     info = self.get_patch_info(file)
 
@@ -777,8 +777,8 @@ class installation():
                                 '集成测试人员'      : '',
                                 '集成测试结果'      : '',
                                 '补丁编号'          : id,
-                                '变更文件'          : '\n'.join(info['source']),
-                                '补丁文件'          : '\n'.join(filenames),
+                                '变更文件'          : info['source'],
+                                '补丁文件'          : filenames,
                                 '系统测试人员'      : '',
                                 '系统测试方法'      : '',
                                 '系统测试结果'      : '',
@@ -801,7 +801,11 @@ class installation():
             for k in change:
                 e = etree.Element('attr')
                 e.set('name', k)
-                e.text = change[k]
+
+                if k in ('变更文件', '补丁文件'):
+                    e.text = '\n      '.join([''] + change[k] + [''])
+                else:
+                    e.text = change[k]
 
                 element.append(e)
 

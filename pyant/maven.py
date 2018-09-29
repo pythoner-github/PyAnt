@@ -89,6 +89,34 @@ class maven:
 
                 return False
 
+    def artifactid_paths(self, dirname):
+        if not dirname:
+            dirname = '.'
+
+        map = {}
+
+        if os.path.isfile(os.path.join(dirname, 'pom.xml')):
+            with __os__.chdir(dirname) as chdir:
+                try:
+                    tree = etree.parse('pom.xml')
+                    namespace = tree.getroot().nsmap
+
+                    e = tree.find('/artifactId', namespace)
+
+                    if e is not None:
+                        map[self.artifactid_prefix(e.text.strip())] = os.getcwd()
+
+                    for e in tree.findall('//modules/module', namespace):
+                        module_path = e.text.strip()
+
+                        if module_path:
+                            for k, v in self.artifactid_paths(module_path).items():
+                                map[k] = v
+                except:
+                    pass
+
+        return map
+
     # ----------------------------------------------------------
 
     def ignore(self, line):
@@ -661,34 +689,6 @@ class maven:
                     return self.artifactid(os.path.dirname(path))
         else:
             return None
-
-    def artifactid_paths(self, dirname):
-        if not dirname:
-            dirname = '.'
-
-        map = {}
-
-        if os.path.isfile(os.path.join(dirname, 'pom.xml')):
-            with __os__.chdir(dirname) as chdir:
-                try:
-                    tree = etree.parse('pom.xml')
-                    namespace = tree.getroot().nsmap
-
-                    e = tree.find('/artifactId', namespace)
-
-                    if e is not None:
-                        map[self.artifactid_prefix(e.text.strip())] = os.getcwd()
-
-                    for e in tree.findall('//modules/module', namespace):
-                        module_path = e.text.strip()
-
-                        if module_path:
-                            for k, v in self.artifactid_paths(module_path).items():
-                                map[k] = v
-                except:
-                    pass
-
-        return map
 
     def artifactid_prefix(self, artifactid):
         if '${prefix}' in artifactid:

@@ -1,4 +1,9 @@
-from pyant.app import __build__
+import os
+import os.path
+
+from pyant import command, maven
+from pyant.app import const, __build__
+from pyant.builtin import __os__
 
 __all__ = ('build', )
 
@@ -32,7 +37,34 @@ class build(__build__):
     def compile_pom(self, cmd = None):
         return super().compile_pom(cmd, 'devops/parent/build/pom.xml')
 
+    def compile(self, cmd = None, clean = False, retry_cmd = None, dirname = None):
+        if not dirname:
+            dirname = 'build'
+
+        if not super().compile(cmd, clean, retry_cmd, dirname):
+            return False
+
+        with __os__.chdir(self.path) as chdir:
+            mvn = maven.maven()
+            map = mvn.artifactid_paths(dirname)
+
+            for path in map.values():
+                if not self.oki(path, os.environ.get('VERSION')):
+                    return False
+
+        return True
+
     # ------------------------------------------------------
 
     def metric_id(self, module_name = None):
         return const.METRIC_ID_UMEBN
+
+    def oki(self, path, version):
+        if os.path.isdir(os.path.join(path, 'output')):
+            cmd = command.command()
+            cmdline = 'python3 %s %s %s' % (const.OKI_FILE, os.path.join(path, 'output'), version)
+
+            for line in cmd.command(cmdline):
+                print(line)
+
+        return True

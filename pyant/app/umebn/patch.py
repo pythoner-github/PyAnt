@@ -6,8 +6,9 @@ import tarfile
 
 from lxml import etree
 
-from pyant import command, git, maven
+from pyant import git, maven
 from pyant.app import const, __patch__, __installation__
+from pyant.app.umebn import build
 from pyant.builtin import __os__
 
 __all__ = ('patch', 'installation')
@@ -97,7 +98,7 @@ class patch(__patch__):
                             if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U'):
                                 return False
 
-                        if not self.oki(build_path):
+                        if not self.oki(build_path, os.environ.get('VERSION')):
                             return False
                     else:
                         print('no such directory: %s' % os.path.normpath(build_path))
@@ -194,16 +195,8 @@ class patch(__patch__):
 
         return True
 
-    def oki(self, path):
-        oki_file = 'devops/parent/ci_scripts/docker/scripts/patch.py'
-
-        cmd = command.command()
-        cmdline = 'python3 %s %s %s' % (oki_file, os.path.join(path, 'output'), os.environ.get('VERSION'))
-
-        for line in cmd.command(cmdline):
-            print(line)
-
-        return True
+    def oki(self, path, version):
+        return build().oki(path, version)
 
 # ******************************************************** #
 #                    PATCH INSTALLATION                    #

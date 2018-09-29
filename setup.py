@@ -1,3 +1,6 @@
+import os.path
+import sysconfig
+
 from distutils.core import setup
 
 setup(
@@ -7,5 +10,10 @@ setup(
     author      = 'jack',
     author_email= '10067748@zte.com.cn',
     packages    = ('pyant', 'pyant.app', 'pyant.builtin', 'pyant.app.bn', 'pyant.app.umebn'),
-    data_files  = [('tmpl/pyant', ['tmpl/changes.xltm', 'tmpl/template(U31R22).xml', 'tmpl/template(umebn).xml'])]
+    data_files  = [
+        (
+            os.path.join(sysconfig.get_path('purelib'), 'pyant/tmpl'),
+            ['tmpl/changes.xltm', 'tmpl/template(U31R22).xml', 'tmpl/template(umebn).xml']
+        )
+    ]
 )

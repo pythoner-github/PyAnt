@@ -795,7 +795,7 @@ class installation():
 
         try:
             wb = openpyxl.load_workbook(const.CHANGES_TEMPLATE)
-            wb.active(1)
+            wb.active = 1
 
             ws = wb.active
             ws._current_row = 1

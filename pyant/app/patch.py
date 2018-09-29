@@ -777,14 +777,14 @@ class installation():
                                 '变更分析和测试建议': info['info']['影响分析'],
                                 '集成测试人员'      : '',
                                 '集成测试结果'      : '',
+                                '走查人员'          : info['info'].get('走查人员', ''),
+                                '走查结果'          : info['info'].get('走查结果', ''),
                                 '补丁编号'          : id,
                                 '变更文件'          : '\n'.join(info['source']),
                                 '补丁文件'          : '\n'.join(filenames),
                                 '系统测试人员'      : '',
                                 '系统测试方法'      : '',
-                                '系统测试结果'      : '',
-                                '走查人员'          : info['info'].get('走查人员', ''),
-                                '走查结果'          : info['info'].get('走查结果', '')
+                                '系统测试结果'      : ''
                             })
                         )
 
@@ -811,14 +811,14 @@ class installation():
                     change['变更分析和测试建议'],
                     change['集成测试人员'],
                     change['集成测试结果'],
+                    change['走查人员'],
+                    change['走查结果'],
                     change['补丁编号'],
                     change['变更文件'],
                     change['补丁文件'],
                     change['系统测试人员'],
                     change['系统测试方法'],
-                    change['系统测试结果'],
-                    change['走查人员'],
-                    change['走查结果']
+                    change['系统测试结果']
                 ])
 
             wb.save(file)

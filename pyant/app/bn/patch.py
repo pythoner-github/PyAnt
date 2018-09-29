@@ -1,5 +1,4 @@
 import collections
-import csv
 import datetime
 import glob
 import os
@@ -624,7 +623,7 @@ class installation(__installation__):
         if type not in ('ems'):
             osname += "(%s)" % type
 
-        return os.path.join(self.output, 'installation', version, 'installation', osname, 'patch')
+        return os.path.join(self.output, 'installation', version, osname, 'patch')
 
     def expand_filename(self, filename):
         extname = os.path.splitext(filename)[1].lower()
@@ -790,7 +789,7 @@ class installation(__installation__):
 
             return False
 
-        if not self.change_info(zipname, id_info, version, type):
+        if not self.__change_info__(id_info, installation, zipname):
             return False
 
         return True
@@ -1168,83 +1167,6 @@ class installation(__installation__):
 
         try:
             tree.write(os.path.join(dirname, 'patchset-update-info.xml'), encoding='utf-8', pretty_print=True, xml_declaration=True)
-        except Exception as e:
-            print(e)
-
-            return False
-
-        return True
-
-    def change_info(self, zipname, id_info, version, type):
-        changes = [
-            [
-                '变更来源',
-                '变更类型',
-                '开发经理',
-                '提交人员',
-                '故障/需求ID',
-                '变更描述',
-                '变更分析和测试建议',
-                '集成测试人员',
-                '集成测试结果',
-                '补丁编号',
-                '变更文件',
-                '补丁文件',
-                '系统测试人员',
-                '系统测试方法',
-                '系统测试结果',
-                '走查人员',
-                '走查结果'
-            ]
-        ]
-
-        with __os__.chdir(self.output) as chdir:
-            for id in id_info:
-                for file in glob.iglob(os.path.join('patch', id, '*.xml')):
-                    info = self.get_patch_info(file)
-
-                    if info:
-                        filenames = []
-
-                        with __os__.chdir(id_info[id]) as chdir:
-                            for file in glob.iglob('**/*', recursive = True):
-                                if os.path.isfile(file):
-                                    filenames.append(__os__.normpath(file))
-
-                        changes.append(
-                            [
-                                info['info']['变更来源'],           # '变更来源'
-                                info['info']['变更类型'],           # '变更类型'
-                                info['info']['开发经理'],           # '开发经理'
-                                info['info']['提交人员'],           # '提交人员'
-                                info['info']['关联故障'],           # '故障/需求ID'
-                                info['info']['变更描述'],           # '变更描述'
-                                info['info']['影响分析'],           # '变更分析和测试建议'
-                                '',                                 # '集成测试人员'
-                                '',                                 # '集成测试结果'
-                                id,                                 # '补丁编号'
-                                '\n'.join(info['source']),          # '变更文件'
-                                '\n'.join(filenames),               # '补丁文件'
-                                '',                                 # '系统测试人员'
-                                '',                                 # '系统测试方法'
-                                '',                                 # '系统测试结果'
-                                info['info'].get('走查人员', ''),   # '走查人员'
-                                info['info'].get('走查结果', ''),   # '走查结果'
-                            ]
-                        )
-
-                    break
-
-        filename = os.path.join(self.installation(version, type), '%s.csv' % zipname)
-
-        os.makedirs(os.path.dirname(filename), exist_ok = True)
-
-        try:
-            with open(filename, 'w', encoding='utf-8', newline='') as f:
-                writer = csv.writer(f)
-
-                for change in changes:
-                    writer.writerow(change)
         except Exception as e:
             print(e)
 

@@ -747,7 +747,74 @@ class installation():
         return True
 
     def installation(self, version, type):
-        return os.path.join(self.output, 'installation', version, 'installation')
+        return os.path.join(self.output, 'installation', version)
+
+    def __change_info__(self, id_info, installation, name):
+        changes = []
+
+        with __os__.chdir(self.output) as chdir:
+            for id in id_info:
+                for file in glob.iglob(os.path.join('patch', id, '*.xml')):
+                    info = self.get_patch_info(file)
+
+                    if info:
+                        filenames = []
+
+                        with __os__.chdir(id_info[id]) as chdir:
+                            for file in glob.iglob('**/*', recursive = True):
+                                if os.path.isfile(file):
+                                    filenames.append(__os__.normpath(file))
+
+                        changes.append(
+                            collections.OrderedDict({
+                                '变更来源'          : info['info']['变更来源'],
+                                '变更类型'          : info['info']['变更类型'],
+                                '开发经理'          : info['info']['开发经理'],
+                                '提交人员'          : info['info']['提交人员'],
+                                '故障/需求ID'       : info['info']['关联故障'],
+                                '变更描述'          : info['info']['变更描述'],
+                                '变更分析和测试建议': info['info']['影响分析'],
+                                '集成测试人员'      : '',
+                                '集成测试结果'      : '',
+                                '补丁编号'          : id,
+                                '变更文件'          : '\n'.join(info['source']),
+                                '补丁文件'          : '\n'.join(filenames),
+                                '系统测试人员'      : '',
+                                '系统测试方法'      : '',
+                                '系统测试结果'      : '',
+                                '走查人员'          : info['info'].get('走查人员', ''),
+                                '走查结果'          : info['info'].get('走查结果', '')
+                            })
+                        )
+
+                    break
+
+        file = os.path.join(installation, '%s.xml' % name)
+        os.makedirs(os.path.dirname(file), exist_ok = True)
+
+        tree = etree.ElementTree(etree.XML("<changes/>"))
+
+        for change in changes:
+            element = etree.Element('info')
+            element.set('id', change['补丁编号'])
+
+            for k in change:
+                e = etree.Element('attr')
+                e.set('name', k)
+                e.text = change[k]
+
+                element.append(e)
+
+            tree.getroot().append(element)
+
+        try:
+            tree.write(file, encoding='utf-8', pretty_print=True, xml_declaration=True)
+
+            return True
+        except Exception as e:
+            print(e)
+
+            return False
 
     def expand_filename(self, filename):
         return filename

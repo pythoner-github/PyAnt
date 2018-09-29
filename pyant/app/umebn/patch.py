@@ -228,7 +228,24 @@ class installation(__installation__):
 
             return False
 
+        if not self.__change_info__(id_info, installation, os.path.basename(installation)):
+            return False
+
         return True
 
     def installation(self, version, type):
-        return os.path.join(self.output, 'installation', version, 'installation')
+        installation = os.path.join(self.output, 'installation', version)
+
+        id= 0
+        prefix = datetime.datetime.now().strftime('%Y%m%d')
+
+        if os.path.isdir(installation):
+            with __os__.chdir(installation) as chdir:
+                for x in glob.iglob('%s_*' % prefix):
+                    m = re.search(r'^\d{8}_(\d{4})$', x)
+
+                    if m:
+                        if id < int(m.group(1)):
+                            id = int(m.group(1))
+
+        return os.path.join(installation, '%s_%04d' % (prefix, id + 1))

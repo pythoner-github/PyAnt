@@ -821,3 +821,52 @@ class installation():
 
     def get_patch_dirname(self, dirname, type = None):
         return os.path.join(dirname, 'patch')
+
+    def get_patch_info(self, file):
+        try:
+            tree = etree.parse(file)
+        except Exception as e:
+            print(e)
+
+            return None
+
+        info = {
+            'source': [],
+            'info'  : {
+                '提交人员': '',
+                '变更版本': '',
+                '变更类型': '',
+                '变更描述': '',
+                '关联故障': '',
+                '影响分析': '',
+                '依赖变更': '',
+                '走查人员': '',
+                '走查结果': '',
+                '自测结果': '',
+                '变更来源': '',
+                '开发经理': '',
+                '抄送人员': ''
+            }
+        }
+
+        for e in tree.findall('patch'):
+            home = e.get('name', '').strip()
+
+            for element in e.findall('source/attr'):
+                name = element.get('name', '').strip()
+
+                if name:
+                    info['source'].append(__os__.join(home, name))
+
+            if len(info['info']) == 0:
+                for element in e.findall('info/attr'):
+                    name = element.get('name', '').strip()
+
+                    if element.text:
+                        value = element.text.strip()
+                    else:
+                        value = ''
+
+                    info['info'][name] = value
+
+        return info

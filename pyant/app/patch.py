@@ -803,7 +803,7 @@ class installation():
                 e.set('name', k)
 
                 if k in ('变更文件', '补丁文件'):
-                    e.text = '\n      '.join([''] + change[k] + [''])
+                    e.text = '\n      '.join([''] + change[k]) + '\n    '
                 else:
                     e.text = change[k]
 

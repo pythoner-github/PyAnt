@@ -2,17 +2,24 @@ import glob
 import os.path
 import shutil
 
-for file in glob.iglob('*'):
-    if file in ('__init__.py',):
-        continue
+from pyant.builtin import __os__
 
-    if os.path.isfile(file):
-        name, extname = os.path.os.path.splitext(file)
+with __os__.chdir(os.path.dirname(__file__)) as chdir:
+    for file in glob.iglob('*'):
+        if file in ('__init__.py',):
+            continue
 
-        if extname in ('.py',):
-            if not os.path.isfile(name):
-                try:
-                    shutil.copyfile(file, name)
-                except:
-                    pass
+        if os.path.isfile(file):
+            name, extname = os.path.os.path.splitext(file)
 
+            if extname in ('.py',):
+                if not os.path.isfile(name):
+                    try:
+                        shutil.copyfile(file, name)
+                    except:
+                        pass
+
+
+# TMPL
+
+TMPL_CHANGES = os.path.abspath(os.path.join(os.path.dirname(__file__), 'changes.xltm'))

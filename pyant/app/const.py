@@ -161,7 +161,3 @@ else:
 # UMEBN
 
 OKI_FILE = 'devops/parent/ci_scripts/docker/scripts/patch.py'
-
-# TEMPLATE
-
-CHANGES_TEMPLATE = os.path.abspath(os.path.join(os.path.dirname(__file__), '../tmpl/changes.xltm'))

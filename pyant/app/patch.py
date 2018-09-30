@@ -14,6 +14,8 @@ from pyant import command, daemon, password, smtp
 from pyant.app import const
 from pyant.builtin import __os__, __string__
 
+import pyant.tmpl
+
 __all__ = ('auto', 'patch', 'installation')
 
 def auto():
@@ -794,7 +796,7 @@ class installation():
         os.makedirs(os.path.dirname(file), exist_ok = True)
 
         try:
-            wb = openpyxl.load_workbook(const.CHANGES_TEMPLATE)
+            wb = openpyxl.load_workbook(pyant.tmpl.TMPL_CHANGES)
             wb.active = 0
 
             ws = wb.active

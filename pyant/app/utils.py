@@ -8,6 +8,7 @@ import zipfile
 
 from lxml import etree
 
+from pyant import command
 from pyant.app import const
 from pyant.builtin import __os__
 

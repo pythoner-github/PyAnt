@@ -1,7 +1,7 @@
 import collections
 import os
 import os.path
-import sysconfig
+import sys
 
 from pyant.builtin import __os__
 
@@ -164,4 +164,4 @@ OKI_FILE = 'devops/parent/ci_scripts/docker/scripts/patch.py'
 
 # TEMPLATE
 
-CHANGES_TEMPLATE = os.path.abspath(os.path.join(sysconfig.get_path('purelib'), 'pyant/tmpl/changes.xltm'))
+CHANGES_TEMPLATE = os.path.abspath(os.path.join(os.path.dirname(__file__), '../tmpl/changes.xltm'))

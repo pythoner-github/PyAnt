@@ -362,6 +362,9 @@ class dashboard:
                                 print(line)
 
                             if not cmd.result():
+                                if cmdline.startswith('kwcheck run') and cmd.result(1):
+                                    continue
+
                                 return False
 
                         try:

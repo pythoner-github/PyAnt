@@ -367,36 +367,37 @@ class dashboard:
 
                                 return False
 
-                        try:
-                            tree = etree.parse(kwreport)
-                        except Exception as e:
-                            print(e)
+                        if os.path.isfile(kwreport):
+                            try:
+                                tree = etree.parse(kwreport)
+                            except Exception as e:
+                                print(e)
 
-                            return False
+                                return False
 
-                        namespace = tree.getroot().nsmap
+                            namespace = tree.getroot().nsmap
 
-                        for e in tree.findall('problem', namespace):
-                            info = {}
+                            for e in tree.findall('problem', namespace):
+                                info = {}
 
-                            for element in e.iter():
-                                tag = element.tag.replace('{%s}' % namespace[None], '')
+                                for element in e.iter():
+                                    tag = element.tag.replace('{%s}' % namespace[None], '')
 
-                                if tag in ('file', 'line', 'method', 'code', 'message', 'severity'):
-                                    if tag == 'file':
-                                        info[tag] = os.path.abspath(element.text)
-                                    else:
-                                        info[tag] = element.text
+                                    if tag in ('file', 'line', 'method', 'code', 'message', 'severity'):
+                                        if tag == 'file':
+                                            info[tag] = os.path.abspath(element.text)
+                                        else:
+                                            info[tag] = element.text
 
-                            if info['severity'] not in defect:
-                                defect[info['severity']] = {}
+                                if info['severity'] not in defect:
+                                    defect[info['severity']] = {}
 
-                            if info['code'] not in defect[info['severity']]:
-                                defect[info['severity']][info['code']] = []
+                                if info['code'] not in defect[info['severity']]:
+                                    defect[info['severity']][info['code']] = []
 
-                            defect[info['severity']][info['code']].append(info)
+                                defect[info['severity']][info['code']].append(info)
 
-                    defect = self.kw_check_fixed(defect)
+                            defect = self.kw_check_fixed(defect)
 
                     if ('Critical' in defect) or ('Error' in defect):
                         lines = []

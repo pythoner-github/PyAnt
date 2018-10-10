@@ -17,7 +17,7 @@ class build(__build__):
 
         super().__init__(
             'umebn',
-            __os__.join(const.SSH_GIT, 'umebn'),
+            const.UMEBN_REPOS,
             artifact_repos
         )
 

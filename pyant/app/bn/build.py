@@ -25,30 +25,13 @@ class build(__build__):
             'release'   : 'U31R22-release-generic'
         }
 
-        repos = collections.OrderedDict([
-            ('interface', __os__.join(const.SSH_GIT, 'U31R22_INTERFACE')),
-            ('platform' , __os__.join(const.SSH_GIT, 'U31R22_PLATFORM')),
-            ('necommon' , __os__.join(const.SSH_GIT, 'U31R22_NECOMMON')),
-            ('e2e'      , __os__.join(const.SSH_GIT, 'U31R22_E2E')),
-            ('uca'      , __os__.join(const.SSH_GIT, 'U31R22_UCA')),
-            ('xmlfile'  , __os__.join(const.SSH_GIT, 'U31R22_NBI_XMLFILE')),
-            ('nbi'      , __os__.join(const.SSH_GIT, 'U31R22_NBI')),
-            ('sdh'      , __os__.join(const.SSH_GIT, 'U31R22_SDH')),
-            ('wdm'      , __os__.join(const.SSH_GIT, 'U31R22_WDM')),
-            ('ptn'      , __os__.join(const.SSH_GIT, 'U31R22_PTN')),
-            ('ptn2'     , __os__.join(const.SSH_GIT, 'U31R22_PTN2')),
-            ('ip'       , __os__.join(const.SSH_GIT, 'U31R22_IP')),
-            ('inventory', __os__.join(const.SSH_GIT, 'U31R22_Inventory'))
-        ])
-
         super().__init__(
             'bn',
-            repos,
+            const.BN_REPOS,
             artifact_repos
         )
 
         self.type = 'ems'
-
         self.repos_devtools = const.SSH_GIT
 
     def update(self, module, branch = None):
@@ -785,7 +768,7 @@ class build(__build__):
     def metric_id(self, module_name = None):
         if module_name in ('interface', 'platform', 'necommon', 'uca', 'sdh', 'ptn'):
             return const.METRIC_ID_BN_ITN
-        elif module_name in ('ptn2', 'ip'):
+        elif module_name in ('ptn2',):
             return const.METRIC_ID_BN_IPN
         elif module_name in ('e2e',):
             return const.METRIC_ID_BN_E2E

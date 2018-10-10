@@ -25,7 +25,6 @@ BN_REPOS = collections.OrderedDict([
     ('wdm'      , __os__.join(SSH_GIT, 'U31R22_WDM')),
     ('ptn'      , __os__.join(SSH_GIT, 'U31R22_PTN')),
     ('ptn2'     , __os__.join(SSH_GIT, 'U31R22_PTN2')),
-    ('ip'       , __os__.join(SSH_GIT, 'U31R22_IP')),
     ('inventory', __os__.join(SSH_GIT, 'U31R22_Inventory'))
 ])
 

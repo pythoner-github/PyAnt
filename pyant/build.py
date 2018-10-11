@@ -71,7 +71,7 @@ def build(argv = None):
 
             if os.environ['VERSION']:
                 if not os.environ.get(POM_VERSION):
-                    os.environ[POM_VERSION] = os.environ['VERSION'].upper().replace('_${date}', '').replace(' ', '')
+                    os.environ[POM_VERSION] = os.environ['VERSION'].replace('_${date}', '').replace(' ', '')
 
                     print('export %s=%s' % (POM_VERSION, os.environ[POM_VERSION]))
 
@@ -79,7 +79,7 @@ def build(argv = None):
 
         if name in ('bn',):
             if os.environ.get(POM_VERSION):
-                os.environ['POM_VERSION'] = os.environ[POM_VERSION]
+                os.environ['POM_VERSION'] = os.environ[POM_VERSION].super()
 
                 print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
 

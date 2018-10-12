@@ -42,7 +42,7 @@
       <attr name='自测结果'>自测结果</attr>
       <attr name='变更来源'>不能为空</attr>
       <attr name='开发经理'>欧雪刚/10032547</attr>
-      <attr name='抄送人员'>张新平10021895</attr>
+      <attr name='抄送人员'>张新平/10021895</attr>
     </info>
   </patch>
 </patches>

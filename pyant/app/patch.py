@@ -610,27 +610,27 @@ class patch():
                     for line in f.readlines():
                         line = line.strip()
 
-                    m = re.search(r'^<\s*attr\s+name\s*=.*提交人员.*>(.*)<\s*/\s*attr\s*>$', line)
+                        m = re.search(r'^<\s*attr\s+name\s*=.*提交人员.*>(.*)<\s*/\s*attr\s*>$', line)
 
-                    if m:
-                        author = m.group(1).replace('\\', '/')
-                        to_addrs = '%s@zte.com.cn' % author.split('/', 1)[-1]
+                        if m:
+                            author = m.group(1).replace('\\', '/')
+                            to_addrs = '%s@zte.com.cn' % author.split('/', 1)[-1]
 
-                        continue
+                            continue
 
-                    m = re.search(r'^<\s*attr\s+name\s*=.*走查人员.*>(.*)<\s*/\s*attr\s*>$', line)
+                        m = re.search(r'^<\s*attr\s+name\s*=.*走查人员.*>(.*)<\s*/\s*attr\s*>$', line)
 
-                    if m:
-                        cc_addrs += ['%s@zte.com.cn' % x.strip().replace('\\', '/').split('/', 1)[-1] for x in m.group(1).split(',')]
+                        if m:
+                            cc_addrs += ['%s@zte.com.cn' % x.strip().replace('\\', '/').split('/', 1)[-1] for x in m.group(1).split(',')]
 
-                        continue
+                            continue
 
-                    m = re.search(r'^<\s*attr\s+name\s*=.*开发经理.*>(.*)<\s*/\s*attr\s*>$', line)
+                        m = re.search(r'^<\s*attr\s+name\s*=.*开发经理.*>(.*)<\s*/\s*attr\s*>$', line)
 
-                    if m:
-                        cc_addrs.append('%s@zte.com.cn' % m.group(1).replace('\\', '/').split('/', 1)[-1])
+                        if m:
+                            cc_addrs.append('%s@zte.com.cn' % m.group(1).replace('\\', '/').split('/', 1)[-1])
 
-                        continue
+                            continue
 
                     break
             except:

@@ -98,28 +98,28 @@ class dashboard:
 
                         for path in paths:
                             if os.path.isdir(path):
-                            lang = None
+                                lang = None
 
-                            if __os__.normpath(path).startswith('code_c/'):
-                                lang = 'cpp'
+                                if __os__.normpath(path).startswith('code_c/'):
+                                    lang = 'cpp'
 
-                            with __os__.chdir(path) as chdir:
-                                # mvn = maven.maven()
-                                # mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
-                                #
-                                # mvn.clean()
-                                #
-                                # cmdline = 'mvn install -fn -U'
-                                #
-                                # if not mvn.compile(cmdline, 'mvn install -fn -U'):
-                                #     status = False
-                                #
-                                #     continue
+                                with __os__.chdir(path) as chdir:
+                                    # mvn = maven.maven()
+                                    # mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
+                                    #
+                                    # mvn.clean()
+                                    #
+                                    # cmdline = 'mvn install -fn -U'
+                                    #
+                                    # if not mvn.compile(cmdline, 'mvn install -fn -U'):
+                                    #     status = False
+                                    #
+                                    #     continue
 
-                                if not self.kw_check('.', lang):
-                                    status = False
+                                    if not self.kw_check('.', lang):
+                                        status = False
 
-                                    continue
+                                        continue
             finally:
                 git.reset(self.path, branch)
 

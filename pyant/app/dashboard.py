@@ -60,43 +60,44 @@ class dashboard:
         status = True
 
         if os.path.isdir(self.path):
-            with __os__.chdir(self.path) as chdir:
-                cmd = command.command()
+            try:
+                with __os__.chdir(self.path) as chdir:
+                    cmd = command.command()
 
-                for line in cmd.command('git fetch %s +refs/changes/*:refs/changes/*' % repos):
-                    print(line)
+                    for line in cmd.command('git fetch %s +refs/changes/*:refs/changes/*' % repos):
+                        print(line)
 
-                if not cmd.result():
-                    return False
+                    if not cmd.result():
+                        return False
 
-                for line in cmd.command('git checkout -f %s' % revision):
-                    print(line)
+                    for line in cmd.command('git checkout -f %s' % revision):
+                        print(line)
 
-                if not cmd.result():
-                    return False
+                    if not cmd.result():
+                        return False
 
-                status = True
+                    status = True
 
-                logs = git.log(None, '-1 --stat=256 %s' % revision, True)
+                    logs = git.log(None, '-1 --stat=256 %s' % revision, True)
 
-                if logs:
-                    paths = []
+                    if logs:
+                        paths = []
 
-                    for log in logs:
-                        if log['changes']:
-                            for k, v in log['changes'].items():
-                                for file in v:
-                                    filenames = (file,)
+                        for log in logs:
+                            if log['changes']:
+                                for k, v in log['changes'].items():
+                                    for file in v:
+                                        filenames = (file,)
 
-                                    for filename in filenames:
-                                        dir = self.pom_path(filename)
+                                        for filename in filenames:
+                                            dir = self.pom_path(filename)
 
-                                        if dir:
-                                            if dir not in paths:
-                                                paths.append(dir)
+                                            if dir:
+                                                if dir not in paths:
+                                                    paths.append(dir)
 
-                    for path in paths:
-                        if os.path.isdir(path):
+                        for path in paths:
+                            if os.path.isdir(path):
                             lang = None
 
                             if __os__.normpath(path).startswith('code_c/'):
@@ -119,6 +120,8 @@ class dashboard:
                                     status = False
 
                                     continue
+            finally:
+                git.reset(self.path, branch)
 
         return status
 

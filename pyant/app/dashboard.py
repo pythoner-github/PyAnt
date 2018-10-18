@@ -122,6 +122,7 @@ class dashboard:
                                         continue
             finally:
                 git.reset(self.path, branch)
+                git.pull(self.path, revert = True)
 
         return status
 

@@ -97,97 +97,101 @@ class dashboard(__dashboard__):
         module_path = os.path.basename(self.repos[module])
 
         if os.path.isdir(module_path):
-            with __os__.chdir(module_path) as chdir:
-                cmd = command.command()
+            try:
+                with __os__.chdir(module_path) as chdir:
+                    cmd = command.command()
 
-                for line in cmd.command('git fetch %s +refs/changes/*:refs/changes/*' % repos):
-                    print(line)
+                    for line in cmd.command('git fetch %s +refs/changes/*:refs/changes/*' % repos):
+                        print(line)
 
-                if not cmd.result():
-                    return False
+                    if not cmd.result():
+                        return False
 
-                for line in cmd.command('git checkout -f %s' % revision):
-                    print(line)
+                    for line in cmd.command('git checkout -f %s' % revision):
+                        print(line)
 
-                if not cmd.result():
-                    return False
+                    if not cmd.result():
+                        return False
 
-                status = True
+                    status = True
 
-                logs = git.log(None, '-1 --stat=256 %s' % revision, True)
+                    logs = git.log(None, '-1 --stat=256 %s' % revision, True)
 
-                if logs:
-                    paths = []
+                    if logs:
+                        paths = []
 
-                    for log in logs:
-                        if log['changes']:
-                            for k, v in log['changes'].items():
-                                for file in v:
-                                    filenames = (file,)
+                        for log in logs:
+                            if log['changes']:
+                                for k, v in log['changes'].items():
+                                    for file in v:
+                                        filenames = (file,)
 
-                                    for filename in filenames:
-                                        dir = self.pom_path(filename)
+                                        for filename in filenames:
+                                            dir = self.pom_path(filename)
 
-                                        if dir:
-                                            if re.search(r'^code_c\/database\/.*\/xml\/.*\.xml$', filename):
-                                                if os.path.isfile('code_c/database/dbscript/pom.xml'):
-                                                    if os.path.isfile(os.path.join(os.path.dirname(filename), '../pom.xml')):
-                                                        if 'code_c/database/dbscript' not in paths:
-                                                            paths.append('code_c/database/dbscript')
+                                            if dir:
+                                                if re.search(r'^code_c\/database\/.*\/xml\/.*\.xml$', filename):
+                                                    if os.path.isfile('code_c/database/dbscript/pom.xml'):
+                                                        if os.path.isfile(os.path.join(os.path.dirname(filename), '../pom.xml')):
+                                                            if 'code_c/database/dbscript' not in paths:
+                                                                paths.append('code_c/database/dbscript')
 
-                                            if dir not in paths:
-                                                paths.append(dir)
-                                        else:
-                                            if module in ('interface',):
-                                                if filename.startswith('code/asn/'):
-                                                    if 'code/finterface' not in paths:
-                                                        paths.append('code/finterface')
+                                                if dir not in paths:
+                                                    paths.append(dir)
+                                            else:
+                                                if module in ('interface',):
+                                                    if filename.startswith('code/asn/'):
+                                                        if 'code/finterface' not in paths:
+                                                            paths.append('code/finterface')
 
-                                                    if 'code_c/finterface' not in paths:
-                                                        paths.append('code_c/finterface')
-                                                else:
-                                                    if filename.startswith('code_c/asn/sdh-wdm/qx-interface/asn/'):
-                                                        dir = 'code_c/qxinterface/qxinterface'
-                                                    elif filename.startswith('code_c/asn/sdh-wdm/qx-interface/asn5800/'):
-                                                        dir = 'code_c/qxinterface/qx5800'
-                                                    elif filename.startswith('code_c/asn/sdh-wdm/qx-interface/asnwdm721/'):
-                                                        dir = 'code_c/qxinterface/qxwdm721'
-                                                    elif filename.startswith('code_c/asn/otntlvqx/'):
-                                                        dir = 'code_c/qxinterface/qxotntlv'
+                                                        if 'code_c/finterface' not in paths:
+                                                            paths.append('code_c/finterface')
                                                     else:
-                                                        pass
+                                                        if filename.startswith('code_c/asn/sdh-wdm/qx-interface/asn/'):
+                                                            dir = 'code_c/qxinterface/qxinterface'
+                                                        elif filename.startswith('code_c/asn/sdh-wdm/qx-interface/asn5800/'):
+                                                            dir = 'code_c/qxinterface/qx5800'
+                                                        elif filename.startswith('code_c/asn/sdh-wdm/qx-interface/asnwdm721/'):
+                                                            dir = 'code_c/qxinterface/qxwdm721'
+                                                        elif filename.startswith('code_c/asn/otntlvqx/'):
+                                                            dir = 'code_c/qxinterface/qxotntlv'
+                                                        else:
+                                                            pass
 
-                                                    if dir:
-                                                        if dir not in paths:
-                                                            paths.append(dir)
+                                                        if dir:
+                                                            if dir not in paths:
+                                                                paths.append(dir)
 
-                    paths = self.expand_dashboard_gerrit(module, paths)
+                        paths = self.expand_dashboard_gerrit(module, paths)
 
-                    for path in paths:
-                        if os.path.isdir(path):
-                            lang = None
+                        for path in paths:
+                            if os.path.isdir(path):
+                                lang = None
 
-                            if __os__.normpath(path).startswith('code_c/'):
-                                lang = 'cpp'
+                                if __os__.normpath(path).startswith('code_c/'):
+                                    lang = 'cpp'
 
-                            with __os__.chdir(path) as chdir:
-                                if module in ('interface',):
-                                    mvn = maven.maven()
-                                    mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
+                                with __os__.chdir(path) as chdir:
+                                    if module in ('interface',):
+                                        mvn = maven.maven()
+                                        mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
 
-                                    mvn.clean()
+                                        mvn.clean()
 
-                                    cmdline = 'mvn install -fn -U'
+                                        cmdline = 'mvn install -fn -U'
 
-                                    if not mvn.compile(cmdline, None, lang):
-                                        status = False
+                                        if not mvn.compile(cmdline, None, lang):
+                                            status = False
 
-                                        continue
-                                else:
-                                    if not self.kw_check('.', lang):
-                                        status = False
+                                            continue
+                                    else:
+                                        if not self.kw_check('.', lang):
+                                            status = False
 
-                                        continue
+                                            continue
+            finally:
+                git.reset(module_path, branch)
+                git.pull(module_path, revert = True)
 
         return status
 

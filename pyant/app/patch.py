@@ -592,10 +592,10 @@ class patch():
 
     def get_addrs(self, info):
         author = info['info']['提交人员'].replace('\\', '/')
-        to_addrs = '%s@zte.com.cn' % author.split('/', 1)[-1]
+        to_addrs = '%s@zte.com.cn' % self.fixed_employee_id(author.split('/', 1)[-1])
 
-        cc_addrs = ['%s@zte.com.cn' % x.replace('\\', '/').split('/', 1)[-1] for x in info['info']['走查人员'] + info['info']['抄送人员']]
-        cc_addrs.append('%s@zte.com.cn' % info['info']['开发经理'].replace('\\', '/').split('/', 1)[-1])
+        cc_addrs = ['%s@zte.com.cn' % self.fixed_employee_id(x.replace('\\', '/').split('/', 1)[-1]) for x in info['info']['走查人员'] + info['info']['抄送人员']]
+        cc_addrs.append('%s@zte.com.cn' % self.fixed_employee_id(info['info']['开发经理'].replace('\\', '/').split('/', 1)[-1]))
 
         return (author, to_addrs, cc_addrs)
 
@@ -614,21 +614,21 @@ class patch():
 
                         if m:
                             author = m.group(1).replace('\\', '/')
-                            to_addrs = '%s@zte.com.cn' % author.split('/', 1)[-1]
+                            to_addrs = '%s@zte.com.cn' % self.fixed_employee_id(author.split('/', 1)[-1])
 
                             continue
 
                         m = re.search(r'^<\s*attr\s+name\s*=.*走查人员.*>(.*)<\s*/\s*attr\s*>$', line)
 
                         if m:
-                            cc_addrs += ['%s@zte.com.cn' % x.strip().replace('\\', '/').split('/', 1)[-1] for x in m.group(1).split(',')]
+                            cc_addrs += ['%s@zte.com.cn' % self.fixed_employee_id(x.strip().replace('\\', '/').split('/', 1)[-1]) for x in m.group(1).split(',')]
 
                             continue
 
                         m = re.search(r'^<\s*attr\s+name\s*=.*开发经理.*>(.*)<\s*/\s*attr\s*>$', line)
 
                         if m:
-                            cc_addrs.append('%s@zte.com.cn' % m.group(1).replace('\\', '/').split('/', 1)[-1])
+                            cc_addrs.append('%s@zte.com.cn' % self.fixed_employee_id(m.group(1).replace('\\', '/').split('/', 1)[-1]))
 
                             continue
 
@@ -637,6 +637,14 @@ class patch():
                 pass
 
         return (author, to_addrs, cc_addrs)
+
+    def fixed_employee_id(self, id):
+        m = re.search(r'(\d{4,})$', id)
+
+        if m:
+            id = m.group(1)
+
+        return id
 
     def get_id(self):
         prefix = datetime.datetime.now().strftime('%Y%m%d')

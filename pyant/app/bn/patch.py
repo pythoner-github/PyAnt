@@ -209,6 +209,14 @@ class patch(__patch__):
             if not self.build_deploy_script(info['script'], info['zip'], path):
                 status = False
 
+        if info['deploy_delete']:
+            for k, v in info['deploy_delete'].items:
+                for type in v:
+                    try:
+                        os.makedirs(os.path.join(path, type), exist_ok = True)
+                    except:
+                        pass
+
         return True
 
     def build_deploy_file(self, src_file, dest_file):

@@ -317,23 +317,32 @@ class patch():
                             output = os.path.join(self.output, 'patch', id)
                             cur_status = True
 
+                            try:
+                                os.makedirs(os.path.join(output, 'patch'), exist_ok = True)
+                            except:
+                                pass
+
                             with __os__.chdir(os.path.join(tmpdir, str(index)), True) as _chdir:
                                 for name in glob.iglob('**/*', recursive = True):
-                                    if os.path.isfile(name):
-                                        try:
-                                            dest_file = os.path.join(output, 'patch', name)
+                                    try:
+                                        dest_file = os.path.join(output, 'patch', name)
+
+                                        if os.path.isdir(name):
+                                            os.makedirs(dest_file, exist_ok = True)
+                                        elif os.path.isfile(name):
                                             os.makedirs(os.path.dirname(dest_file), exist_ok = True)
-
                                             shutil.copyfile(name, dest_file)
-                                        except Exception as e:
-                                            print(e)
+                                        else:
+                                            pass
+                                    except Exception as e:
+                                        print(e)
 
-                                            shutil.rmtree(output)
+                                        shutil.rmtree(output)
 
-                                            status = False
-                                            cur_status = False
+                                        status = False
+                                        cur_status = False
 
-                                            break
+                                        break
 
                             if cur_status:
                                 if len(glob.glob(os.path.join(output, '*'), recursive = True)) == 0:

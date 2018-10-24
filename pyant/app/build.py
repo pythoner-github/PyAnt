@@ -66,6 +66,14 @@ class build():
             return False
 
     def package(self, version, type = None):
+        path = self.package_home(version, type)
+
+        if len(glob.glob(os.path.join(path, '*'))) > 10:
+            try:
+                shutil.rmtree(path)
+            except:
+                pass
+
         return True
 
     def kw_build(self, path = None):

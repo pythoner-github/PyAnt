@@ -106,6 +106,9 @@ class build(__build__):
 
         type = type.strip().lower()
 
+        if not super().package(version, type):
+            return False
+
         if self.__package__(version, None, type, self.expand_filename):
             if os.environ.get('ARTIFACT'):
                 artifact = __string__.vars_expand(

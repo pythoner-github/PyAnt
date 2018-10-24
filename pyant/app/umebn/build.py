@@ -56,6 +56,9 @@ class build(__build__):
 
     # ------------------------------------------------------
 
+    def package_home(self, version, type):
+        return super().package_home(version, self.type)
+
     def metric_id(self, module_name = None):
         return const.METRIC_ID_UMEBN
 

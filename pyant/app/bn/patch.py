@@ -64,7 +64,10 @@ class patch(__patch__):
                             status = False
 
             for file in glob.iglob('build/*/.git', recursive = True):
-                shutil.rmtree(file, ignore_errors = True)
+                try:
+                    shutil.rmtree(file)
+                except:
+                    pass
 
         return status
 

@@ -84,7 +84,10 @@ class PyroFile():
         if os.path.isfile(name):
             os.remove(name)
         else:
-            shutil.rmtree(name, ignore_errors = True)
+            try:
+                shutil.rmtree(name)
+            except:
+                pass
 
         return True
 

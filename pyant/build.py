@@ -200,7 +200,11 @@ def build(argv = None):
 
                 if name in ('bn',):
                     if module in list(build.repos.keys()) + ['wdm1', 'wdm2', 'wdm3']:
-                        shutil.rmtree(os.path.join(path, 'kwinject'), ignore_errors = True)
+                        try:
+                            shutil.rmtree(os.path.join(path, 'kwinject'))
+                        except:
+                            pass
+
                         os.makedirs(os.path.join(path, 'kwinject'), exist_ok = True)
 
                     if module in ('wdm1', 'wdm2', 'wdm3'):
@@ -208,7 +212,11 @@ def build(argv = None):
                     else:
                         return build.compile(module, cmd, True, lang = lang)
                 else:
-                    shutil.rmtree(os.path.join(path, 'kwinject'), ignore_errors = True)
+                    try:
+                        shutil.rmtree(os.path.join(path, 'kwinject'))
+                    except:
+                        pass
+
                     os.makedirs(os.path.join(path, 'kwinject'), exist_ok = True)
 
                     return build.compile(cmd, True)
@@ -225,10 +233,18 @@ def build(argv = None):
 
                 if name in ('bn',):
                     if module in list(build.repos.keys()) + ['wdm1', 'wdm2', 'wdm3']:
-                        shutil.rmtree(os.path.join(path, 'kwbuild'), ignore_errors = True)
+                        try:
+                            shutil.rmtree(os.path.join(path, 'kwbuild'))
+                        except:
+                            pass
+
                         os.makedirs(os.path.join(path, 'kwbuild'), exist_ok = True)
                 else:
-                    shutil.rmtree(os.path.join(path, 'kwbuild'), ignore_errors = True)
+                    try:
+                        shutil.rmtree(os.path.join(path, 'kwbuild'))
+                    except:
+                        pass
+
                     os.makedirs(os.path.join(path, 'kwbuild'), exist_ok = True)
 
                 return build.kw_build(path)

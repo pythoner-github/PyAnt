@@ -283,7 +283,11 @@ class build(__build__):
         zipfile_home = self.package_home(version, type)
         tmpdir = tempfile.mkdtemp()
 
-        shutil.rmtree(zipfile_home, ignore_errors = True)
+        try:
+            shutil.rmtree(zipfile_home)
+        except:
+            pass
+
         os.makedirs(zipfile_home, exist_ok = True)
 
         packages = {}
@@ -484,7 +488,10 @@ class build(__build__):
             except Exception as e:
                 print(e)
 
-                shutil.rmtree(tmpdir, ignore_errors = True)
+                try:
+                    shutil.rmtree(tmpdir)
+                except:
+                    pass
 
                 return False
 
@@ -525,11 +532,17 @@ class build(__build__):
             except Exception as e:
                 print(e)
 
-                shutil.rmtree(tmpdir, ignore_errors = True)
+                try:
+                    shutil.rmtree(tmpdir)
+                except:
+                    pass
 
                 return False
 
-        shutil.rmtree(tmpdir, ignore_errors = True)
+        try:
+            shutil.rmtree(tmpdir)
+        except:
+            pass
 
         return True
 

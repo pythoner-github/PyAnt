@@ -37,7 +37,10 @@ def auto():
                 m = re.search(r'^(umebn|bn)_.*\((\d{8}.*)\)$', dir)
 
                 if not m:
-                    shutil.rmtree(dir, ignore_errors = True)
+                    try:
+                        shutil.rmtree(dir)
+                    except:
+                        pass
 
                     continue
 
@@ -71,7 +74,10 @@ def auto():
                             status = False
                             continue
 
-                shutil.rmtree(dir, ignore_errors = True)
+                try:
+                    shutil.rmtree(dir)
+                except:
+                    pass
 
     auto_info = []
 
@@ -134,9 +140,15 @@ def auto():
                                             auto_info.append((dir, name))
 
                                     if len(glob.glob(os.path.join(name, '**/*.xml'), recursive = True)) == 0:
-                                        shutil.rmtree(name, ignore_errors = True)
+                                        try:
+                                            shutil.rmtree(name)
+                                        except:
+                                            pass
                                 else:
-                                    shutil.rmtree(name, ignore_errors = True)
+                                    try:
+                                        shutil.rmtree(name)
+                                    except:
+                                        pass
                             except Exception as e:
                                 print(e)
 
@@ -144,13 +156,22 @@ def auto():
                                 continue
 
                     if len(glob.glob(os.path.join(dir, '**/*.xml'), recursive = True)) == 0:
-                        shutil.rmtree(dir, ignore_errors = True)
+                        try:
+                            shutil.rmtree(dir)
+                        except:
+                            pass
                 else:
-                    shutil.rmtree(dir, ignore_errors = True)
+                    try:
+                        shutil.rmtree(dir)
+                    except:
+                        pass
 
             for dir in glob.iglob('*', recursive = True):
                 if len(glob.glob(os.path.join(dir, '**/*.xml'), recursive = True)) == 0:
-                    shutil.rmtree(dir, ignore_errors = True)
+                    try:
+                        shutil.rmtree(dir)
+                    except:
+                        pass
 
     if auto_info:
         print('===== 启动补丁制作 =====')

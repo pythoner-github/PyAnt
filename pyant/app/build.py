@@ -66,9 +66,9 @@ class build():
             return False
 
     def package(self, version, type = None):
-        path = self.package_home(version, type)
+        path = os.path.dirname(self.package_home(version, type))
 
-        if len(glob.glob(os.path.join(path, '*'))) > 10:
+        if len(glob.glob(os.path.join(path, '*'))) > 5:
             try:
                 shutil.rmtree(path)
             except:

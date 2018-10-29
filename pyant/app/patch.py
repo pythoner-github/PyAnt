@@ -260,6 +260,12 @@ class patch():
                     if not os.path.isfile(file):
                         continue
 
+                    print()
+                    print('*' * 60)
+                    print('正在处理补丁文件: %s' % file)
+                    print('*' * 60)
+                    print()
+
                     infoes = self.load_xml(file)
 
                     if infoes is None:

@@ -155,7 +155,7 @@ else:
 if os.environ.get('KLOCWORK_DATE'):
     KLOCWORK_DATE = os.environ['KLOCWORK_DATE']
 else:
-    KLOCWORK_DATE = '2018-09-01 00:00:00'
+    KLOCWORK_DATE = '2018-11-01 00:00:00'
 
 # UMEBN
 

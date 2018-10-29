@@ -79,7 +79,7 @@ def build(argv = None):
 
         if name in ('bn',):
             if os.environ.get(POM_VERSION):
-                os.environ['POM_VERSION'] = os.environ[POM_VERSION].super()
+                os.environ['POM_VERSION'] = os.environ[POM_VERSION].upper()
 
                 print('export POM_VERSION=%s' % os.environ['POM_VERSION'])
 

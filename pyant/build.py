@@ -289,6 +289,9 @@ def build(argv = None):
                 revision = os.environ.get('GERRIT_PATCHSET_REVISION')
                 branch = os.environ.get('GERRIT_BRANCH')
 
+                if branch not in ('master',):
+                    return True
+
                 if name in ('bn',):
                     return dashboard.dashboard_gerrit(arg[0], repos, revision, branch)
                 else:

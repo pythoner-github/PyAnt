@@ -241,7 +241,7 @@ class dashboard:
                     mvn.clean()
 
                     if 'code_c/' in __os__.normpath(path):
-                        cmdline = 'mvn deploy -fn -U -Djobs=5'
+                        cmdline = 'mvn deploy -fn -U -Djobs=10'
                         lang = 'cpp'
                     else:
                         cmdline = 'mvn deploy -fn -U'
@@ -339,7 +339,7 @@ class dashboard:
                     os.makedirs(os.path.dirname(kwinject), exist_ok = True)
 
                 if lang == 'cpp':
-                    cmdline = 'kwinject --output %s mvn install -U -fn' % kwinject
+                    cmdline = 'kwinject --output %s mvn install -U -fn -Djobs=10' % kwinject
                 else:
                     cmdline = 'kwmaven --output %s install -U -fn' % kwinject
 
@@ -437,7 +437,7 @@ class dashboard:
                                 os.environ['GERRIT_EMAIL'], admin_addrs, '<br>\n'.join(lines)
                             )
 
-                        #return False
+                        return False
 
             return True
         else:

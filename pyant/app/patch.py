@@ -261,9 +261,9 @@ class patch():
                         continue
 
                     print()
-                    print('*' * 60)
-                    print('正在处理补丁文件: %s' % file)
-                    print('*' * 60)
+                    print('=' * 60)
+                    print('正在处理补丁文件: %s' % os.path.basename(file))
+                    print('=' * 60)
                     print()
 
                     infoes = self.load_xml(file)

@@ -128,13 +128,13 @@ class build(__build__):
 
             if type in ('lct',):
                 filenames = (
-                    os.path.join(self.artifact_repos['release'], 'bn/LCT/current_en.tar.gz'),
-                    os.path.join(self.artifact_repos['release'], 'bn/LCT/current_zh.tar.gz')
+                    os.path.join(self.artifact_repos['release'], 'bn/LCT/%s_en.tar.gz' % os.environ['UEP_INSTALL']),
+                    os.path.join(self.artifact_repos['release'], 'bn/LCT/%s_zh.tar.gz' % os.environ['UEP_INSTALL'])
                 )
             else:
                 filenames = ((
-                    os.path.join(self.artifact_repos['release'], 'bn/%s/current.tar.gz' % type.upper()),
-                    os.path.join(self.artifact_repos['release'], 'bn/%s/extend.tar.gz' % type.upper())
+                    os.path.join(self.artifact_repos['release'], 'bn/%s/%s.tar.gz' % (type.upper(),  os.environ['UEP_INSTALL'])),
+                    os.path.join(self.artifact_repos['release'], 'bn/%s/%s_extend.tar.gz' % (type.upper(),  os.environ['UEP_INSTALL']))
                 ),)
 
             for filename in filenames:

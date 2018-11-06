@@ -419,11 +419,11 @@ class patch():
                 for line in f:
                     m = re.search(r'\s*=\s*', line.strip())
 
-                    if m and m.group(1):
-                        envs[m.group(1)] = m.group(2)
+                    if m and m.string[:m.start()]:
+                        envs[m.string[:m.start()]] = m.string[m.end():]
 
             print()
-            print('=' * 18, 'LOAD ENVIRONMENT VARIABLE', '=' * 17)
+            print('=' * 17, 'LOAD ENVIRONMENT VARIABLE', '=' * 16)
 
             for name in envs:
                 os.environ[name] = envs[name]

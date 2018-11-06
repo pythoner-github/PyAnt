@@ -28,6 +28,8 @@ class build():
         self.path = self.name
         self.type = 'none'
 
+        self.load_env()
+
     def update(self, module = None, branch = None):
         return True
 
@@ -153,6 +155,29 @@ class build():
         return None
 
     # ------------------------------------------------------
+
+    def load_env(self):
+        file = const.ENV_FILE
+
+        if os.path.isfile(file):
+            envs = collections.OrderedDict()
+
+            with open(file) as f:
+                for line in f:
+                    m = re.search(r'\s*=\s*', line.strip())
+
+                    if m and m.group(1):
+                        envs[m.group(1)] = m.group(2)
+
+            print()
+            print('=' * 18, 'LOAD ENVIRONMENT VARIABLE', '=' * 17)
+
+            for name in envs:
+                os.environ[name] = envs[name]
+                print('export %s=%s' % (name, os.environ[name]))
+
+            print('=' * 60)
+            print()
 
     def package_home(self, version, type):
         return os.path.normpath(os.path.abspath(os.path.join('../zipfile', type, version.replace(' ', ''))))

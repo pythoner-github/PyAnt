@@ -160,3 +160,7 @@ else:
 # UMEBN
 
 OKI_FILE = 'devops/parent/ci_scripts/docker/scripts/patch.py'
+
+# ENV
+
+ENV_FILE = 'env.txt'

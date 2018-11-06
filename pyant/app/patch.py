@@ -235,6 +235,8 @@ class patch():
         self.notification = '<PATCH 通知>'
         self.modules = {}
 
+        self.load_env()
+
     def init(self, branch = None):
         os.makedirs(self.path, exist_ok = True)
         os.makedirs(self.output, exist_ok = True)
@@ -406,6 +408,29 @@ class patch():
         return status
 
     # ------------------------------------------------------
+
+    def load_env(self):
+        file = os.path.join(self.path, const.ENV_FILE)
+
+        if os.path.isfile(file):
+            envs = collections.OrderedDict()
+
+            with open(file) as f:
+                for line in f:
+                    m = re.search(r'\s*=\s*', line.strip())
+
+                    if m and m.group(1):
+                        envs[m.group(1)] = m.group(2)
+
+            print()
+            print('=' * 18, 'LOAD ENVIRONMENT VARIABLE', '=' * 17)
+
+            for name in envs:
+                os.environ[name] = envs[name]
+                print('export %s=%s' % (name, os.environ[name]))
+
+            print('=' * 60)
+            print()
 
     def build_permit(self, info):
         return True

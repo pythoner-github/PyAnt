@@ -104,6 +104,31 @@ class dashboard:
                                     lang = 'cpp'
 
                                 with __os__.chdir(path) as chdir:
+                                    if path in ('code_c/build',):
+                                        mvn = maven.maven()
+
+                                        if not mvn.clean():
+                                            if os.environ.get('GERRIT_EMAIL'):
+                                                admin_addrs = None
+
+                                                if os.environ.get('SENDMAIL.ADMIN'):
+                                                    admin_addrs = __string__.split(os.environ.get('SENDMAIL.ADMIN'))
+
+                                                line = ''
+
+                                                if os.environ.get('BUILD_URL'):
+                                                    console_url = __os__.join(os.environ['BUILD_URL'], 'console')
+                                                    line = '详细信息: <a href="%s">%s</a>' % (console_url, console_url)
+
+                                                smtp.sendmail(
+                                                    '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper(),
+                                                    os.environ['GERRIT_EMAIL'], admin_addrs, line
+                                                )
+
+                                            return False
+                                        else:
+                                            return True
+
                                     # mvn = maven.maven()
                                     # mvn.notification = '<%s_DASHBOARD_GERRIT_BUILD 通知> 编译失败, 请尽快处理' % self.name.upper()
                                     #

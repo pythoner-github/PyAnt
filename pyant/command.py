@@ -14,15 +14,10 @@ class command:
         self.pipe = None
         self.async = async
 
-        try:
-            self.pipe = subprocess.Popen(args, stdout = subprocess.PIPE,
-                stderr = subprocess.STDOUT, stdin = subprocess.PIPE, cwd = cwd
-            )
-        except:
-            self.pipe = subprocess.Popen(args, stdout = subprocess.PIPE,
-                stderr = subprocess.STDOUT, stdin = subprocess.PIPE, cwd = cwd,
-                shell = True
-            )
+        self.pipe = subprocess.Popen(args, stdout = subprocess.PIPE,
+            stderr = subprocess.STDOUT, stdin = subprocess.PIPE, cwd = cwd,
+            shell = True
+        )
 
         if isinstance(args, str):
             cmd = args.strip()

@@ -90,6 +90,9 @@ class patch(__patch__):
                 for dir in info['source']:
                     build_path = os.path.join(dir, 'build')
 
+                    if not os.path.isdir(build_path):
+                        build_path = dir
+
                     if os.path.isdir(build_path):
                         with __os__.chdir(build_path) as _chdir:
                             mvn = maven.maven()

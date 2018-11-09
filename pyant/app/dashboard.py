@@ -81,20 +81,23 @@ class dashboard:
                     logs = git.log(None, '-1 --stat=256 %s' % revision, True)
 
                     if logs:
-                        paths = []
+                        paths = collections.OrderedDict()
 
                         for log in logs:
                             if log['changes']:
                                 for k, v in log['changes'].items():
+                                    if k in ('delete',):
+                                        continue
+
                                     for file in v:
-                                        filenames = (file,)
+                                        if os.path.splitext(file)[-1] in ('.java',):
+                                            path = self.pom_path(file)
 
-                                        for filename in filenames:
-                                            dir = self.pom_path(filename)
+                                            if path:
+                                                if path not in paths:
+                                                    paths[path] = []
 
-                                            if dir:
-                                                if dir not in paths:
-                                                    paths.append(dir)
+                                                paths[path].append(os.path.abspath(file))
 
                         for path in paths:
                             if os.path.isdir(path):
@@ -141,7 +144,7 @@ class dashboard:
                                     #
                                     #     continue
 
-                                    if not self.kw_check('.', lang):
+                                    if not self.kw_check('.', lang, paths[path]):
                                         status = False
 
                                         continue
@@ -347,7 +350,7 @@ class dashboard:
     def update(self, branch = None):
         return build.build().update(branch)
 
-    def kw_check(self, path = None, lang = None):
+    def kw_check(self, path = None, lang = None, filenames = None):
         if not path:
             path = '.'
 
@@ -426,7 +429,7 @@ class dashboard:
 
                                 defect[info['severity']][info['code']].append(info)
 
-                            defect = self.kw_check_fixed(defect)
+                            defect = self.kw_check_fixed(defect, filenames)
 
                     if ('Critical' in defect) or ('Error' in defect):
                         lines = []
@@ -470,7 +473,7 @@ class dashboard:
 
             return False
 
-    def kw_check_fixed(self, defect):
+    def kw_check_fixed(self, defect, filenames = None):
         return defect
 
     def expand_dashboard(self, path, file):

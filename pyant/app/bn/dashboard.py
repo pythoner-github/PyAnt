@@ -69,6 +69,9 @@ class dashboard(__dashboard__):
             return False
 
     def dashboard_gerrit(self, module, repos, revision, branch = None):
+        if module in ('interface',):
+            return True
+
         modules = []
 
         if module in ('ptn', 'ptn2'):
@@ -118,51 +121,32 @@ class dashboard(__dashboard__):
                     logs = git.log(None, '-1 --stat=256 %s' % revision, True)
 
                     if logs:
-                        paths = []
+                        paths = collections.OrderedDict()
+                        dbscript_paths = collections.OrderedDict()
 
                         for log in logs:
                             if log['changes']:
                                 for k, v in log['changes'].items():
+                                    if k in ('delete',):
+                                        continue
+
                                     for file in v:
-                                        filenames = (file,)
+                                        if os.path.splitext(file)[-1] in ('.java', '.cpp', '.h', '.xml'):
+                                            path = self.pom_path(file)
 
-                                        for filename in filenames:
-                                            dir = self.pom_path(filename)
+                                            if path:
+                                                if os.path.splitext(file)[-1] in ('.xml',):
+                                                    if re.search(r'^code_c\/database\/.*\/xml\/.*\.xml$', file):
+                                                        if os.path.isfile('code_c/database/dbscript/pom.xml'):
+                                                            if os.path.isfile(os.path.join(os.path.dirname(file), '../pom.xml')):
+                                                                dbscript_paths['code_c/database/dbscript'] = []
+                                                else:
+                                                    if path not in paths:
+                                                        paths[path] = []
 
-                                            if dir:
-                                                if re.search(r'^code_c\/database\/.*\/xml\/.*\.xml$', filename):
-                                                    if os.path.isfile('code_c/database/dbscript/pom.xml'):
-                                                        if os.path.isfile(os.path.join(os.path.dirname(filename), '../pom.xml')):
-                                                            if 'code_c/database/dbscript' not in paths:
-                                                                paths.append('code_c/database/dbscript')
+                                                    paths[path].append(os.path.abspath(file))
 
-                                                if dir not in paths:
-                                                    paths.append(dir)
-                                            else:
-                                                if module in ('interface',):
-                                                    if filename.startswith('code/asn/'):
-                                                        if 'code/finterface' not in paths:
-                                                            paths.append('code/finterface')
-
-                                                        if 'code_c/finterface' not in paths:
-                                                            paths.append('code_c/finterface')
-                                                    else:
-                                                        if filename.startswith('code_c/asn/sdh-wdm/qx-interface/asn/'):
-                                                            dir = 'code_c/qxinterface/qxinterface'
-                                                        elif filename.startswith('code_c/asn/sdh-wdm/qx-interface/asn5800/'):
-                                                            dir = 'code_c/qxinterface/qx5800'
-                                                        elif filename.startswith('code_c/asn/sdh-wdm/qx-interface/asnwdm721/'):
-                                                            dir = 'code_c/qxinterface/qxwdm721'
-                                                        elif filename.startswith('code_c/asn/otntlvqx/'):
-                                                            dir = 'code_c/qxinterface/qxotntlv'
-                                                        else:
-                                                            pass
-
-                                                        if dir:
-                                                            if dir not in paths:
-                                                                paths.append(dir)
-
-                        paths = self.expand_dashboard_gerrit(module, paths)
+                        paths = self.expand_dashboard_gerrit(module_path, paths, dbscript_paths)
 
                         for path in paths:
                             if os.path.isdir(path):
@@ -185,7 +169,7 @@ class dashboard(__dashboard__):
 
                                             continue
                                     else:
-                                        if not self.kw_check('.', lang):
+                                        if not self.kw_check('.', lang, paths[path]):
                                             status = False
 
                                             continue
@@ -234,13 +218,13 @@ class dashboard(__dashboard__):
 
             return file
 
-    def expand_dashboard_gerrit(self, module, paths):
+    def expand_dashboard_gerrit(self, module_path, paths, dbscript_paths):
         _paths = []
 
         for path in paths:
             _path = path
 
-            if module in ('U31R22_INTERFACE',):
+            if module_path in ('U31R22_INTERFACE',):
                 if path.startswith('code/finterface'):
                     _path = 'code/finterface'
                 elif path.startswith('code/netconf'):
@@ -263,7 +247,7 @@ class dashboard(__dashboard__):
                     _path = 'code_c/qxinterface/qxotntlv'
                 else:
                     _path = path
-            elif module in ('U31R22_NBI',):
+            elif module_path in ('U31R22_NBI',):
                 if path.startswith('code_c/adapters/xtncorba/corbaidl'):
                     if 'code_c/adapters/xtncorba/corbaidl/corbaidl_common' not in _paths:
                         _paths.append('code_c/adapters/xtncorba/corbaidl/corbaidl_common')
@@ -282,9 +266,17 @@ class dashboard(__dashboard__):
             if _path not in _paths:
                 _paths.append(_path)
 
-        return _paths
+        cur_paths = collections.OrderedDict()
 
-    def kw_check_fixed(self, defect):
+        for path in dbscript_paths:
+            cur_paths[path] = []
+
+        for path in _paths:
+            cur_paths[path] = paths[path]
+
+        return cur_paths
+
+    def kw_check_fixed(self, defect, filenames = None):
         branch = 'master'
 
         git_home = git.home()
@@ -316,10 +308,23 @@ class dashboard(__dashboard__):
 
         diff_info = self.diff(lines, git_home)
 
+        print('*' * 60)
+        print(filenames)
+        print('Error', defect.get('Error'))
+        print('Critical', defect.get('Critical'))
+        print('*' * 60)
+
         for severity in defect:
             for code in defect[severity]:
                 for info in defect[severity][code]:
+                    if filenames:
+                        if info['file'] not in filenames:
+                            continue
+
                     if info['file'] not in diff_info:
+                        continue
+
+                    if '/target/' in info['file']:
                         continue
 
                     if int(info['line']) in diff_info[info['file']]:

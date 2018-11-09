@@ -304,37 +304,47 @@ class dashboard(__dashboard__):
         for line in cmd.command('git diff %s' % commit):
             lines.append(line)
 
-        fixed_defect = {}
+        _defect = {}
 
         diff_info = self.diff(lines, git_home)
-
-        print('*' * 60)
-        print(filenames)
-        print('Error', defect.get('Error'))
-        print('Critical', defect.get('Critical'))
-        print('*' * 60)
 
         for severity in defect:
             for code in defect[severity]:
                 for info in defect[severity][code]:
+                    if info['file'] not in diff_info:
+                        continue
+
+                    if int(info['line']) in diff_info[info['file']]:
+                        if severity not in _defect:
+                            _defect[severity] = {}
+
+                        if code not in _defect[severity]:
+                            _defect[severity][code] = []
+
+                        _defect[severity][code].append(info)
+
+        print('*' * 60)
+        print(filenames)
+        print('Error', _defect.get('Error'))
+        print('Critical', _defect.get('Critical'))
+        print('*' * 60)
+
+        fixed_defect = {}
+
+        for severity in _defect:
+            for code in _defect[severity]:
+                for info in _defect[severity][code]:
                     if filenames:
                         if info['file'] not in filenames:
                             continue
 
-                    if info['file'] not in diff_info:
-                        continue
+                    if severity not in fixed_defect:
+                        fixed_defect[severity] = {}
 
-                    if '/target/' in info['file']:
-                        continue
+                    if code not in fixed_defect[severity]:
+                        fixed_defect[severity][code] = []
 
-                    if int(info['line']) in diff_info[info['file']]:
-                        if severity not in fixed_defect:
-                            fixed_defect[severity] = {}
-
-                        if code not in fixed_defect[severity]:
-                            fixed_defect[severity][code] = []
-
-                        fixed_defect[severity][code].append(info)
+                    fixed_defect[severity][code].append(info)
 
         return fixed_defect
 

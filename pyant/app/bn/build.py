@@ -137,13 +137,21 @@ class build(__build__):
                     os.path.join(self.artifact_repos['release'], 'bn/%s/%s_extend.tar.gz' % (type.upper(),  os.environ['UEP_INSTALL']))
                 ),)
 
+            if type in ('su31', 'su31nm', 'su31-e2e', 'su31-nme2e'):
+                targz = True
+                tarpath = 'umebn_%s/installation' % type
+            else:
+                targz = False
+                tarpath = None
+
             for filename in filenames:
                 if not self.__artifactory__(
                     self.package_home(version, type),
                     os.path.join(artifact, version.replace(' ', '')),
                     filename,
                     suffix,
-                    False
+                    targz,
+                    tarpath
                 ):
                     return False
 
@@ -285,6 +293,9 @@ class build(__build__):
 
         zipfile_home = self.package_home(version, type)
         tmpdir = tempfile.mkdtemp()
+
+        if type in ('su31', 'su31nm', 'su31-e2e', 'su31-nme2e'):
+            zipfile_home = os.path.join(zipfile_home, 'installation')
 
         try:
             shutil.rmtree(zipfile_home)
@@ -546,6 +557,23 @@ class build(__build__):
             shutil.rmtree(tmpdir)
         except:
             pass
+
+        install_sh = os.path.join(zipfile_home, '../install.sh')
+
+        if os.path.isfile(install_sh):
+            lines = []
+
+            with open(install_sh, 'r', encoding = 'utf-8') as f:
+                for line in f:
+                    line = line.rstrip()
+
+                    if '${u31_version}' in line:
+                        line = line.replace('${u31_version}', version)
+
+                    lines.append(lines)
+
+            with open(install_sh, 'w', encoding = 'utf-8') as f:
+                f.write('\n'.join(lines))
 
         return True
 

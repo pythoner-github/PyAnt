@@ -182,9 +182,12 @@ class build():
     def package_home(self, version, type):
         return os.path.normpath(os.path.abspath(os.path.join('../zipfile', type, version.replace(' ', ''))))
 
-    def __artifactory__(self, path, artifact_path, artifact_filenames = None, suffix = None, targz = True):
+    def __artifactory__(self, path, artifact_path, artifact_filenames = None, suffix = None, targz = True, tarpath = None):
         if isinstance(artifact_filenames, str):
             artifact_filenames = [artifact_filenames]
+
+        if not tarpath:
+            tarpath = 'installation'
 
         if os.path.isdir(path):
             with __os__.tmpdir(tempfile.mkdtemp(), False) as tmpdir:
@@ -207,7 +210,7 @@ class build():
 
                         try:
                             with tarfile.open(os.path.basename(file)) as tar:
-                                tar.extractall('installation')
+                                tar.extractall(tarpath)
                         except Exception as e:
                             print(e)
 
@@ -215,7 +218,7 @@ class build():
 
                 # zip
 
-                dst = os.path.join(os.getcwd(), 'installation')
+                dst = os.path.join(os.getcwd(), tarpath.split('/')[0])
 
                 with __os__.chdir(path) as chdir:
                     try:
@@ -240,7 +243,7 @@ class build():
 
                     try:
                         with tarfile.open(zipname, 'w:gz') as tar:
-                            tar.add('installation')
+                            tar.add(tarpath.split('/')[0])
                     except Exception as e:
                         print(e)
 
@@ -253,7 +256,7 @@ class build():
 
                     try:
                         with zipfile.ZipFile(zipname, 'w', compression=zipfile.ZIP_DEFLATED) as zip:
-                            for file in glob.iglob('installation/**/*', recursive = True):
+                            for file in glob.iglob(os.path.join(tarpath.split('/')[0], '**/*'), recursive = True):
                                 zip.write(file)
                     except Exception as e:
                         print(e)

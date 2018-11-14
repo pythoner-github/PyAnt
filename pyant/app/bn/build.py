@@ -294,13 +294,13 @@ class build(__build__):
         zipfile_home = self.package_home(version, type)
         tmpdir = tempfile.mkdtemp()
 
-        if type in ('su31', 'su31nm', 'su31-e2e', 'su31-nme2e'):
-            zipfile_home = os.path.join(zipfile_home, 'installation')
-
         try:
             shutil.rmtree(zipfile_home)
         except:
             pass
+
+        if type in ('su31', 'su31nm', 'su31-e2e', 'su31-nme2e'):
+            zipfile_home = os.path.join(zipfile_home, 'installation')
 
         os.makedirs(zipfile_home, exist_ok = True)
 

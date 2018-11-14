@@ -570,7 +570,7 @@ class build(__build__):
                     if '${u31_version}' in line:
                         line = line.replace('${u31_version}', version)
 
-                    lines.append(lines)
+                    lines.append(line)
 
             with open(install_sh, 'w', encoding = 'utf-8') as f:
                 f.write('\n'.join(lines))

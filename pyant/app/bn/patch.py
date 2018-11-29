@@ -11,6 +11,7 @@ from lxml import etree
 
 from pyant import git, maven
 from pyant.app import const, __patch__, __installation__
+from pyant.app.bn import build
 from pyant.builtin import __os__, __string__
 
 __all__ = ('patch', 'installation')
@@ -148,7 +149,7 @@ class patch(__patch__):
                 return False
 
             with __os__.chdir('build') as chdir:
-                bn.environ('cpp')
+                build.build().environ('cpp')
 
             with __os__.chdir(path) as chdir:
                 for build_path, clean in info['compile'].items():

@@ -604,16 +604,29 @@ class build(__build__):
         name = os.path.join(dirname, filename)
 
         if vars:
-            lines = []
+            lines = None
+            encoding = None
 
-            with open(name, encoding = 'utf-8') as f:
-                for line in f.readlines():
-                    lines.append(__string__.vars_expand(line.rstrip(), vars))
+            with open(name, 'rb') as f:
+                str = f.read()
 
-            name = os.path.join(tmpdir, __os__.tmpfilename())
+                for enc in ('utf-8', 'cp936'):
+                    try:
+                        str = str.decode(enc)
 
-            with open(name, 'w', encoding = 'utf-8') as f:
-                f.write('\n'.join(lines))
+                        lines = []
+                        encoding = enc
+
+                        for line in str.splitlines():
+                            lines.append(__string__.vars_expand(line.rstrip(), vars))
+
+                        break
+                    except:
+                        pass
+
+            if lines:
+                with open(name, 'w', encoding = encoding) as f:
+                    f.write('\n'.join(lines))
 
         dst = dst.replace('ums-nms', 'ums-client').replace('ums-lct', 'ums-client')
 

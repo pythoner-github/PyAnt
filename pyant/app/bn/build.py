@@ -328,7 +328,7 @@ class build(__build__):
                     value = element.text.strip()
 
                     if '<![CDATA[' in etree.tostring(element, encoding='utf-8').decode('utf-8'):
-                        value = '<![CDATA[%s]]' % value
+                        value = '<![CDATA[%s]]>' % value
 
                     break
 
@@ -476,11 +476,10 @@ class build(__build__):
 
                         if os.path.isfile(os.path.join(dirname, filename)):
                             arcname = destname
+                            srcname = os.path.join(dirname, filename)
 
                             if expand_filename:
-                                filename, arcname = expand_filename(version, dirname, filename, destname, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
-
-                            srcname = os.path.join(dirname, filename)
+                                srcname, arcname = expand_filename(version, srcname, destname, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
 
                             if type in ('upgrade', ):
                                 srcname = self.upgrade_expand_filename(srcname, tmpdir)
@@ -533,16 +532,17 @@ class build(__build__):
 
                             if os.path.isfile(os.path.join(dirname, filename)):
                                 dst = destname
+                                src = os.path.join(dirname, filename)
 
                                 if expand_filename:
-                                    filename, dst = expand_filename(version, dirname, filename, destname, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
+                                    src, dst = expand_filename(version, src, destname, type, tmpdir, vars.get(os.path.normpath(os.path.join(dirname, filename))))
 
                                 dst = os.path.join(zipfile_home, name, dest, dst)
 
                                 if not os.path.isdir(os.path.dirname(dst)):
                                     os.makedirs(os.path.dirname(dst), exist_ok = True)
 
-                                shutil.copyfile(os.path.join(dirname, filename), dst)
+                                shutil.copyfile(src, dst)
             except Exception as e:
                 print(e)
 
@@ -599,9 +599,8 @@ class build(__build__):
         else:
             return git.clone(url, path, branch)
 
-    def expand_filename(self, version, dirname, filename, destname, type, tmpdir, vars = None):
+    def expand_filename(self, version, name, destname, type, tmpdir, vars = None):
         dst = destname
-        name = os.path.join(dirname, filename)
 
         if vars:
             lines = None
@@ -625,6 +624,8 @@ class build(__build__):
                         pass
 
             if lines:
+                name = os.path.join(tmpdir, __os__.tmpfilename())
+
                 with open(name, 'w', encoding = encoding) as f:
                     f.write('\n'.join(lines))
 
@@ -655,7 +656,7 @@ class build(__build__):
             except:
                 pass
 
-        return (filename, dst)
+        return (name, dst)
 
     def upgrade_expand_filename(self, name, tmpdir):
         if re.search(r'ums-server\/procs\/ppus\/bn\.ppu\/bn-ptn\.pmu\/.*\/ican-adaptercmdcode-config.*\.xml$', name):

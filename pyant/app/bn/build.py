@@ -328,7 +328,7 @@ class build(__build__):
                     value = element.text.strip()
 
                     if '<![CDATA[' in etree.tostring(element, encoding='utf-8').decode('utf-8'):
-                        value = '<![CDATA[%s]]>' % value
+                        pass
 
                     break
 

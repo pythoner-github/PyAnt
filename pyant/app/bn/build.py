@@ -624,7 +624,8 @@ class build(__build__):
                         pass
 
             if lines:
-                name = os.path.join(tmpdir, __os__.tmpfilename())
+                name = os.path.join(tmpdir, __os__.tmpfilename(), os.path.basename(name))
+                os.makedirs(os.path.dirname(name), exist_ok = True)
 
                 with open(name, 'w', encoding = encoding) as f:
                     f.write('\n'.join(lines))

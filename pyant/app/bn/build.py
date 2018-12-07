@@ -176,11 +176,16 @@ class build(__build__):
             if type not in ('ems',):
                 suffix += '_%s' % type
 
+            filename = (
+                os.path.join(self.artifact_repos['release'], 'bn/UPDATE/%s/%s.tar.gz' % (type.upper(),  os.environ['UEP_INSTALL'])),
+                os.path.join(self.artifact_repos['release'], 'bn/UPDATE/%s/%s_extend.tar.gz' % (type.upper(),  os.environ['UEP_INSTALL']))
+            )
+
             if not self.__artifactory__(
                 self.package_home(version, type),
                 os.path.join(artifact, version.replace(' ', '')),
                 None,
-                suffix,
+                filename,
                 False
             ):
                 return False

@@ -184,6 +184,12 @@ def bn_cut_upgrade_installation(installation_home):
             delete_zipfiles += glob.glob('patch/itmp*.zip')
             delete_zipfiles += glob.glob('pmservice*.zip')
             delete_zipfiles += glob.glob('patch/pmservice*.zip')
+            delete_zipfiles += glob.glob('uepi-pro*.zip')
+            delete_zipfiles += glob.glob('patch/uepi-pro*.zip')
+            delete_zipfiles += glob.glob('topo*.zip')
+            delete_zipfiles += glob.glob('patch/topo*.zip')
+            delete_zipfiles += glob.glob('Nginx*.zip')
+            delete_zipfiles += glob.glob('patch/Nginx*.zip')
 
             for filename in delete_zipfiles:
                 if os.path.isfile(filename):

@@ -184,8 +184,8 @@ class build(__build__):
             if not self.__artifactory__(
                 self.package_home(version, type),
                 os.path.join(artifact, version.replace(' ', '')),
-                None,
                 filename,
+                suffix,
                 False
             ):
                 return False

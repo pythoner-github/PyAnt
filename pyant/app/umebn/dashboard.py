@@ -12,3 +12,6 @@ class dashboard(__dashboard__):
 
     def update(self, branch = None):
         return build.build().update(branch)
+
+    def __dashboard__(self, paths, ignores = None):
+        return super().__dashboard__(paths, ignores, True)

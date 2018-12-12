@@ -267,7 +267,7 @@ class patch(__patch__):
                 install = None
 
                 for file in glob.iglob('**/install/dbscript-patch/ums-db-update-info.xml'):
-                    install = os.path.dirname(os.path.dirname(file))
+                    install = __os__.normpath(os.path.dirname(os.path.dirname(file)))
 
                     break
 

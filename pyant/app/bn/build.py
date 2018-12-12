@@ -665,6 +665,8 @@ class build(__build__):
         return (name, dst)
 
     def upgrade_expand_filename(self, name, tmpdir):
+        name = __os__.normpath(name)
+
         if re.search(r'ums-server\/procs\/ppus\/bn\.ppu\/bn-ptn\.pmu\/.*\/ican-adaptercmdcode-config.*\.xml$', name):
             try:
                 tree = etree.parse(name)

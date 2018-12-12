@@ -153,11 +153,13 @@ def bn_cut_upgrade_installation(installation_home):
                         delete_files = []
 
                         for filename in glob.iglob('**/*', recursive = True):
+                            filename = __os__.normpath(filename)
+
                             if re.search(r'^ums-server\/works\/.*\/deploy-.*(fm|pm|hmf|e2e).*\.xml$', filename):
                                 delete_files.append(filename)
                             elif os.path.basename(filename) in ('deploy-uep-main-main.xml', 'deploy-uep-mmlndf-mmlndf.xml', 'deploy-uep-umdproc-umdproc.xml', 'deploy-uep-web-web.xml'):
                                 delete_files.append(filename)
-                            elif filename.replace('\\', '/') in uep_deletes:
+                            elif filename in uep_deletes:
                                 delete_files.append(filename)
                             else:
                                 pass

@@ -139,7 +139,7 @@ class dashboard:
                                     #
                                     # cmdline = 'mvn install -fn -U'
                                     #
-                                    # if not mvn.compile(cmdline, 'mvn install -fn -U'):
+                                    # if not mvn.compile(cmdline):
                                     #     status = False
                                     #
                                     #     continue
@@ -237,7 +237,7 @@ class dashboard:
 
         return changes
 
-    def __dashboard__(self, paths, ignores = None):
+    def __dashboard__(self, paths, ignores = None, all = False):
         filename = os.path.abspath(os.path.join('../errors', '%s.json' % os.path.basename(os.getcwd())))
 
         if os.path.isfile(filename):
@@ -275,7 +275,7 @@ class dashboard:
                         cmdline = 'mvn deploy -fn -U'
                         lang = None
 
-                    if not mvn.compile(cmdline, 'mvn deploy -fn -U', lang):
+                    if not mvn.compile(cmdline, 'mvn deploy -fn -U', lang, all):
                         if path not in errors:
                             errors.append(path)
 

@@ -47,7 +47,7 @@ class build():
 
             return False
 
-    def compile(self, cmd = None, clean = False, retry_cmd = None, dirname = None):
+    def compile(self, cmd = None, clean = False, retry_cmd = None, dirname = None, lang = None, all = False):
         if not dirname:
             dirname = 'build'
 
@@ -61,7 +61,7 @@ class build():
                 if clean:
                     mvn.clean()
 
-                return mvn.compile(cmd, retry_cmd)
+                return mvn.compile(cmd, retry_cmd, lang, all)
         else:
             print('no such directory: %s' % os.path.normpath(path))
 

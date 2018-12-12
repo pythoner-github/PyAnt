@@ -86,7 +86,7 @@ class build(__build__):
                 else:
                     self.path = os.path.basename(self.repos[module])
 
-                return super().compile(cmd, clean, retry_cmd, dirname)
+                return super().compile(cmd, clean, retry_cmd, dirname, lang)
             else:
                 print('module name not found in %s' % str(tuple(self.repos.keys())))
 

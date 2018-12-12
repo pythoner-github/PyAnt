@@ -42,7 +42,7 @@ class maven:
 
         return status
 
-    def compile(self, cmdline = None, retry_cmd = None, lang = None):
+    def compile(self, cmdline = None, retry_cmd = None, lang = None, all = False):
         if not cmdline:
             cmdline = 'mvn install -fn -U'
 
@@ -73,7 +73,10 @@ class maven:
             return True
         else:
             if retry_cmd:
-                modules = self.retry_modules()
+                if all:
+                    modules = []
+                else:
+                    modules = self.retry_modules()
 
                 if modules:
                     with __os__.tmpdir('tmp') as tmpdir:

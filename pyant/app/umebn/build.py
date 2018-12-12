@@ -41,7 +41,7 @@ class build(__build__):
         if not dirname:
             dirname = 'build'
 
-        if not super().compile(cmd, clean, retry_cmd, dirname):
+        if not super().compile(cmd, clean, retry_cmd, dirname, None, True):
             return False
 
         with __os__.chdir(self.path) as chdir:

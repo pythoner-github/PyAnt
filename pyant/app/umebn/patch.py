@@ -100,7 +100,7 @@ class patch(__patch__):
 
                             mvn.clean()
 
-                            if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U'):
+                            if not mvn.compile('mvn deploy -fn -U', 'mvn deploy -fn -U', None, True):
                                 return False
 
                         if not self.oki(build_path, os.environ.get('VERSION')):
